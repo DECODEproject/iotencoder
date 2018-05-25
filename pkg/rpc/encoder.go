@@ -2,7 +2,11 @@ package rpc
 
 import (
 	"context"
+	"strings"
 
+	"github.com/twitchtv/twirp"
+
+	sq "github.com/elgris/sqrl"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -61,9 +65,71 @@ func (e *Encoder) Stop() error {
 }
 
 func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
-	return nil, nil
+	err := validateCreateRequest(req)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to validate request"))
+	}
+
+	sql, args, err := sq.Insert("devices").
+		Columns("broker", "topic", "private_key", "user_uid", "longitude", "latitude", "disposition").
+		Values(
+			req.BrokerAddress,
+			req.DeviceTopic,
+			req.DevicePrivateKey,
+			req.UserUid,
+			req.Location.Longitude,
+			req.Location.Latitude,
+			strings.ToLower(req.Disposition.String()),
+		).
+		ToSql()
+
+	if err != nil {
+		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to generate device insert sql"))
+	}
+
+	// rebind for postgres ($1 vs ?)
+	sql = e.DB.Rebind(sql)
+
+	_, err = e.DB.Exec(sql, args...)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to insert device when creating stream"))
+	}
+
+	return &encoder.CreateStreamResponse{}, nil
 }
 
 func (e *Encoder) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
 	return nil, nil
+}
+
+func validateCreateRequest(req *encoder.CreateStreamRequest) error {
+	if req.BrokerAddress == "" {
+		return twirp.RequiredArgumentError("broker_address")
+	}
+
+	if req.DeviceTopic == "" {
+		return twirp.RequiredArgumentError("device_topic")
+	}
+
+	if req.DevicePrivateKey == "" {
+		return twirp.RequiredArgumentError("device_private_key")
+	}
+
+	if req.RecipientPublicKey == "" {
+		return twirp.RequiredArgumentError("recipient_public_key")
+	}
+
+	if req.UserUid == "" {
+		return twirp.RequiredArgumentError("user_uid")
+	}
+
+	if req.Location == nil {
+		return twirp.RequiredArgumentError("location")
+	}
+
+	if req.Location.Longitude == 0 {
+		return twirp.RequiredArgumentError("longitude")
+	}
+
+	return nil
 }

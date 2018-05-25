@@ -1,38 +1,72 @@
 package rpc_test
 
-// getTestDatastore is a helper function that returns a datastore, and also does
+import (
+	"context"
+	"os"
+	"testing"
+
+	"github.com/thingful/twirp-encoder-go"
+
+	kitlog "github.com/go-kit/kit/log"
+	"github.com/stretchr/testify/assert"
+	"github.com/thingful/iotencoder/pkg/postgres"
+	"github.com/thingful/iotencoder/pkg/rpc"
+)
+
+// getTestEncoder is a helper function that returns an encoder, and also does
 // some housekeeping to clean the DB by rolling back and reapplying migrations.
 //
 // TODO: not terribly happy with this as an approach. See if we can think of an
 // alternative.
-//func getTestDatastore(t *testing.T) *rpc.Datastore {
-//	t.Helper()
-//
-//	logger := kitlog.NewNopLogger()
-//	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
-//
-//	// create datastore
-//	ds := rpc.NewDatastore(connStr, logger)
-//
-//	// start the datastore (this runs all migrations slightly annoyingly)
-//	err := ds.Start()
-//	if err != nil {
-//		t.Fatalf("Error starting datastore: %v", err)
-//	}
-//
-//	err = postgres.MigrateDownAll(ds.DB.DB, logger)
-//	if err != nil {
-//		t.Fatalf("Error running down migrations: %v", err)
-//	}
-//
-//	err = postgres.MigrateUp(ds.DB.DB, logger)
-//	if err != nil {
-//		t.Fatalf("Error running down migrations: %v", err)
-//	}
-//
-//	return ds
-//}
-//
+func getTestEncoder(t *testing.T) *rpc.Encoder {
+	t.Helper()
+
+	logger := kitlog.NewNopLogger()
+	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
+
+	// create encoder
+	enc := rpc.NewEncoder(connStr, logger)
+
+	// start the encoder (this runs all migrations slightly annoyingly)
+	err := enc.Start()
+	if err != nil {
+		t.Fatalf("Error starting encoder: %v", err)
+	}
+
+	err = postgres.MigrateDownAll(enc.DB.DB, logger)
+	if err != nil {
+		t.Fatalf("Error running down migrations: %v", err)
+	}
+
+	err = postgres.MigrateUp(enc.DB.DB, logger)
+	if err != nil {
+		t.Fatalf("Error running down migrations: %v", err)
+	}
+
+	return enc
+}
+
+func TestCreateStream(t *testing.T) {
+	enc := getTestEncoder(t)
+	defer enc.Stop()
+
+	assert.NotNil(t, enc)
+
+	_, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
+		BrokerAddress:      "mqtt.local:1883",
+		DeviceTopic:        "device/sck/abc123/readings",
+		DevicePrivateKey:   "priv_key",
+		RecipientPublicKey: "pub_key",
+		UserUid:            "alice",
+		Location: &encoder.CreateStreamRequest_Location{
+			Longitude: -0.024,
+			Latitude:  54.24,
+		},
+		Disposition: encoder.CreateStreamRequest_INDOOR,
+	})
+	assert.Nil(t, err)
+}
+
 //func TestRoundTrip(t *testing.T) {
 //	ds := getTestDatastore(t)
 //	defer ds.Stop()
