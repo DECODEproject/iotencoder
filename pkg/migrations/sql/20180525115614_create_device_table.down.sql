@@ -1,0 +1,7 @@
+DROP INDEX IF EXISTS devices_topic_idx CASCADE;
+
+DROP INDEX IF EXISTS devices_user_uid_idx CASCADE;
+
+DROP TABLE IF EXISTS devices CASCADE;
+
+DROP TYPE IF EXISTS disposition CASCADE;
