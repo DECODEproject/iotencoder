@@ -14,6 +14,15 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/eclipse/paho.mqtt.golang"
+  packages = [
+    ".",
+    "packets"
+  ]
+  revision = "36d01c2b4cbeb3d2a12063e4880ce30800af9560"
+  version = "v1.1.1"
+
+[[projects]]
   branch = "master"
   name = "github.com/elgris/sqrl"
   packages = ["."]
@@ -189,9 +198,19 @@
   revision = "2d98ac4d4ccb29e08ea745c758e6d103f971eba5"
   version = "v5.4.0"
 
+[[projects]]
+  branch = "master"
+  name = "golang.org/x/net"
+  packages = [
+    "internal/socks",
+    "proxy",
+    "websocket"
+  ]
+  revision = "dfa909b99c79129e1100513e5cd36307665e5723"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a47d5c284c939d53a24988f96647e1f1df11e986bb2da534f906fbc1c91c275e"
+  inputs-digest = "c48d783cceec1c4d984ba21337614bf05370deb5c7f5f4e73742a457988a0859"
   solver-name = "gps-cdcl"
   solver-version = 1
