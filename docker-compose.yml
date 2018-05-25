@@ -1,0 +1,43 @@
+# This file should not be used as is - instead should be used via Make which
+# rewrites the below to match the current build environment.
+
+version: '3'
+services:
+  app:
+    build:
+      context: .
+      dockerfile: ARG_DOCKERFILE
+    image: ARG_IMAGE
+    volumes:
+      - ARG_PWD/.go:/go
+      - ARG_PWD:/go/src/ARG_PKG
+      - ARG_PWD/bin/ARG_ARCH:/go/bin
+      - ARG_PWD/.go/std:/usr/local/go/pkg/linux_ARG_ARCH_static
+      - ARG_PWD/.cache/go-build:/.cache/go-build
+    working_dir: /go/src/ARG_PKG
+    ports:
+      - "8080:8080"
+    command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server" ]
+    depends_on:
+      - postgres
+    environment:
+      - PGHOST=postgres
+      - PGPASSWORD=password
+      - PGUSER=iotencoder
+      - IOTENCODER_DATABASE_URL=postgres://iotencoder:password@postgres:5432/iotencoder_development?sslmode=disable
+
+
+  postgres:
+    image: postgres:10-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_vol:/var/lib/postgresql/data
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=iotencoder
+      - POSTGRES_DB=postgres
+
+volumes:
+  postgres_vol:

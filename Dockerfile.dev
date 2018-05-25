@@ -1,0 +1,16 @@
+FROM ARG_FROM
+
+MAINTAINER Thingful <info@thingful.net>
+
+RUN apk add --update \
+    git \
+    postgresql-client && \
+  rm -rf /var/cache/apk/*
+
+# move retool out of /go/bin so binary is not masked
+RUN go get -u github.com/twitchtv/retool && \
+  cp /go/bin/* /usr/local/bin
+
+WORKDIR ARG_WORKDIR
+
+CMD ["/bin/sh"]

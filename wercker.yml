@@ -1,0 +1,40 @@
+box: golang:1.10-alpine
+
+services:
+  - id: postgres
+    env:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: iotencoder
+
+build:
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: go version
+        code: |
+          go version
+
+    - script:
+        name: setup env
+        code: |
+          export IOTENCODER_DATABASE_URL=postgres://${POSTGRES_ENV_POSTGRES_USER}:${POSTGRES_ENV_POSTGRES_PASSWORD}@${POSTGRES_PORT_5432_TCP_ADDR}:${POSTGRES_PORT_5432_TCP_PORT}/postgres?sslmode=disable
+
+    - script:
+        name: show env
+        code: |
+          env
+
+    - script:
+        name: install build tooling
+        code: |
+          apk --no-cache add build-base git
+
+    - script:
+        name: go test
+        code: |
+          echo
+          go test -i -installsuffix "static" ./cmd/... ./pkg/...
+          go test -v -installsuffix "static" -coverprofile=$WERCKER_REPORT_ARTIFACTS_DIR/coverage.out -timeout 30s ./pkg/...
+          go tool cover -html=$WERCKER_REPORT_ARTIFACTS_DIR/coverage.out -o $WERCKER_REPORT_ARTIFACTS_DIR/coverage.html
+          go tool cover -func=$WERCKER_REPORT_ARTIFACTS_DIR/coverage.out
