@@ -54,11 +54,7 @@
   packages = [
     "jsonpb",
     "proto",
-    "ptypes",
-    "ptypes/any",
-    "ptypes/duration",
-    "ptypes/struct",
-    "ptypes/timestamp"
+    "ptypes/struct"
   ]
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
@@ -178,12 +174,6 @@
   version = "v1.2.1"
 
 [[projects]]
-  name = "github.com/thingful/twirp-datastore-go"
-  packages = ["."]
-  revision = "e4927e769f268bd8df71d99043bcaec365414d6c"
-  version = "v0.0.3"
-
-[[projects]]
   name = "github.com/thingful/twirp-encoder-go"
   packages = ["."]
   revision = "3234a0f153613cf417a81752c7685bb23aaa294f"
@@ -202,6 +192,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "22b7d3a721adf70d2bdf7aa05f5730e109ac9128331e7f9c930135a0f4f4f238"
+  inputs-digest = "a47d5c284c939d53a24988f96647e1f1df11e986bb2da534f906fbc1c91c275e"
   solver-name = "gps-cdcl"
   solver-version = 1

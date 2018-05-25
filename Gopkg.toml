@@ -34,10 +34,6 @@
   version = "0.0.2"
 
 [[constraint]]
-  name = "github.com/thingful/twirp-datastore-go"
-  version = "0.0.3"
-
-[[constraint]]
   branch = "master"
   name = "github.com/lib/pq"
 
