@@ -23,8 +23,8 @@ services:
     environment:
       - PGHOST=postgres
       - PGPASSWORD=password
-      - PGUSER=iotencoder
-      - IOTENCODER_DATABASE_URL=postgres://iotencoder:password@postgres:5432/iotencoder_development?sslmode=disable
+      - PGUSER=iotenc
+      - IOTENCODER_DATABASE_URL=postgres://iotenc:password@postgres:5432/iotenc_development?sslmode=disable
 
 
   postgres:
