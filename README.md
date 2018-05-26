@@ -1,7 +1,11 @@
 # iotencoder
 
-Implementaton of proposed datastore interface for the DECODE IoTPilot/Scale
-Model.
+Implementaton of proposed stream encoder interface for the DECODE
+IoTPilot/Scale Model.
+
+This component is responsible for subscribing to MQTT topics representing
+streams of data from a device, encoding the incoming data and writing it to a
+datastore.
 
 Uses an experimental template structure from here:
 https://github.com/thingful/go-build-template
