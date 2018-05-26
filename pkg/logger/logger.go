@@ -11,5 +11,13 @@ import (
 // ready for use.
 func NewLogger() kitlog.Logger {
 	logger := kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(os.Stdout))
-	return kitlog.With(logger, "service", version.BinaryName, "ts", kitlog.DefaultTimestampUTC)
+	logger = kitlog.With(logger,
+		"service", version.BinaryName,
+		"ts", kitlog.DefaultTimestampUTC,
+		"version", version.Version,
+	)
+
+	logger.Log("module", "logger", "msg", "creating logger instance")
+
+	return logger
 }
