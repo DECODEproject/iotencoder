@@ -7,27 +7,45 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/version"
 )
 
 var (
+	// mqttClientID holds a reference to the application ID we send to a broker
+	// when connecting
 	mqttClientID = fmt.Sprintf("%s_decode", version.BinaryName)
+
+	// messageCounter is a prometheus counter recording the number of received
+	// messages
+	messageCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "messages_received",
+			Help: "Count of MQTT messages received",
+		},
+	)
 )
+
+func init() {
+	prometheus.MustRegister(messageCounter)
+}
 
 // Client abstracts our connection to one or more MQTT brokers, it allows new
 // subscriptions to be made to topics, and somehow emits received events to be
 // written on to the datastore.
 type Client struct {
 	logger kitlog.Logger
+
 	sync.RWMutex
 	clients map[string]mqtt.Client
 }
 
-func NewClient(logger kitlog.Logger) *Client {
+func NewClient(logger kitlog.Logger, db *postgres.DB) *Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
-	logger.Log("msg", "constructing mqtt client")
+	logger.Log("msg", "creating mqtt client instance")
 
 	return &Client{
 		logger:  logger,
@@ -64,7 +82,7 @@ func connect(broker string, logger kitlog.Logger) (mqtt.Client, error) {
 // createClientOptions initializes a set of ClientOptions for connecting to an
 // MQTT broker.
 func createClientOptions(broker string, logger kitlog.Logger) (*mqtt.ClientOptions, error) {
-	logger.Log("broker", broker, "msg", "creating client options")
+	logger.Log("broker", broker, "msg", "configuring client")
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
@@ -94,6 +112,8 @@ func (c *Client) Subscribe(broker, topic string) error {
 	c.logger.Log("topic", topic, "broker", broker, "msg", "subscribing")
 
 	var msgHandler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
+		messageCounter.Inc()
+
 		fmt.Printf("Topic: %s\n", message.Topic())
 		fmt.Printf("Message: %s\n", message.Payload())
 	}
