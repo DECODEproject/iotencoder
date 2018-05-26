@@ -10,11 +10,13 @@ import (
 
 	kitlog "github.com/go-kit/kit/log"
 	twrpprom "github.com/joneskoo/twirp-serverhook-prometheus"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	encoder "github.com/thingful/twirp-encoder-go"
 
 	"github.com/thingful/iotencoder/pkg/mqtt"
+	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/rpc"
+	encoder "github.com/thingful/twirp-encoder-go"
 )
 
 // Server is our top level type, contains all other components, is responsible
@@ -22,6 +24,8 @@ import (
 type Server struct {
 	srv    *http.Server
 	enc    *rpc.Encoder
+	db     *postgres.DB
+	mqtt   *mqtt.Client
 	logger kitlog.Logger
 }
 
@@ -34,9 +38,10 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 
 // NewServer returns a new simple HTTP server.
 func NewServer(addr string, connStr string, logger kitlog.Logger) *Server {
-	mqttClient := mqtt.NewClient(logger)
+	db := postgres.NewDB(connStr, logger)
+	mc := mqtt.NewClient(logger, db)
 
-	enc := rpc.NewEncoder(connStr, logger, mqttClient)
+	enc := rpc.NewEncoder(logger, mc, db)
 	hooks := twrpprom.NewServerHooks(nil)
 
 	logger = kitlog.With(logger, "module", "server")
@@ -60,6 +65,8 @@ func NewServer(addr string, connStr string, logger kitlog.Logger) *Server {
 	return &Server{
 		srv:    srv,
 		enc:    enc,
+		db:     db,
+		mqtt:   mc,
 		logger: kitlog.With(logger, "module", "server"),
 	}
 }
@@ -67,9 +74,19 @@ func NewServer(addr string, connStr string, logger kitlog.Logger) *Server {
 // Start starts the server running. We also create a channel listening for
 // interrupt signals before gracefully shutting down.
 func (s *Server) Start() error {
-	err := s.enc.Start()
+	err := s.db.Start()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to start db")
+	}
+
+	err = s.mqtt.Start()
+	if err != nil {
+		return errors.Wrap(err, "failed to start mqtt client")
+	}
+
+	err = s.enc.Start()
+	if err != nil {
+		return errors.Wrap(err, "failed to start encoder")
 	}
 
 	stopChan := make(chan os.Signal)
@@ -93,6 +110,16 @@ func (s *Server) Stop() error {
 	defer cancelFn()
 
 	err := s.enc.Stop()
+	if err != nil {
+		return err
+	}
+
+	err = s.mqtt.Stop()
+	if err != nil {
+		return err
+	}
+
+	err = s.db.Stop()
 	if err != nil {
 		return err
 	}
