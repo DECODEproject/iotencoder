@@ -2,13 +2,10 @@ package rpc
 
 import (
 	"context"
-	"strings"
 
 	"github.com/twitchtv/twirp"
 
-	sq "github.com/elgris/sqrl"
 	kitlog "github.com/go-kit/kit/log"
-	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	encoder "github.com/thingful/twirp-encoder-go"
 
@@ -19,10 +16,9 @@ import (
 // Encoder is our implementation of the generated twirp interface for the
 // stream encoder.
 type Encoder struct {
-	DB         *sqlx.DB
-	connStr    string
-	logger     kitlog.Logger
-	mqttClient *mqtt.Client
+	logger kitlog.Logger
+	db     *postgres.DB
+	mqtt   *mqtt.Client
 }
 
 // ensure we adhere to the interface
@@ -31,37 +27,34 @@ var _ encoder.Encoder = &Encoder{}
 // NewEncoder returns a newly instantiated Encoder instance. It takes as
 // parameters a DB connection string and a logger. The connection string is
 // passed down to the postgres package where it is used to connect.
-func NewEncoder(connStr string, logger kitlog.Logger, mqttClient *mqtt.Client) *Encoder {
+func NewEncoder(logger kitlog.Logger, mqttClient *mqtt.Client, db *postgres.DB) *Encoder {
 	logger = kitlog.With(logger, "module", "rpc")
 
-	logger.Log("msg", "constructing rpc encoder")
+	logger.Log("msg", "creating encoder rpc instance")
 
 	return &Encoder{
-		connStr:    connStr,
-		logger:     logger,
-		mqttClient: mqttClient,
+		logger: logger,
+		db:     db,
+		mqtt:   mqttClient,
 	}
 }
 
-// Start starts all child components (currently just the postgres DB).
+// Start - does this actually need to do anything
 func (e *Encoder) Start() error {
-	err := e.mqttClient.Start()
-	if err != nil {
-		return errors.Wrap(err, "starting mqtt client failed")
-	}
-
 	e.logger.Log("msg", "starting encoder")
 
-	db, err := postgres.Open(e.connStr)
+	e.logger.Log("msg", "creating existing subscriptions")
+
+	devices, err := e.db.GetDevices()
 	if err != nil {
-		return errors.Wrap(err, "opening db connection failed")
+		return errors.Wrap(err, "failed to load devices")
 	}
 
-	e.DB = db
-
-	err = postgres.MigrateUp(e.DB.DB, e.logger)
-	if err != nil {
-		return errors.Wrap(err, "running up migrations failed")
+	for _, d := range devices {
+		err = e.mqtt.Subscribe(d.Broker, d.Topic)
+		if err != nil {
+			return errors.Wrap(err, "failed to subscribe to topic")
+		}
 	}
 
 	return nil
@@ -69,18 +62,7 @@ func (e *Encoder) Start() error {
 
 // Stop stops all child components.
 func (e *Encoder) Stop() error {
-	e.logger.Log("msg", "stopping datastore")
-
-	mqttErr := e.mqttClient.Stop()
-	dbErr := e.DB.Close()
-
-	if dbErr != nil {
-		return dbErr
-	}
-
-	if mqttErr != nil {
-		return mqttErr
-	}
+	e.logger.Log("msg", "stopping encoder")
 
 	return nil
 }
@@ -91,32 +73,12 @@ func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamReq
 		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to validate request"))
 	}
 
-	sql, args, err := sq.Insert("devices").
-		Columns("broker", "topic", "private_key", "user_uid", "longitude", "latitude", "disposition").
-		Values(
-			req.BrokerAddress,
-			req.DeviceTopic,
-			req.DevicePrivateKey,
-			req.UserUid,
-			req.Location.Longitude,
-			req.Location.Latitude,
-			strings.ToLower(req.Disposition.String()),
-		).
-		ToSql()
-
+	err = e.db.CreateDevice(req)
 	if err != nil {
-		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to generate device insert sql"))
+		return nil, twirp.InternalErrorWith(err)
 	}
 
-	// rebind for postgres ($1 vs ?)
-	sql = e.DB.Rebind(sql)
-
-	_, err = e.DB.Exec(sql, args...)
-	if err != nil {
-		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to insert device when creating stream"))
-	}
-
-	err = e.mqttClient.Subscribe(req.BrokerAddress, req.DeviceTopic)
+	err = e.mqtt.Subscribe(req.BrokerAddress, req.DeviceTopic)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to subscribe"))
 	}
