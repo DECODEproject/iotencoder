@@ -102,7 +102,7 @@ func _20180525115614_create_device_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180525115614_create_device_table.up.sql", size: 536, mode: os.FileMode(420), modTime: time.Unix(1527249703, 0)}
+	info := bindataFileInfo{name: "20180525115614_create_device_table.up.sql", size: 536, mode: os.FileMode(420), modTime: time.Unix(1527258120, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
