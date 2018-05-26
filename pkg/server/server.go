@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	encoder "github.com/thingful/twirp-encoder-go"
 
+	"github.com/thingful/iotencoder/pkg/mqtt"
 	"github.com/thingful/iotencoder/pkg/rpc"
 )
 
@@ -33,8 +34,13 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 
 // NewServer returns a new simple HTTP server.
 func NewServer(addr string, connStr string, logger kitlog.Logger) *Server {
-	enc := rpc.NewEncoder(connStr, logger)
+	mqttClient := mqtt.NewClient(logger)
+
+	enc := rpc.NewEncoder(connStr, logger, mqttClient)
 	hooks := twrpprom.NewServerHooks(nil)
+
+	logger = kitlog.With(logger, "module", "server")
+	logger.Log("msg", "creating server")
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 

@@ -12,15 +12,17 @@ import (
 	"github.com/pkg/errors"
 	encoder "github.com/thingful/twirp-encoder-go"
 
+	"github.com/thingful/iotencoder/pkg/mqtt"
 	"github.com/thingful/iotencoder/pkg/postgres"
 )
 
 // Encoder is our implementation of the generated twirp interface for the
 // stream encoder.
 type Encoder struct {
-	DB      *sqlx.DB
-	connStr string
-	logger  kitlog.Logger
+	DB         *sqlx.DB
+	connStr    string
+	logger     kitlog.Logger
+	mqttClient *mqtt.Client
 }
 
 // ensure we adhere to the interface
@@ -29,17 +31,25 @@ var _ encoder.Encoder = &Encoder{}
 // NewEncoder returns a newly instantiated Encoder instance. It takes as
 // parameters a DB connection string and a logger. The connection string is
 // passed down to the postgres package where it is used to connect.
-func NewEncoder(connStr string, logger kitlog.Logger) *Encoder {
+func NewEncoder(connStr string, logger kitlog.Logger, mqttClient *mqtt.Client) *Encoder {
 	logger = kitlog.With(logger, "module", "rpc")
 
+	logger.Log("msg", "constructing rpc encoder")
+
 	return &Encoder{
-		connStr: connStr,
-		logger:  logger,
+		connStr:    connStr,
+		logger:     logger,
+		mqttClient: mqttClient,
 	}
 }
 
 // Start starts all child components (currently just the postgres DB).
 func (e *Encoder) Start() error {
+	err := e.mqttClient.Start()
+	if err != nil {
+		return errors.Wrap(err, "starting mqtt client failed")
+	}
+
 	e.logger.Log("msg", "starting encoder")
 
 	db, err := postgres.Open(e.connStr)
@@ -61,7 +71,18 @@ func (e *Encoder) Start() error {
 func (e *Encoder) Stop() error {
 	e.logger.Log("msg", "stopping datastore")
 
-	return e.DB.Close()
+	mqttErr := e.mqttClient.Stop()
+	dbErr := e.DB.Close()
+
+	if dbErr != nil {
+		return dbErr
+	}
+
+	if mqttErr != nil {
+		return mqttErr
+	}
+
+	return nil
 }
 
 func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
@@ -93,6 +114,11 @@ func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamReq
 	_, err = e.DB.Exec(sql, args...)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to insert device when creating stream"))
+	}
+
+	err = e.mqttClient.Subscribe(req.BrokerAddress, req.DeviceTopic)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(errors.Wrap(err, "failed to subscribe"))
 	}
 
 	return &encoder.CreateStreamResponse{}, nil
