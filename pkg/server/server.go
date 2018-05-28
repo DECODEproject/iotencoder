@@ -37,8 +37,8 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewServer returns a new simple HTTP server.
-func NewServer(addr string, connStr string, logger kitlog.Logger) *Server {
-	db := postgres.NewDB(connStr, logger)
+func NewServer(addr, connStr, encryptionPassword string, logger kitlog.Logger) *Server {
+	db := postgres.NewDB(connStr, encryptionPassword, logger)
 	mc := mqtt.NewClient(logger, db)
 
 	enc := rpc.NewEncoder(logger, mc, db)
