@@ -30,14 +30,19 @@ clients unable to use the Protocol Buffer API.`,
 			return err
 		}
 
-		datasource, err := GetFromEnv("IOTENCODER_DATABASE_URL")
+		connStr, err := GetFromEnv("IOTENCODER_DATABASE_URL")
+		if err != nil {
+			return err
+		}
+
+		encryptionPassword, err := GetFromEnv("IOTENCODER_ENCRYPTION_PASSWORD")
 		if err != nil {
 			return err
 		}
 
 		logger := logger.NewLogger()
 
-		s := server.NewServer(addr, datasource, logger)
+		s := server.NewServer(addr, connStr, encryptionPassword, logger)
 
 		return s.Start()
 	},
