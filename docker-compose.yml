@@ -25,6 +25,7 @@ services:
       - PGPASSWORD=password
       - PGUSER=iotenc
       - IOTENCODER_DATABASE_URL=postgres://iotenc:password@postgres:5432/iotenc_development?sslmode=disable
+      - IOTENCODER_ENCRYPTION_PASSWORD=e3d741d6f84afc301d8e32c66e51f264
 
 
   postgres:
