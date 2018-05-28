@@ -30,7 +30,7 @@ var _ encoder.Encoder = &Encoder{}
 func NewEncoder(logger kitlog.Logger, mqttClient *mqtt.Client, db *postgres.DB) *Encoder {
 	logger = kitlog.With(logger, "module", "rpc")
 
-	logger.Log("msg", "creating encoder rpc instance")
+	logger.Log("msg", "creating encoder")
 
 	return &Encoder{
 		logger: logger,
@@ -51,6 +51,7 @@ func (e *Encoder) Start() error {
 	}
 
 	for _, d := range devices {
+		e.logger.Log("id", d.ID, "private_key", d.PrivateKey)
 		err = e.mqtt.Subscribe(d.Broker, d.Topic)
 		if err != nil {
 			return errors.Wrap(err, "failed to subscribe to topic")

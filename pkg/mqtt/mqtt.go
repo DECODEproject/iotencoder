@@ -146,7 +146,7 @@ func (c *Client) getClient(broker string) (mqtt.Client, error) {
 			return nil, errors.Wrap(err, "failed to connect to broker")
 		}
 
-		c.logger.Log("broker", broker, "msg", "adding client to map")
+		c.logger.Log("broker", broker, "msg", "storing client")
 
 		c.Lock()
 		c.clients[broker] = client
