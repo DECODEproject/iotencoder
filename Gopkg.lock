@@ -23,12 +23,6 @@
   version = "v1.1.1"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/elgris/sqrl"
-  packages = ["."]
-  revision = "f1d9ecedc98d1483fd102348caa7284a59da9d2f"
-
-[[projects]]
   name = "github.com/go-kit/kit"
   packages = ["log"]
   revision = "ca4112baa34cb55091301bdc13b1420a122b1b9e"
@@ -63,7 +57,8 @@
   packages = [
     "jsonpb",
     "proto",
-    "ptypes/struct"
+    "ptypes/struct",
+    "ptypes/timestamp"
   ]
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
   version = "v1.1.0"
@@ -183,6 +178,12 @@
   version = "v1.2.1"
 
 [[projects]]
+  name = "github.com/thingful/twirp-datastore-go"
+  packages = ["."]
+  revision = "e4927e769f268bd8df71d99043bcaec365414d6c"
+  version = "v0.0.3"
+
+[[projects]]
   name = "github.com/thingful/twirp-encoder-go"
   packages = ["."]
   revision = "3234a0f153613cf417a81752c7685bb23aaa294f"
@@ -211,6 +212,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "c48d783cceec1c4d984ba21337614bf05370deb5c7f5f4e73742a457988a0859"
+  inputs-digest = "52f339119fb55f05eb716d55e837d8075ed081def2c3adb898430f77572e44bd"
   solver-name = "gps-cdcl"
   solver-version = 1
