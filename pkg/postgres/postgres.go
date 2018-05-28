@@ -3,7 +3,6 @@ package postgres
 import (
 	"strings"
 
-	sq "github.com/elgris/sqrl"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -13,8 +12,10 @@ import (
 
 // Device is a type used when reading data back from the DB.
 type Device struct {
-	Broker string `db:"broker"`
-	Topic  string `db:"topic"`
+	ID         int    `db:"id"`
+	Broker     string `db:"broker"`
+	Topic      string `db:"topic"`
+	PrivateKey string `db:"private_key"`
 }
 
 // Open takes as input a connection string for a DB, and returns either a
@@ -26,21 +27,23 @@ func Open(connStr string) (*sqlx.DB, error) {
 // DB is our type that wraps an sqlx.DB instance and provides an API for the
 // data access functions we require.
 type DB struct {
-	connStr string
-	DB      *sqlx.DB
-	logger  kitlog.Logger
+	connStr            string
+	encryptionPassword []byte
+	DB                 *sqlx.DB
+	logger             kitlog.Logger
 }
 
 // NewDB creates a new DB instance with the given connection string. We also
 // pass in a logger.
-func NewDB(connStr string, logger kitlog.Logger) *DB {
+func NewDB(connStr, encryptionPassword string, logger kitlog.Logger) *DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
 	logger.Log("msg", "creating DB instance")
 
 	return &DB{
-		connStr: connStr,
-		logger:  logger,
+		connStr:            connStr,
+		encryptionPassword: []byte(encryptionPassword),
+		logger:             logger,
 	}
 }
 
@@ -70,45 +73,90 @@ func (d *DB) Stop() error {
 	return d.DB.Close()
 }
 
-func (d *DB) CreateDevice(req *encoder.CreateStreamRequest) error {
-	sql, args, err := sq.Insert("devices").
-		Columns("broker", "topic", "private_key", "user_uid", "longitude", "latitude", "disposition").
-		Values(
-			req.BrokerAddress,
-			req.DeviceTopic,
-			req.DevicePrivateKey,
-			req.UserUid,
-			req.Location.Longitude,
-			req.Location.Latitude,
-			strings.ToLower(req.Disposition.String()),
-		).
-		ToSql()
+func (d *DB) CreateDevice(req *encoder.CreateStreamRequest) (err error) {
+	sql := `INSERT INTO devices
+	(broker, topic, private_key, user_uid, longitude, latitude, disposition)
+	VALUES (:broker, :topic, pgp_sym_encrypt(:private_key, :encryption_password), :user_uid, :longitude, :latitude, :disposition)
+	ON CONFLICT (topic) DO UPDATE
+	SET broker = EXCLUDED.broker,
+			longitude = EXCLUDED.longitude,
+			latitude = EXCLUDED.latitude,
+			disposition = EXCLUDED.disposition
+	RETURNING id`
 
-	if err != nil {
-		return errors.Wrap(err, "failed to generate device insert sql")
+	mapArgs := map[string]interface{}{
+		"broker":              req.BrokerAddress,
+		"topic":               req.DeviceTopic,
+		"private_key":         req.DevicePrivateKey,
+		"user_uid":            req.UserUid,
+		"longitude":           req.Location.Longitude,
+		"latitude":            req.Location.Latitude,
+		"disposition":         strings.ToLower(req.Disposition.String()),
+		"encryption_password": d.encryptionPassword,
 	}
 
-	// rebind for postgres ($1 vs ?)
-	sql = d.DB.Rebind(sql)
-
-	_, err = d.DB.Exec(sql, args...)
+	tx, err := d.DB.Beginx()
 	if err != nil {
-		return errors.Wrap(err, "failed to insert device")
+		return errors.Wrap(err, "failed to start transaction when inserting device")
 	}
 
-	return nil
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+
+		err = tx.Commit()
+	}()
+
+	sql, args, err := tx.BindNamed(sql, mapArgs)
+	if err != nil {
+		return errors.Wrap(err, "failed to rebind args")
+	}
+
+	var deviceId int
+
+	err = tx.Get(&deviceId, sql, args...)
+	if err != nil {
+		return errors.Wrap(err, "failed to upsert device")
+	}
+
+	sql = `INSERT INTO streams
+	(device_id, public_key)
+	VALUES (:device_id, pgp_sym_encrypt(:public_key, :encryption_password))`
+
+	mapArgs = map[string]interface{}{
+		"device_id":           deviceId,
+		"public_key":          req.RecipientPublicKey,
+		"encryption_password": d.encryptionPassword,
+	}
+
+	sql, args, err = tx.BindNamed(sql, mapArgs)
+	if err != nil {
+		return errors.Wrap(err, "failed to rebind args")
+	}
+
+	_, err = tx.Exec(sql, args...)
+	if err != nil {
+		return errors.Wrap(err, "failed to insert stream")
+	}
+
+	return err
 }
 
 // GetDevices returns a slice of pointers to Device instances
 func (d *DB) GetDevices() ([]*Device, error) {
-	sql, args, err := sq.Select("broker", "topic").
-		From("devices").ToSql()
+	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key
+		FROM devices`
 
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate device select sql")
+	mapArgs := map[string]interface{}{
+		"encryption_password": d.encryptionPassword,
 	}
 
-	sql = d.DB.Rebind(sql)
+	sql, args, err := d.DB.BindNamed(sql, mapArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to rebind args")
+	}
 
 	devices := []*Device{}
 
