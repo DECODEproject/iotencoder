@@ -1,32 +1,83 @@
 package postgres
 
 import (
-	"strings"
+	"strconv"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
-	encoder "github.com/thingful/twirp-encoder-go"
 )
 
 // Device is a type used when reading data back from the DB.
 type Device struct {
-	ID         int    `db:"id"`
-	Broker     string `db:"broker"`
-	Topic      string `db:"topic"`
-	PrivateKey string `db:"private_key"`
+	ID          int     `db:"id"`
+	Broker      string  `db:"broker"`
+	Topic       string  `db:"topic"`
+	PrivateKey  string  `db:"private_key"`
+	UserUID     string  `db:"user_uid"`
+	Longitude   float64 `db:"longitude"`
+	Latitude    float64 `db:"latitude"`
+	Disposition string  `db:"disposition"`
+
+	Streams []*Stream
 }
 
-// Open takes as input a connection string for a DB, and returns either a
-// sqlx.DB instance or an error.
+// Stream is a type used when reading data back from the DB, and when creating a
+// stream. It contains a public key field used when reading data, and for
+// creating a new stream has an associated Device instance.
+type Stream struct {
+	PublicKey string `db:"public_key"`
+
+	Device *Device
+}
+
+// DB is our interface to Postgres. Exposes methods for inserting a new Device
+// (and associated Stream), listing all Devices, getting an individual Device,
+// and deleting a Stream
+type DB interface {
+	// CreateStream takes as input a pointer to an instantiated Stream instance
+	// which must have a an associated Device. We upsert the Device, then attempt
+	// to insert the Stream. Returns a string id for the inserted Stream or an
+	// error if any failure happens.
+	CreateStream(stream *Stream) (string, error)
+
+	// DeleteStream takes as input a string representing the id of a previously
+	// stored stream, and attempts to delete the associated stream from the
+	// underlying database. If this stream is the last stream associated with a
+	// device then the device record is also deleted.
+	DeleteStream(id string) error
+
+	// GetDevices returns a slice containing all Devices currently stored in the
+	// system. We know we have a maximum limit here of around 25 devices, so we
+	// don't need to worry about this being an excessively large dataset. Note we
+	// do not load all Streams here, we just return the device.
+	GetDevices() ([]*Device, error)
+
+	// GetDevice returns a single Device with all associated Streams on being given
+	// the devices unique token. This is used on boot to create MQTT subscriptions
+	// for all Streams.
+	GetDevice(token string) (*Device, error)
+
+	// MigrateUp is a helper method that attempts to run all up migrations against
+	// the underlying Postgres DB or returns an error.
+	MigrateUp() error
+
+	// MigrateDownAll is a helper method that attempts to run all down migrations
+	// against the underlying Postgres DB or returns an error.
+	MigrateDownAll() error
+}
+
+// Open is a helper function that takes as input a connection string for a DB,
+// and returns either a sqlx.DB instance or an error. This function is separated
+// out to help with CLI tasks for managing migrations.
 func Open(connStr string) (*sqlx.DB, error) {
 	return sqlx.Open("postgres", connStr)
 }
 
-// DB is our type that wraps an sqlx.DB instance and provides an API for the
+// db is our type that wraps an sqlx.DB instance and provides an API for the
 // data access functions we require.
-type DB struct {
+type db struct {
 	connStr            string
 	encryptionPassword []byte
 	DB                 *sqlx.DB
@@ -35,20 +86,21 @@ type DB struct {
 
 // NewDB creates a new DB instance with the given connection string. We also
 // pass in a logger.
-func NewDB(connStr, encryptionPassword string, logger kitlog.Logger) *DB {
+func NewDB(connStr, encryptionPassword string, logger kitlog.Logger) DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
 	logger.Log("msg", "creating DB instance")
 
-	return &DB{
+	return &db{
 		connStr:            connStr,
 		encryptionPassword: []byte(encryptionPassword),
 		logger:             logger,
 	}
 }
 
-// Start creates our DB connection pool, and runs all up migrations.
-func (d *DB) Start() error {
+// Start creates our DB connection pool running returning an error if any
+// failure occurs.
+func (d *db) Start() error {
 	d.logger.Log("msg", "starting postgres")
 
 	db, err := Open(d.connStr)
@@ -58,25 +110,27 @@ func (d *DB) Start() error {
 
 	d.DB = db
 
-	err = MigrateUp(d.DB.DB, d.logger)
-	if err != nil {
-		return errors.Wrap(err, "running up migrations failed")
-	}
-
 	return nil
 }
 
 // Stop closes the DB connection pool.
-func (d *DB) Stop() error {
+func (d *db) Stop() error {
 	d.logger.Log("msg", "stopping postgres")
 
 	return d.DB.Close()
 }
 
-func (d *DB) CreateDevice(req *encoder.CreateStreamRequest) (err error) {
+// CreateStream attempts to insert records into the database for the given
+// Stream object. Returns a string containing the ID of the created stream if
+// successful or an error if any data constraint is violated, or any other error
+// occurs.
+func (d *db) CreateStream(stream *Stream) (_ string, err error) {
+	// device upsert sql - note we encrypt the private key using postgres native
+	// symmetric encryption
 	sql := `INSERT INTO devices
-	(broker, topic, private_key, user_uid, longitude, latitude, disposition)
-	VALUES (:broker, :topic, pgp_sym_encrypt(:private_key, :encryption_password), :user_uid, :longitude, :latitude, :disposition)
+		(broker, topic, private_key, user_uid, longitude, latitude, disposition)
+	VALUES (:broker, :topic, pgp_sym_encrypt(:private_key, :encryption_password),
+		  :user_uid, :longitude, :latitude, :disposition)
 	ON CONFLICT (topic) DO UPDATE
 	SET broker = EXCLUDED.broker,
 			longitude = EXCLUDED.longitude,
@@ -85,67 +139,131 @@ func (d *DB) CreateDevice(req *encoder.CreateStreamRequest) (err error) {
 	RETURNING id`
 
 	mapArgs := map[string]interface{}{
-		"broker":              req.BrokerAddress,
-		"topic":               req.DeviceTopic,
-		"private_key":         req.DevicePrivateKey,
-		"user_uid":            req.UserUid,
-		"longitude":           req.Location.Longitude,
-		"latitude":            req.Location.Latitude,
-		"disposition":         strings.ToLower(req.Disposition.String()),
+		"broker":              stream.Device.Broker,
+		"topic":               stream.Device.Topic,
+		"private_key":         stream.Device.PrivateKey,
+		"user_uid":            stream.Device.UserUID,
+		"longitude":           stream.Device.Longitude,
+		"latitude":            stream.Device.Latitude,
+		"disposition":         stream.Device.Disposition,
 		"encryption_password": d.encryptionPassword,
 	}
 
-	tx, err := d.DB.Beginx()
+	tx, err := BeginTX(d.DB)
 	if err != nil {
-		return errors.Wrap(err, "failed to start transaction when inserting device")
+		return "", errors.Wrap(err, "failed to start transaction when inserting device")
 	}
 
 	defer func() {
-		if err != nil {
-			tx.Rollback()
-			return
+		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
+			err = cerr
 		}
-
-		err = tx.Commit()
 	}()
 
-	sql, args, err := tx.BindNamed(sql, mapArgs)
+	var deviceID int
+
+	// we use a Get for the upsert so we get back the device id
+	err = tx.Get(&deviceID, sql, mapArgs)
 	if err != nil {
-		return errors.Wrap(err, "failed to rebind args")
+		return "", errors.Wrap(err, "failed to upsert device")
 	}
 
-	var deviceId int
-
-	err = tx.Get(&deviceId, sql, args...)
-	if err != nil {
-		return errors.Wrap(err, "failed to upsert device")
-	}
-
+	// streams insert sql
 	sql = `INSERT INTO streams
-	(device_id, public_key)
-	VALUES (:device_id, pgp_sym_encrypt(:public_key, :encryption_password))`
+		(device_id, public_key)
+	VALUES (:device_id, pgp_sym_encrypt(:public_key, :encryption_password))
+	RETURNING id`
 
 	mapArgs = map[string]interface{}{
-		"device_id":           deviceId,
-		"public_key":          req.RecipientPublicKey,
+		"device_id":           deviceID,
+		"public_key":          stream.PublicKey,
 		"encryption_password": d.encryptionPassword,
 	}
 
-	sql, args, err = tx.BindNamed(sql, mapArgs)
+	var streamID int
+
+	// again use a Get to get back the stream's id
+	err = tx.Get(&streamID, sql, mapArgs)
 	if err != nil {
-		return errors.Wrap(err, "failed to rebind args")
+		return "", errors.Wrap(err, "failed to insert stream")
 	}
 
-	_, err = tx.Exec(sql, args...)
-	if err != nil {
-		return errors.Wrap(err, "failed to insert stream")
-	}
-
-	return err
+	return strconv.Itoa(streamID), err
 }
 
-// GetDevices returns a slice of pointers to Device instances
-func (d *DB) GetDevices() ([]*Device, error) {
+// DeleteStream deletes a stream identified by the given id string. If this
+// stream is the last one associated with a device, then the device record is
+// also deleted.
+func (d *db) DeleteStream(id string) (err error) {
+	sql := `DELETE FROM streams WHERE id = :id
+		RETURNING device_id`
+
+	streamID, err := strconv.Atoi(id)
+	if err != nil {
+		return errors.Wrap(err, "failed to convert id back to int")
+	}
+
+	mapArgs := map[string]interface{}{
+		"id": streamID,
+	}
+
+	tx, err := BeginTX(d.DB)
+	if err != nil {
+		return errors.Wrap(err, "failed to start transaction when deleting stream")
+	}
+
+	defer func() {
+		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
+			err = cerr
+		}
+	}()
+
+	var deviceID int
+
+	// again use a Get to get back the device's id
+	err = tx.Get(&deviceID, sql, mapArgs)
+	if err != nil {
+		return errors.Wrap(err, "failed to delete stream")
+	}
+
+	// now we count streams for that device id, and if no more we should also
+	// delete the device
+	sql = `SELECT COUNT(*) FROM streams
+		WHERE device_id = :device_id`
+
+	mapArgs = map[string]interface{}{
+		"device_id": deviceID,
+	}
+
+	var streamCount int
+
+	// again use a Get to get the count
+	err = tx.Get(&streamCount, sql, mapArgs)
+	if err != nil {
+		return errors.Wrap(err, "failed to count streams")
+	}
+
+	if streamCount == 0 {
+		// delete the device too
+		sql = `DELETE FROM devices WHERE id = :id`
+
+		mapArgs = map[string]interface{}{
+			"id": deviceID,
+		}
+
+		err = tx.Exec(sql, mapArgs)
+		if err != nil {
+			return errors.Wrap(err, "failed to delete device")
+		}
+	}
+
+	return nil
+}
+
+// GetDevices returns a slice of pointers to Device instances. We don't worry
+// about pagination here as we have a maximum number of devices of approximately
+// 25. Note we do not load all streams for these devices.
+func (d *db) GetDevices() ([]*Device, error) {
 	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key
 		FROM devices`
 
@@ -153,27 +271,118 @@ func (d *DB) GetDevices() ([]*Device, error) {
 		"encryption_password": d.encryptionPassword,
 	}
 
-	sql, args, err := d.DB.BindNamed(sql, mapArgs)
+	tx, err := BeginTX(d.DB)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to rebind args")
+		return nil, errors.Wrap(err, "failed to begin transaction")
 	}
+
+	defer func() {
+		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
+			err = cerr
+		}
+	}()
 
 	devices := []*Device{}
 
-	rows, err := d.DB.Queryx(sql, args...)
+	mapper := func(rows *sqlx.Rows) error {
+		var d Device
+
+		for rows.Next() {
+			err = rows.StructScan(&d)
+			if err != nil {
+				return errors.Wrap(err, "failed to scan row into Device struct")
+			}
+
+			devices = append(devices, &d)
+		}
+
+		return nil
+	}
+
+	err = tx.Map(sql, mapArgs, mapper)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to select device rows from database")
 	}
 
-	for rows.Next() {
-		var d Device
-		err = rows.StructScan(&d)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to scan row into Device struct")
-		}
+	return devices, nil
+}
 
-		devices = append(devices, &d)
+// GetDevice returns a single device identified by topic, including all streams
+// for that device. This is used to set up subscriptions for existing records on
+// application start.
+func (d *db) GetDevice(topic string) (_ *Device, err error) {
+	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key,
+	  user_uid, longitude, latitude, disposition
+		FROM devices
+		WHERE topic = :topic`
+
+	mapArgs := map[string]interface{}{
+		"encryption_password": d.encryptionPassword,
+		"topic":               topic,
 	}
 
-	return devices, nil
+	tx, err := BeginTX(d.DB)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to begin transaction")
+	}
+
+	defer func() {
+		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
+			err = cerr
+		}
+	}()
+
+	var device Device
+	err = tx.Get(&device, sql, mapArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load device")
+	}
+
+	// now load streams
+	sql = `SELECT pgp_sym_decrypt(public_key, :encryption_password) AS public_key
+		FROM streams
+		WHERE device_id = :device_id`
+
+	mapArgs = map[string]interface{}{
+		"encryption_password": d.encryptionPassword,
+		"device_id":           device.ID,
+	}
+
+	streams := []*Stream{}
+
+	mapper := func(rows *sqlx.Rows) error {
+		var s Stream
+
+		for rows.Next() {
+			err = rows.StructScan(&s)
+			if err != nil {
+				return errors.Wrap(err, "failed to scan stream row into struct")
+			}
+
+			streams = append(streams, &s)
+		}
+
+		return nil
+	}
+
+	err = tx.Map(sql, mapArgs, mapper)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute row mapper")
+	}
+
+	device.Streams = streams
+
+	return &device, nil
+}
+
+// MigrateUp is a convenience function to run all up migrations in the context
+// of an instantiated DB instance.
+func (d *db) MigrateUp() error {
+	return MigrateUp(d.DB.DB, d.logger)
+}
+
+// MigrateDownAll is a convenience function to run all down migrations in the
+// context of an instantiated DB instance.
+func (d *db) MigrateDownAll() error {
+	return MigrateDownAll(d.DB.DB, d.logger)
 }
