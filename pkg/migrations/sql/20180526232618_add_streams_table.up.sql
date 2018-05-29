@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS streams (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS streams_device_id_idx
-  ON streams(device_id);
+CREATE UNIQUE INDEX IF NOT EXISTS streams_device_id_idx
+  ON streams(device_id, public_key);
