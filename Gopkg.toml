@@ -80,3 +80,11 @@
 [[constraint]]
   name = "github.com/thingful/twirp-datastore-go"
   version = "0.0.3"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/speps/go-hashids"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  version = "1.0.2"
