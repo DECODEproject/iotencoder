@@ -12,11 +12,13 @@ import (
 	twrpprom "github.com/joneskoo/twirp-serverhook-prometheus"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	datastore "github.com/thingful/twirp-datastore-go"
+	encoder "github.com/thingful/twirp-encoder-go"
 
 	"github.com/thingful/iotencoder/pkg/mqtt"
 	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/rpc"
-	encoder "github.com/thingful/twirp-encoder-go"
+	"github.com/thingful/iotencoder/pkg/system"
 )
 
 // Server is our top level type, contains all other components, is responsible
@@ -24,8 +26,8 @@ import (
 type Server struct {
 	srv    *http.Server
 	enc    *rpc.Encoder
-	db     *postgres.DB
-	mqtt   *mqtt.Client
+	db     postgres.DB
+	mqtt   mqtt.Client
 	logger kitlog.Logger
 }
 
@@ -39,7 +41,10 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 // NewServer returns a new simple HTTP server.
 func NewServer(addr, connStr, encryptionPassword string, logger kitlog.Logger) *Server {
 	db := postgres.NewDB(connStr, encryptionPassword, logger)
-	mc := mqtt.NewClient(logger, db)
+
+	ds := datastore.NewDatastoreProtobufClient("http://192.168.1.116:8081", &http.Client{})
+
+	mc := mqtt.NewClient(logger, db, ds)
 
 	enc := rpc.NewEncoder(logger, mc, db)
 	hooks := twrpprom.NewServerHooks(nil)
@@ -71,24 +76,38 @@ func NewServer(addr, connStr, encryptionPassword string, logger kitlog.Logger) *
 	}
 }
 
-// Start starts the server running. We also create a channel listening for
-// interrupt signals before gracefully shutting down.
+// Start starts the server running. This is responsible for starting components
+// in the correct order, and in addition we attempt to run all up migrations as
+// we start.
+//
+// We also create a channel listening for interrupt signals before gracefully
+// shutting down.
 func (s *Server) Start() error {
-	err := s.db.Start()
+	// start the postgres connection pool
+	err := s.db.(system.Component).Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start db")
 	}
 
-	err = s.mqtt.Start()
+	// start the mqtt client
+	err = s.mqtt.(system.Component).Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start mqtt client")
 	}
 
+	// migrate up the database
+	err = s.db.MigrateUp()
+	if err != nil {
+		return errors.Wrap(err, "failed to migrate the database")
+	}
+
+	// start the encoder RPC service
 	err = s.enc.Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start encoder")
 	}
 
+	// add signal handling stuff to shutdown gracefully
 	stopChan := make(chan os.Signal)
 	signal.Notify(stopChan, os.Interrupt)
 
@@ -114,12 +133,12 @@ func (s *Server) Stop() error {
 		return err
 	}
 
-	err = s.mqtt.Stop()
+	err = s.mqtt.(system.Component).Stop()
 	if err != nil {
 		return err
 	}
 
-	err = s.db.Stop()
+	err = s.db.(system.Component).Stop()
 	if err != nil {
 		return err
 	}
