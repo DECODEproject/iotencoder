@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"context"
 	"fmt"
 	"sync"
 
@@ -8,6 +9,7 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	datastore "github.com/thingful/twirp-datastore-go"
 
 	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/version"
@@ -32,28 +34,36 @@ func init() {
 	prometheus.MustRegister(messageCounter)
 }
 
-// Client abstracts our connection to one or more MQTT brokers, it allows new
+type Client interface {
+	Subscribe(broker, topic string) error
+}
+
+// client abstracts our connection to one or more MQTT brokers, it allows new
 // subscriptions to be made to topics, and somehow emits received events to be
 // written on to the datastore.
-type Client struct {
-	logger kitlog.Logger
+type client struct {
+	logger    kitlog.Logger
+	db        postgres.DB
+	datastore datastore.Datastore
 
 	sync.RWMutex
 	clients map[string]mqtt.Client
 }
 
-func NewClient(logger kitlog.Logger, db *postgres.DB) *Client {
+func NewClient(logger kitlog.Logger, db postgres.DB, ds datastore.Datastore) Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
 	logger.Log("msg", "creating mqtt client instance")
 
-	return &Client{
-		logger:  logger,
-		clients: make(map[string]mqtt.Client),
+	return &client{
+		logger:    logger,
+		db:        db,
+		datastore: ds,
+		clients:   make(map[string]mqtt.Client),
 	}
 }
 
-func (c *Client) Start() error {
+func (c *client) Start() error {
 	c.logger.Log("msg", "starting mqtt client")
 
 	return nil
@@ -94,7 +104,7 @@ func createClientOptions(broker string, logger kitlog.Logger) (*mqtt.ClientOptio
 
 // Stop disconnects all currently connected clients, and clears the map of
 // clients
-func (c *Client) Stop() error {
+func (c *client) Stop() error {
 	c.Lock()
 	for broker, client := range c.clients {
 		client.Disconnect(500)
@@ -108,14 +118,33 @@ func (c *Client) Stop() error {
 // Subscribe attempts to create a subscription for the given topic, on the given
 // broker. This method will create a new connection to particular broker if one
 // does not already exist, but will reuse an existing connection.
-func (c *Client) Subscribe(broker, topic string) error {
+func (c *client) Subscribe(broker, topic string) error {
 	c.logger.Log("topic", topic, "broker", broker, "msg", "subscribing")
 
-	var msgHandler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
+	var handler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
 		messageCounter.Inc()
 
 		fmt.Printf("Topic: %s\n", message.Topic())
 		fmt.Printf("Message: %s\n", message.Payload())
+
+		device, err := c.db.GetDevice(message.Topic())
+		if err != nil {
+			c.logger.Log("err", err, "msg", "failed to get device")
+			return
+		}
+
+		// write all streams to the datastore
+		for _, stream := range device.Streams {
+			_, err = c.datastore.WriteData(context.Background(), &datastore.WriteRequest{
+				PublicKey: stream.PublicKey,
+				UserUid:   device.UserUID,
+				Data:      message.Payload(),
+			})
+
+			if err != nil {
+				c.logger.Log("err", err, "msg", "failed to write to datastore")
+			}
+		}
 	}
 
 	client, err := c.getClient(broker)
@@ -123,14 +152,14 @@ func (c *Client) Subscribe(broker, topic string) error {
 		return errors.Wrap(err, "failed to get client")
 	}
 
-	if token := client.Subscribe(topic, 0, msgHandler); token.Wait() && token.Error() != nil {
+	if token := client.Subscribe(topic, 0, handler); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 
 	return nil
 }
 
-func (c *Client) getClient(broker string) (mqtt.Client, error) {
+func (c *client) getClient(broker string) (mqtt.Client, error) {
 	var client mqtt.Client
 	var err error
 
