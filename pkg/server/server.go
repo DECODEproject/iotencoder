@@ -21,6 +21,17 @@ import (
 	"github.com/thingful/iotencoder/pkg/system"
 )
 
+// Config is a top level config object. Populated by viper in the command setup,
+// we then pass down config to the right places.
+type Config struct {
+	ListenAddr         string
+	ConnStr            string
+	EncryptionPassword string
+	HashidSalt         string
+	HashidMinLength    int
+	DatastoreAddr      string
+}
+
 // Server is our top level type, contains all other components, is responsible
 // for starting and stopping them in the correct order.
 type Server struct {
@@ -39,10 +50,20 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // NewServer returns a new simple HTTP server.
-func NewServer(addr, connStr, encryptionPassword string, logger kitlog.Logger) *Server {
-	db := postgres.NewDB(connStr, encryptionPassword, logger)
+func NewServer(config *Config, logger kitlog.Logger) *Server {
+	db := postgres.NewDB(&postgres.Config{
+		ConnStr:            config.ConnStr,
+		EncryptionPassword: config.EncryptionPassword,
+		HashidSalt:         config.HashidSalt,
+		HashidMinLength:    config.HashidMinLength,
+	}, logger)
 
-	ds := datastore.NewDatastoreProtobufClient("http://192.168.1.116:8081", &http.Client{})
+	ds := datastore.NewDatastoreProtobufClient(
+		config.DatastoreAddr,
+		&http.Client{
+			Timeout: time.Second * 10,
+		},
+	)
 
 	mc := mqtt.NewClient(logger, db, ds)
 
@@ -62,7 +83,7 @@ func NewServer(addr, connStr, encryptionPassword string, logger kitlog.Logger) *
 
 	// create our http.Server instance
 	srv := &http.Server{
-		Addr:    addr,
+		Addr:    config.ListenAddr,
 		Handler: mux,
 	}
 
