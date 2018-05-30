@@ -44,6 +44,10 @@ type Client interface {
 	// events being written to the datastore. Returns an error if we were unable to
 	// subscribe for any reason.
 	Subscribe(broker, topic string) error
+
+	// Unsubscribe takes a broker and a topic, and attempts to remove the
+	// subscription from the specified broker.
+	Unsubscribe(broker, topic string) error
 }
 
 // client abstracts our connection to one or more MQTT brokers, it allows new
@@ -132,6 +136,21 @@ func (c *client) Subscribe(broker, topic string) error {
 	}
 
 	if token := client.Subscribe(topic, 0, handler); token.Wait() && token.Error() != nil {
+		return token.Error()
+	}
+
+	return nil
+}
+
+func (c *client) Unsubscribe(broker, topic string) error {
+	c.logger.Log("broker", broker, "topic", topic, "msg", "unsubscribing")
+
+	client, err := c.getClient(broker)
+	if err != nil {
+		return errors.Wrap(err, "failed to get client")
+	}
+
+	if token := client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
 
