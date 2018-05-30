@@ -72,6 +72,9 @@ func (e *Encoder) Stop() error {
 	return nil
 }
 
+// CreateStream is our implementation of the protocol buffer interface. It takes
+// the incoming request, validates it and if valid we write some data to the
+// database, and set up a subscription with the specified MQTT broker.
 func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
 	err := validateCreateRequest(req)
 	if err != nil {
@@ -96,15 +99,26 @@ func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamReq
 	}, nil
 }
 
+// DeleteStream is the method we provide for deleting a stream. It validates the
+// request, then deletes specified records from the database, and removes any
+// subscriptions.
 func (e *Encoder) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
 	err := validateDeleteRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
-	err = e.db.DeleteStream(req.StreamUid)
+	device, err := e.db.DeleteStream(req.StreamUid)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
+	}
+
+	if device != nil {
+		// we should unsubscribe from this topic
+		err = e.mqtt.Unsubscribe(device.Broker, device.Topic)
+		if err != nil {
+			return nil, twirp.InternalErrorWith(err)
+		}
 	}
 
 	return &encoder.DeleteStreamResponse{}, nil
@@ -140,6 +154,10 @@ func validateCreateRequest(req *encoder.CreateStreamRequest) error {
 
 	if req.Location.Longitude == 0 {
 		return twirp.RequiredArgumentError("longitude")
+	}
+
+	if req.Location.Latitude == 0 {
+		return twirp.RequiredArgumentError("latitude")
 	}
 
 	return nil
