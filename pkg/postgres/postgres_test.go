@@ -86,8 +86,10 @@ func TestRoundTrip(t *testing.T) {
 	assert.Len(t, device.Streams, 1)
 	assert.Equal(t, "public", device.Streams[0].PublicKey)
 
-	err = db.DeleteStream(streamID)
+	device, err = db.DeleteStream(streamID)
 	assert.Nil(t, err)
+	assert.Equal(t, "tcp://example.com", device.Broker)
+	assert.Equal(t, "device/123", device.Topic)
 
 	devices, err = db.GetDevices()
 	assert.Nil(t, err)

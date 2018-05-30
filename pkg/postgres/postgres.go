@@ -44,8 +44,10 @@ type DB interface {
 	// DeleteStream takes as input a string representing the id of a previously
 	// stored stream, and attempts to delete the associated stream from the
 	// underlying database. If this stream is the last stream associated with a
-	// device then the device record is also deleted.
-	DeleteStream(id string) error
+	// device then the device record is also deleted. We return a Device instance
+	// as we need to pass back out the broker and topic so that we can also
+	// unsubscribe from the MQTT topic.
+	DeleteStream(id string) (*Device, error)
 
 	// GetDevices returns a slice containing all Devices currently stored in the
 	// system. We know we have a maximum limit here of around 25 devices, so we
@@ -218,14 +220,15 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 
 // DeleteStream deletes a stream identified by the given id string. If this
 // stream is the last one associated with a device, then the device record is
-// also deleted.
-func (d *db) DeleteStream(id string) (err error) {
+// also deleted. We return a Device object purely so we can pass back out the
+// broker and topic allowing us to unsubscribe.V
+func (d *db) DeleteStream(id string) (_ *Device, err error) {
 	sql := `DELETE FROM streams WHERE id = :id
 		RETURNING device_id`
 
 	streamIDs, err := d.hashid.DecodeWithError(id)
 	if err != nil {
-		return errors.Wrap(err, "failed to decode hashed id")
+		return nil, errors.Wrap(err, "failed to decode hashed id")
 	}
 
 	mapArgs := map[string]interface{}{
@@ -234,7 +237,7 @@ func (d *db) DeleteStream(id string) (err error) {
 
 	tx, err := BeginTX(d.DB)
 	if err != nil {
-		return errors.Wrap(err, "failed to start transaction when deleting stream")
+		return nil, errors.Wrap(err, "failed to start transaction when deleting stream")
 	}
 
 	defer func() {
@@ -245,14 +248,14 @@ func (d *db) DeleteStream(id string) (err error) {
 
 	var deviceID int
 
-	// again use a Get to get back the device's id
+	// again use a Get to run the delete so we get back the device's id
 	err = tx.Get(&deviceID, sql, mapArgs)
 	if err != nil {
-		return errors.Wrap(err, "failed to delete stream")
+		return nil, errors.Wrap(err, "failed to delete stream")
 	}
 
 	// now we count streams for that device id, and if no more we should also
-	// delete the device
+	// delete the device and unsubscribe from its topic
 	sql = `SELECT COUNT(*) FROM streams
 		WHERE device_id = :device_id`
 
@@ -265,24 +268,29 @@ func (d *db) DeleteStream(id string) (err error) {
 	// again use a Get to get the count
 	err = tx.Get(&streamCount, sql, mapArgs)
 	if err != nil {
-		return errors.Wrap(err, "failed to count streams")
+		return nil, errors.Wrap(err, "failed to count streams")
 	}
 
 	if streamCount == 0 {
 		// delete the device too
-		sql = `DELETE FROM devices WHERE id = :id`
+		sql = `DELETE FROM devices WHERE id = :id
+			RETURNING broker, topic`
 
 		mapArgs = map[string]interface{}{
 			"id": deviceID,
 		}
 
-		err = tx.Exec(sql, mapArgs)
+		var device Device
+
+		err = tx.Get(&device, sql, mapArgs)
 		if err != nil {
-			return errors.Wrap(err, "failed to delete device")
+			return nil, errors.Wrap(err, "failed to delete device")
 		}
+
+		return &device, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 // GetDevices returns a slice of pointers to Device instances. We don't worry
@@ -310,9 +318,9 @@ func (d *db) GetDevices() ([]*Device, error) {
 	devices := []*Device{}
 
 	mapper := func(rows *sqlx.Rows) error {
-		var d Device
-
 		for rows.Next() {
+			var d Device
+
 			err = rows.StructScan(&d)
 			if err != nil {
 				return errors.Wrap(err, "failed to scan row into Device struct")
@@ -376,9 +384,10 @@ func (d *db) GetDevice(topic string) (_ *Device, err error) {
 	streams := []*Stream{}
 
 	mapper := func(rows *sqlx.Rows) error {
-		var s Stream
 
 		for rows.Next() {
+			var s Stream
+
 			err = rows.StructScan(&s)
 			if err != nil {
 				return errors.Wrap(err, "failed to scan stream row into struct")
