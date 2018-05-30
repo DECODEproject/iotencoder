@@ -97,7 +97,17 @@ func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamReq
 }
 
 func (e *Encoder) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
-	return nil, nil
+	err := validateDeleteRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = e.db.DeleteStream(req.StreamUid)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &encoder.DeleteStreamResponse{}, nil
 }
 
 // validateCreateRequest is a slightly verbose method that takes as input an
@@ -151,4 +161,14 @@ func createStream(req *encoder.CreateStreamRequest) *postgres.Stream {
 			Disposition: strings.ToLower(req.Disposition.String()),
 		},
 	}
+}
+
+// validateDeleteRequest validates incoming deletion requests (we just check for
+// a stream uid)
+func validateDeleteRequest(req *encoder.DeleteStreamRequest) error {
+	if req.StreamUid == "" {
+		return twirp.RequiredArgumentError("stream_uid")
+	}
+
+	return nil
 }

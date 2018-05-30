@@ -1,41 +1,47 @@
 package rpc_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/thingful/iotencoder/pkg/mocks"
 	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/rpc"
+	"github.com/thingful/iotencoder/pkg/system"
+	encoder "github.com/thingful/twirp-encoder-go"
 )
-
-// component is a local interface - declaring here just so we can assert using it.
-type component interface {
-	Start() error
-	Stop() error
-}
 
 // getTestEncoder is a helper function that returns an encoder, and also does
 // some housekeeping to clean the DB by rolling back and reapplying migrations.
 //
 // TODO: not terribly happy with this as an approach. See if we can think of an
 // alternative.
-func getTestEncoder(t *testing.T) (*rpc.Encoder, *mocks.MQTTClient) {
+func getTestEncoder(t *testing.T) (*rpc.Encoder, *mocks.MQTTClient, postgres.DB) {
 	t.Helper()
 
 	logger := kitlog.NewNopLogger()
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
-	encryptionPassword := os.Getenv("IOTENCODER_ENCRYPTION_PASSWORD")
 
-	db := postgres.NewDB(connStr, encryptionPassword, logger)
-	mqtt := mocks.NewMQTTClient()
+	db := postgres.NewDB(
+		&postgres.Config{
+			ConnStr:            connStr,
+			EncryptionPassword: "password",
+			HashidSalt:         "salt",
+			HashidMinLength:    8,
+		},
+		logger,
+	)
+
+	m := mocks.NewMQTTClient()
 
 	// create encoder
-	enc := rpc.NewEncoder(logger, mqtt, db)
+	enc := rpc.NewEncoder(logger, m, db)
 
-	err := db.(component).Start()
+	err := db.(system.Component).Start()
 	if err != nil {
 		t.Fatalf("Error starting DB: %v", err)
 	}
@@ -55,31 +61,42 @@ func getTestEncoder(t *testing.T) (*rpc.Encoder, *mocks.MQTTClient) {
 		t.Fatalf("Error starting encoder: %v", err)
 	}
 
-	return enc, mqtt
+	return enc, m, db
 }
 
-//func TestCreateStream(t *testing.T) {
-//	enc, mqtt := getTestEncoder(t)
-//	defer enc.Stop()
-//
-//	assert.NotNil(t, enc)
-//
-//	_, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
-//		BrokerAddress:      "tcp://mqtt.local:1883",
-//		DeviceTopic:        "device/sck/abc123/readings",
-//		DevicePrivateKey:   "priv_key",
-//		RecipientPublicKey: "pub_key",
-//		UserUid:            "alice",
-//		Location: &encoder.CreateStreamRequest_Location{
-//			Longitude: -0.024,
-//			Latitude:  54.24,
-//		},
-//		Disposition: encoder.CreateStreamRequest_INDOOR,
-//	})
-//
-//	assert.Nil(t, err)
-//	assert.Len(t, mqtt.Subscriptions, 1)
-//}
+func TestCreateStream(t *testing.T) {
+	enc, m, db := getTestEncoder(t)
+	defer enc.Stop()
+
+	assert.NotNil(t, enc)
+
+	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
+		BrokerAddress:      "tcp://mqtt.local:1883",
+		DeviceTopic:        "device/sck/abc123/readings",
+		DevicePrivateKey:   "priv_key",
+		RecipientPublicKey: "pub_key",
+		UserUid:            "alice",
+		Location: &encoder.CreateStreamRequest_Location{
+			Longitude: -0.024,
+			Latitude:  54.24,
+		},
+		Disposition: encoder.CreateStreamRequest_INDOOR,
+	})
+
+	assert.Nil(t, err)
+	assert.Len(t, m.Subscriptions, 1)
+	assert.Equal(t, "zxkXG8ZW", resp.StreamUid)
+
+	device, err := db.GetDevice("device/sck/abc123/readings")
+	assert.Nil(t, err)
+	assert.Equal(t, "tcp://mqtt.local:1883", device.Broker)
+	assert.Len(t, device.Streams, 1)
+
+	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{
+		StreamUid: resp.StreamUid,
+	})
+	assert.Nil(t, err)
+}
 
 //func TestRoundTrip(t *testing.T) {
 //	ds := getTestDatastore(t)
@@ -121,7 +138,7 @@ func getTestEncoder(t *testing.T) (*rpc.Encoder, *mocks.MQTTClient) {
 //	assert.Equal(t, "123abc", resp.PublicKey)
 //	assert.Len(t, resp.Events, 0)
 //}
-//
+
 //func TestWriteDataInvalid(t *testing.T) {
 //	ds := getTestDatastore(t)
 //	defer ds.Stop()
