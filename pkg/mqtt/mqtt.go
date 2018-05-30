@@ -34,7 +34,15 @@ func init() {
 	prometheus.MustRegister(messageCounter)
 }
 
+// Client is the main interface for our MQTT module. It exposes a single method
+// Subscribe which attempts to subscribe to the given topic on the specified
+// broker, and as events are received it feeds them to a processing pipeline
+// which ultimately will end with data being written to the datastore.
 type Client interface {
+	// Subscribe takes a broker and a topic, and after this function is called the
+	// client will have set up a subscription for the given details with received
+	// events being written to the datastore. Returns an error if we were unable to
+	// subscribe for any reason.
 	Subscribe(broker, topic string) error
 }
 
@@ -50,6 +58,8 @@ type client struct {
 	clients map[string]mqtt.Client
 }
 
+// NewClient creates a new client that is intended to support connections to
+// multiple brokers if required. Takes as input
 func NewClient(logger kitlog.Logger, db postgres.DB, ds datastore.Datastore) Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
@@ -63,43 +73,12 @@ func NewClient(logger kitlog.Logger, db postgres.DB, ds datastore.Datastore) Cli
 	}
 }
 
+// Start "starts" the mqtt client. Now this has become a noop, as we lazily
+// connect to a broker only on `Subscribe`, so this may be removed.
 func (c *client) Start() error {
 	c.logger.Log("msg", "starting mqtt client")
 
 	return nil
-}
-
-// connect is a helper function that creates a new mqtt.Client instance that is
-// connected to the passed in broker.
-func connect(broker string, logger kitlog.Logger) (mqtt.Client, error) {
-	opts, err := createClientOptions(broker, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Log("broker", broker, "msg", "creating client")
-
-	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		return nil, errors.Wrap(token.Error(), "failed to connect to broker")
-	}
-
-	logger.Log("broker", broker, "msg", "mqtt connected")
-
-	return client, nil
-}
-
-// createClientOptions initializes a set of ClientOptions for connecting to an
-// MQTT broker.
-func createClientOptions(broker string, logger kitlog.Logger) (*mqtt.ClientOptions, error) {
-	logger.Log("broker", broker, "msg", "configuring client")
-
-	opts := mqtt.NewClientOptions()
-	opts.AddBroker(broker)
-	opts.SetClientID(mqttClientID)
-	opts.SetAutoReconnect(true)
-
-	return opts, nil
 }
 
 // Stop disconnects all currently connected clients, and clears the map of
@@ -159,6 +138,43 @@ func (c *client) Subscribe(broker, topic string) error {
 	return nil
 }
 
+// connect is a helper function that creates a new mqtt.Client instance that is
+// connected to the passed in broker.
+func connect(broker string, logger kitlog.Logger) (mqtt.Client, error) {
+	opts, err := createClientOptions(broker, logger)
+	if err != nil {
+		return nil, err
+	}
+
+	logger.Log("broker", broker, "msg", "creating client")
+
+	client := mqtt.NewClient(opts)
+	if token := client.Connect(); token.Wait() && token.Error() != nil {
+		return nil, errors.Wrap(token.Error(), "failed to connect to broker")
+	}
+
+	logger.Log("broker", broker, "msg", "mqtt connected")
+
+	return client, nil
+}
+
+// createClientOptions initializes a set of ClientOptions for connecting to an
+// MQTT broker.
+func createClientOptions(broker string, logger kitlog.Logger) (*mqtt.ClientOptions, error) {
+	logger.Log("broker", broker, "msg", "configuring client")
+
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(broker)
+	opts.SetClientID(mqttClientID)
+	opts.SetAutoReconnect(true)
+
+	return opts, nil
+}
+
+// getClient attempts to get a valid client for a given broker. We first attempt
+// to return a client from the in memory process, but if one does not exist we
+// use `connect` in order to make a new connection. Once a connnection is made
+// it will be stored in memory for use for other subscriptions.
 func (c *client) getClient(broker string) (mqtt.Client, error) {
 	var client mqtt.Client
 	var err error
