@@ -1,12 +1,11 @@
 package postgres
 
 import (
-	"strconv"
-
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/speps/go-hashids"
 )
 
 // Device is a type used when reading data back from the DB.
@@ -80,20 +79,35 @@ func Open(connStr string) (*sqlx.DB, error) {
 type db struct {
 	connStr            string
 	encryptionPassword []byte
+	hashidData         *hashids.HashIDData
 	DB                 *sqlx.DB
+	hashid             *hashids.HashID
 	logger             kitlog.Logger
+}
+
+// Config is used to carry package local configuration for Postgres DB module.
+type Config struct {
+	ConnStr            string
+	EncryptionPassword string
+	HashidSalt         string
+	HashidMinLength    int
 }
 
 // NewDB creates a new DB instance with the given connection string. We also
 // pass in a logger.
-func NewDB(connStr, encryptionPassword string, logger kitlog.Logger) DB {
+func NewDB(config *Config, logger kitlog.Logger) DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
-	logger.Log("msg", "creating DB instance")
+	logger.Log("msg", "creating DB instance", "hashidlength", config.HashidMinLength)
+
+	hd := hashids.NewData()
+	hd.Salt = config.HashidSalt
+	hd.MinLength = config.HashidMinLength
 
 	return &db{
-		connStr:            connStr,
-		encryptionPassword: []byte(encryptionPassword),
+		connStr:            config.ConnStr,
+		encryptionPassword: []byte(config.EncryptionPassword),
+		hashidData:         hd,
 		logger:             logger,
 	}
 }
@@ -108,7 +122,13 @@ func (d *db) Start() error {
 		return errors.Wrap(err, "opening db connection failed")
 	}
 
+	h, err := hashids.NewWithData(d.hashidData)
+	if err != nil {
+		return errors.Wrap(err, "creating hashid generator failed")
+	}
+
 	d.DB = db
+	d.hashid = h
 
 	return nil
 }
@@ -188,7 +208,12 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 		return "", errors.Wrap(err, "failed to insert stream")
 	}
 
-	return strconv.Itoa(streamID), err
+	id, err := d.hashid.Encode([]int{streamID})
+	if err != nil {
+		return "", errors.Wrap(err, "failed to hash new stream ID")
+	}
+
+	return id, err
 }
 
 // DeleteStream deletes a stream identified by the given id string. If this
@@ -198,13 +223,13 @@ func (d *db) DeleteStream(id string) (err error) {
 	sql := `DELETE FROM streams WHERE id = :id
 		RETURNING device_id`
 
-	streamID, err := strconv.Atoi(id)
+	streamIDs, err := d.hashid.DecodeWithError(id)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert id back to int")
+		return errors.Wrap(err, "failed to decode hashed id")
 	}
 
 	mapArgs := map[string]interface{}{
-		"id": streamID,
+		"id": streamIDs[0],
 	}
 
 	tx, err := BeginTX(d.DB)

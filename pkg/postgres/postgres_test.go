@@ -16,9 +16,17 @@ func getTestingDB(t *testing.T) postgres.DB {
 
 	logger := kitlog.NewNopLogger()
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
-	encryptionPassword := os.Getenv("IOTENCODER_ENCRYPTION_PASSWORD")
 
-	db := postgres.NewDB(connStr, encryptionPassword, logger)
+	db := postgres.NewDB(
+		&postgres.Config{
+			ConnStr:            connStr,
+			EncryptionPassword: "password",
+			HashidSalt:         "hashid salt",
+			HashidMinLength:    8,
+		},
+		logger,
+	)
+
 	err := db.(system.Component).Start()
 	if err != nil {
 		t.Fatalf("Error starting DB: %v", err)
