@@ -19,6 +19,8 @@ build:
         name: setup env
         code: |
           export IOTENCODER_DATABASE_URL=postgres://${POSTGRES_ENV_POSTGRES_USER}:${POSTGRES_ENV_POSTGRES_PASSWORD}@${POSTGRES_PORT_5432_TCP_ADDR}:${POSTGRES_PORT_5432_TCP_PORT}/postgres?sslmode=disable
+          export IOTENCODER_ENCRYPTION_PASSWORD=password
+          export IOTENCODER_HASHID_SALT=salt
 
     - script:
         name: show env
