@@ -1,7 +1,6 @@
 package mqtt
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -9,16 +8,14 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	datastore "github.com/thingful/twirp-datastore-go"
 
-	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/version"
 )
 
 var (
 	// mqttClientID holds a reference to the application ID we send to a broker
 	// when connecting
-	mqttClientID = fmt.Sprintf("%s_decode", version.BinaryName)
+	mqttClientID = fmt.Sprintf("%sDECODE", version.BinaryName)
 
 	// messageCounter is a prometheus counter recording the number of received
 	// messages
@@ -34,6 +31,9 @@ func init() {
 	prometheus.MustRegister(messageCounter)
 }
 
+// Callback is a function we pass in to subscribe to a feed.
+type Callback func(topic string, payload []byte)
+
 // Client is the main interface for our MQTT module. It exposes a single method
 // Subscribe which attempts to subscribe to the given topic on the specified
 // broker, and as events are received it feeds them to a processing pipeline
@@ -43,7 +43,7 @@ type Client interface {
 	// client will have set up a subscription for the given details with received
 	// events being written to the datastore. Returns an error if we were unable to
 	// subscribe for any reason.
-	Subscribe(broker, topic string) error
+	Subscribe(broker, topic string, callback Callback) error
 
 	// Unsubscribe takes a broker and a topic, and attempts to remove the
 	// subscription from the specified broker.
@@ -54,46 +54,37 @@ type Client interface {
 // subscriptions to be made to topics, and somehow emits received events to be
 // written on to the datastore.
 type client struct {
-	logger    kitlog.Logger
-	db        postgres.DB
-	datastore datastore.Datastore
+	logger kitlog.Logger
 
 	sync.RWMutex
 	clients map[string]mqtt.Client
 }
 
 // NewClient creates a new client that is intended to support connections to
-// multiple brokers if required. Takes as input
-func NewClient(logger kitlog.Logger, db postgres.DB, ds datastore.Datastore) Client {
+// multiple brokers if required. Takes as input our logger.
+func NewClient(logger kitlog.Logger) Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
 	logger.Log("msg", "creating mqtt client instance")
 
 	return &client{
-		logger:    logger,
-		db:        db,
-		datastore: ds,
-		clients:   make(map[string]mqtt.Client),
+		logger:  logger,
+		clients: make(map[string]mqtt.Client),
 	}
-}
-
-// Start "starts" the mqtt client. Now this has become a noop, as we lazily
-// connect to a broker only on `Subscribe`, so this may be removed.
-func (c *client) Start() error {
-	c.logger.Log("msg", "starting mqtt client")
-
-	return nil
 }
 
 // Stop disconnects all currently connected clients, and clears the map of
 // clients
 func (c *client) Stop() error {
+	c.logger.Log("msg", "stopping mqtt, disconnecting clients")
+
 	c.Lock()
+	defer c.Unlock()
+
 	for broker, client := range c.clients {
 		client.Disconnect(500)
 		delete(c.clients, broker)
 	}
-	c.Unlock()
 
 	return nil
 }
@@ -101,33 +92,13 @@ func (c *client) Stop() error {
 // Subscribe attempts to create a subscription for the given topic, on the given
 // broker. This method will create a new connection to particular broker if one
 // does not already exist, but will reuse an existing connection.
-func (c *client) Subscribe(broker, topic string) error {
+func (c *client) Subscribe(broker, topic string, cb Callback) error {
 	c.logger.Log("topic", topic, "broker", broker, "msg", "subscribing")
 
 	var handler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
 		messageCounter.Inc()
 
-		fmt.Printf("Topic: %s\n", message.Topic())
-		fmt.Printf("Message: %s\n", message.Payload())
-
-		device, err := c.db.GetDevice(message.Topic())
-		if err != nil {
-			c.logger.Log("err", err, "msg", "failed to get device")
-			return
-		}
-
-		// write all streams to the datastore
-		for _, stream := range device.Streams {
-			_, err = c.datastore.WriteData(context.Background(), &datastore.WriteRequest{
-				PublicKey: stream.PublicKey,
-				UserUid:   device.UserUID,
-				Data:      message.Payload(),
-			})
-
-			if err != nil {
-				c.logger.Log("err", err, "msg", "failed to write to datastore")
-			}
-		}
+		cb(message.Topic(), message.Payload())
 	}
 
 	client, err := c.getClient(broker)
@@ -142,6 +113,9 @@ func (c *client) Subscribe(broker, topic string) error {
 	return nil
 }
 
+// Unsubscribe attempts to unsubscribe to the given topic published on the
+// specified broker. We should only unsubscribe when no streams remain for a
+// device. Returns any error that occurs while trying to unsubscribe.
 func (c *client) Unsubscribe(broker, topic string) error {
 	c.logger.Log("broker", broker, "topic", topic, "msg", "unsubscribing")
 
