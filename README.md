@@ -31,6 +31,8 @@ architecture containers. To push all containers run `make all-push`.
 
 Run `make clean` to clean up.
 
+To remove all containers, volumes run `make teardown`.
+
 ## Testing
 
 To run the test suite, use the make task `test`. This will run all testcases
