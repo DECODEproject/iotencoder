@@ -21,9 +21,6 @@ type Transactor interface {
 	// rolled back it will be committed.
 	CommitOrRollback() error
 
-	// Exec runs a sql query, returning an error if the query failed
-	Exec(sql string, args interface{}) error
-
 	// Get executes the given sql statement and args, scanning the the result into
 	// the given destination.
 	Get(dest interface{}, sql string, args interface{}) error
@@ -72,24 +69,6 @@ func (t *transactor) CommitOrRollback() error {
 	t.finalised = true
 	t.finalisedErr = t.tx.Commit()
 	return t.finalisedErr
-}
-
-// Exec wraps tx.Exec and takes as input an sql string and some args. Internally
-// we rebind args for Postgres. In addition if this function is passed an sql
-// string containing `:name` style parameters, and `map[string]interface{}` args,
-// it will convert the map args to positional ones.
-func (t *transactor) Exec(sql string, args interface{}) error {
-	nsql, nargs, err := t.normalizeSql(sql, args)
-	if err != nil {
-		return t.rollback(err)
-	}
-
-	_, err = t.tx.Exec(nsql, nargs...)
-	if err != nil {
-		return t.rollback(err)
-	}
-
-	return nil
 }
 
 // Get wraps tx.Get and takes as input a destination object (into which the
