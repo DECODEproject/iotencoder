@@ -5,9 +5,15 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/thingful/iotencoder/pkg/version"
 )
+
+func init() {
+	viper.SetEnvPrefix("iotencoder")
+	viper.AutomaticEnv()
+}
 
 var rootCmd = &cobra.Command{
 	Use:   version.BinaryName,

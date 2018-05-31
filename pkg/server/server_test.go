@@ -27,7 +27,17 @@ func TestPulseHandler(t *testing.T) {
 
 func TestStartStop(t *testing.T) {
 	logger := kitlog.NewNopLogger()
-	s := server.NewServer("127.0.0.1:0", os.Getenv("IOTENCODER_DATABASE_URL"), logger)
+	s := server.NewServer(
+		&server.Config{
+			ListenAddr:         "127.0.0.1:0",
+			ConnStr:            os.Getenv("IOTENCODER_DATABASE_URL"),
+			EncryptionPassword: "password",
+			HashidSalt:         "salt",
+			HashidMinLength:    8,
+			DatastoreAddr:      "127.0.0.1:9999",
+		},
+		logger,
+	)
 
 	go func() {
 		s.Start()

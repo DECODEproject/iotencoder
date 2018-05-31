@@ -14,6 +14,7 @@ func init() {
 	rootCmd.AddCommand(migrateCmd)
 	migrateCmd.AddCommand(migrateNewCmd)
 	migrateCmd.AddCommand(migrateDownCmd)
+	migrateCmd.AddCommand(migrateUpCmd)
 
 	migrateNewCmd.Flags().String("dir", "pkg/migrations/sql", "The directory into which new migrations should be created")
 	migrateDownCmd.Flags().IntP("steps", "s", 1, "Number of down migrations to run")
@@ -89,5 +90,30 @@ default is to simply rollback one migration.`,
 		}
 
 		return postgres.MigrateDown(db.DB, steps, logger)
+	},
+}
+
+var migrateUpCmd = &cobra.Command{
+	Use:   "up",
+	Short: "Run up migrations against Postgres",
+	Long: `This command can be used to run up migrations against Postgres. It is
+primarily intended to be used in development when working on migrations as
+once deployed the server automatically attempts to run all up migrations on
+boot.
+	`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		connStr, err := GetFromEnv(DatabaseURLKey)
+		if err != nil {
+			return err
+		}
+
+		logger := logger.NewLogger()
+
+		db, err := postgres.Open(connStr)
+		if err != nil {
+			return err
+		}
+
+		return postgres.MigrateUp(db.DB, logger)
 	},
 }

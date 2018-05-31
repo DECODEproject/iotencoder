@@ -1,7 +1,11 @@
 # iotencoder
 
-Implementaton of proposed datastore interface for the DECODE IoTPilot/Scale
-Model.
+Implementaton of proposed stream encoder interface for the DECODE
+IoTPilot/Scale Model.
+
+This component is responsible for subscribing to MQTT topics representing
+streams of data from a device, encoding the incoming data and writing it to a
+datastore.
 
 Uses an experimental template structure from here:
 https://github.com/thingful/go-build-template
@@ -26,6 +30,8 @@ can run `make push ARCH=arm` or `make push ARCH=arm64` to push different
 architecture containers. To push all containers run `make all-push`.
 
 Run `make clean` to clean up.
+
+To remove all containers, volumes run `make teardown`.
 
 ## Testing
 

@@ -34,10 +34,6 @@
   version = "0.0.2"
 
 [[constraint]]
-  name = "github.com/thingful/twirp-datastore-go"
-  version = "0.0.3"
-
-[[constraint]]
   branch = "master"
   name = "github.com/lib/pq"
 
@@ -58,10 +54,6 @@
   version = "0.8.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/elgris/sqrl"
-
-[[constraint]]
   name = "github.com/stretchr/testify"
   version = "1.2.1"
 
@@ -80,3 +72,19 @@
 [[constraint]]
   name = "github.com/thingful/twirp-encoder-go"
   version = "0.0.1"
+
+[[constraint]]
+  name = "github.com/eclipse/paho.mqtt.golang"
+  version = "1.1.1"
+
+[[constraint]]
+  name = "github.com/thingful/twirp-datastore-go"
+  version = "0.0.3"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/speps/go-hashids"
+
+[[constraint]]
+  name = "github.com/spf13/viper"
+  version = "1.0.2"

@@ -63,7 +63,12 @@ func MigrateDownAll(db *sql.DB, logger kitlog.Logger) error {
 		return errors.Wrap(err, "failed to create migrator")
 	}
 
-	return m.Down()
+	err = m.Down()
+	if err != migrate.ErrNoChange {
+		return err
+	}
+
+	return nil
 }
 
 // NewMigration creates a new pair of files into which an SQL migration should
