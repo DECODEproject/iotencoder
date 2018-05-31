@@ -17,7 +17,7 @@ services:
     working_dir: /go/src/ARG_PKG
     ports:
       - "8080:8080"
-    command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server" ]
+    command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server", "--datastore", "datastore:8080" ]
     depends_on:
       - postgres
     environment:
@@ -28,9 +28,9 @@ services:
       - IOTENCODER_ENCRYPTION_PASSWORD=e3d741d6f84afc301d8e32c66e51f264
       - IOTENCODER_HASHID_SALT=014c02a69e9a095b851875888474d7fa
 
-
   postgres:
-    image: postgres:10-alpine
+    build:
+      context: ./docker/postgres
     ports:
       - "5432"
     volumes:
@@ -40,6 +40,7 @@ services:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=iotenc
       - POSTGRES_DB=postgres
+      - DATABASES=iotenc_development,iotenc_test
 
 volumes:
   postgres_vol:
