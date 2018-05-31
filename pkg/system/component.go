@@ -1,12 +1,16 @@
 package system
 
-// Component is a simple interface defining a component that can be started and
-// stopped. This is pulled out into a separate package so we can use in various
-// places.
-type Component interface {
-	// Start a component running, returning an error or nil.
+// Startable is a single method interface for a component that can meaningfully
+// be "started"
+type Startable interface {
+	// Start starts the component, creating any runtime resources (connection
+	// pools, clients, etc.)
 	Start() error
+}
 
-	// Stop a component running, returning an error or nil.
+// Stoppable is a single method interface for a component that can meaningfully be
+// "stopped".
+type Stoppable interface {
+	// Stop stops the component, cleaning up any open resources.
 	Stop() error
 }

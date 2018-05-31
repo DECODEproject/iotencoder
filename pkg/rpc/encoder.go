@@ -10,38 +10,38 @@ import (
 	"github.com/twitchtv/twirp"
 
 	"github.com/thingful/iotencoder/pkg/mqtt"
+	"github.com/thingful/iotencoder/pkg/pipeline"
 	"github.com/thingful/iotencoder/pkg/postgres"
 )
 
-// Encoder is our implementation of the generated twirp interface for the
+// encoderImpl is our implementation of the generated twirp interface for the
 // stream encoder.
-type Encoder struct {
-	logger kitlog.Logger
-	db     postgres.DB
-	mqtt   mqtt.Client
+type encoderImpl struct {
+	logger    kitlog.Logger
+	db        postgres.DB
+	mqtt      mqtt.Client
+	processor pipeline.Processor
 }
-
-// ensure we adhere to the interface
-var _ encoder.Encoder = &Encoder{}
 
 // NewEncoder returns a newly instantiated Encoder instance. It takes as
 // parameters a DB connection string and a logger. The connection string is
 // passed down to the postgres package where it is used to connect.
-func NewEncoder(logger kitlog.Logger, mqttClient mqtt.Client, db postgres.DB) *Encoder {
+func NewEncoder(db postgres.DB, mqttClient mqtt.Client, processor pipeline.Processor, logger kitlog.Logger) encoder.Encoder {
 	logger = kitlog.With(logger, "module", "rpc")
 
 	logger.Log("msg", "creating encoder")
 
-	return &Encoder{
-		logger: logger,
-		db:     db,
-		mqtt:   mqttClient,
+	return &encoderImpl{
+		logger:    logger,
+		db:        db,
+		mqtt:      mqttClient,
+		processor: processor,
 	}
 }
 
 // Start the encoder. Here we create MQTT subscriptions for all records stored
 // in the DB.
-func (e *Encoder) Start() error {
+func (e *encoderImpl) Start() error {
 	e.logger.Log("msg", "starting encoder")
 
 	e.logger.Log("msg", "creating existing subscriptions")
@@ -54,7 +54,9 @@ func (e *Encoder) Start() error {
 	for _, d := range devices {
 		e.logger.Log("broker", d.Broker, "topic", d.Topic, "msg", "creating subscription")
 
-		err = e.mqtt.Subscribe(d.Broker, d.Topic)
+		err = e.mqtt.Subscribe(d.Broker, d.Topic, func(topic string, payload []byte) {
+			e.handleCallback(topic, payload)
+		})
 
 		if err != nil {
 			return errors.Wrap(err, "failed to subscribe to topic")
@@ -66,7 +68,7 @@ func (e *Encoder) Start() error {
 
 // Stop stops the encoder. Currently this is a NOOP, but keeping the function
 // for now.
-func (e *Encoder) Stop() error {
+func (e *encoderImpl) Stop() error {
 	e.logger.Log("msg", "stopping encoder")
 
 	return nil
@@ -75,7 +77,7 @@ func (e *Encoder) Stop() error {
 // CreateStream is our implementation of the protocol buffer interface. It takes
 // the incoming request, validates it and if valid we write some data to the
 // database, and set up a subscription with the specified MQTT broker.
-func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
+func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
 	err := validateCreateRequest(req)
 	if err != nil {
 		return nil, err
@@ -88,7 +90,9 @@ func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamReq
 		return nil, twirp.InternalErrorWith(err)
 	}
 
-	err = e.mqtt.Subscribe(req.BrokerAddress, req.DeviceTopic)
+	err = e.mqtt.Subscribe(req.BrokerAddress, req.DeviceTopic, func(topic string, payload []byte) {
+		e.handleCallback(topic, payload)
+	})
 
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
@@ -102,7 +106,7 @@ func (e *Encoder) CreateStream(ctx context.Context, req *encoder.CreateStreamReq
 // DeleteStream is the method we provide for deleting a stream. It validates the
 // request, then deletes specified records from the database, and removes any
 // subscriptions.
-func (e *Encoder) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
+func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
 	err := validateDeleteRequest(req)
 	if err != nil {
 		return nil, err
@@ -122,6 +126,19 @@ func (e *Encoder) DeleteStream(ctx context.Context, req *encoder.DeleteStreamReq
 	}
 
 	return &encoder.DeleteStreamResponse{}, nil
+}
+
+// handleCallback is our internal function that receives incoming data from the
+// MQTT client. It loads the correct device from Postgres and then dispatches
+// processing to the pipeline module which is responsible for manipulating the
+// data and then writing to the datastore.
+func (e *encoderImpl) handleCallback(topic string, payload []byte) {
+	device, err := e.db.GetDevice(topic)
+	if err != nil {
+		e.logger.Log("err", err, "msg", "failed to get device")
+	}
+
+	err = e.processor.Process(device, payload)
 }
 
 // validateCreateRequest is a slightly verbose method that takes as input an

@@ -2,6 +2,8 @@ package mocks
 
 import (
 	"sync"
+
+	"github.com/thingful/iotencoder/pkg/mqtt"
 )
 
 // MQTTClient is a mock type that implements our mqtt interface. Internally it
@@ -25,7 +27,7 @@ func NewMQTTClient() *MQTTClient {
 // Subscribe is the public interface method. In the mock we add the given broker
 // and topic to an internal data structure where it can be retrieved for test
 // verification.
-func (m *MQTTClient) Subscribe(broker, topic string) error {
+func (m *MQTTClient) Subscribe(broker, topic string, cb mqtt.Callback) error {
 	if m.err != nil {
 		return m.err
 	}

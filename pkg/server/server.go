@@ -16,6 +16,7 @@ import (
 	encoder "github.com/thingful/twirp-encoder-go"
 
 	"github.com/thingful/iotencoder/pkg/mqtt"
+	"github.com/thingful/iotencoder/pkg/pipeline"
 	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/rpc"
 	"github.com/thingful/iotencoder/pkg/system"
@@ -35,11 +36,11 @@ type Config struct {
 // Server is our top level type, contains all other components, is responsible
 // for starting and stopping them in the correct order.
 type Server struct {
-	srv    *http.Server
-	enc    *rpc.Encoder
-	db     postgres.DB
-	mqtt   mqtt.Client
-	logger kitlog.Logger
+	srv     *http.Server
+	encoder encoder.Encoder
+	db      postgres.DB
+	mqtt    mqtt.Client
+	logger  kitlog.Logger
 }
 
 // PulseHandler is the simplest possible handler function - used to expose an
@@ -49,7 +50,9 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "ok")
 }
 
-// NewServer returns a new simple HTTP server.
+// NewServer returns a new simple HTTP server. Is also responsible for
+// constructing all components, and injecting them into the right place. This
+// perhaps belongs elsewhere, but leaving here for now.
 func NewServer(config *Config, logger kitlog.Logger) *Server {
 	db := postgres.NewDB(&postgres.Config{
 		ConnStr:            config.ConnStr,
@@ -65,9 +68,11 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		},
 	)
 
-	mc := mqtt.NewClient(logger, db, ds)
+	processor := pipeline.NewProcessor(ds, logger)
 
-	enc := rpc.NewEncoder(logger, mc, db)
+	mqttClient := mqtt.NewClient(logger)
+
+	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
 	hooks := twrpprom.NewServerHooks(nil)
 
 	logger = kitlog.With(logger, "module", "server")
@@ -89,11 +94,11 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	// return the instantiated server
 	return &Server{
-		srv:    srv,
-		enc:    enc,
-		db:     db,
-		mqtt:   mc,
-		logger: kitlog.With(logger, "module", "server"),
+		srv:     srv,
+		encoder: enc,
+		db:      db,
+		mqtt:    mqttClient,
+		logger:  kitlog.With(logger, "module", "server"),
 	}
 }
 
@@ -105,15 +110,9 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 // shutting down.
 func (s *Server) Start() error {
 	// start the postgres connection pool
-	err := s.db.(system.Component).Start()
+	err := s.db.(system.Startable).Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start db")
-	}
-
-	// start the mqtt client
-	err = s.mqtt.(system.Component).Start()
-	if err != nil {
-		return errors.Wrap(err, "failed to start mqtt client")
 	}
 
 	// migrate up the database
@@ -122,8 +121,8 @@ func (s *Server) Start() error {
 		return errors.Wrap(err, "failed to migrate the database")
 	}
 
-	// start the encoder RPC service
-	err = s.enc.Start()
+	// start the encoder RPC component - this creates all mqtt subscriptions
+	err = s.encoder.(system.Startable).Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start encoder")
 	}
@@ -149,17 +148,17 @@ func (s *Server) Stop() error {
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancelFn()
 
-	err := s.enc.Stop()
+	err := s.encoder.(system.Stoppable).Stop()
 	if err != nil {
 		return err
 	}
 
-	err = s.mqtt.(system.Component).Stop()
+	err = s.mqtt.(system.Stoppable).Stop()
 	if err != nil {
 		return err
 	}
 
-	err = s.db.(system.Component).Stop()
+	err = s.db.(system.Stoppable).Stop()
 	if err != nil {
 		return err
 	}

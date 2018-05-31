@@ -32,7 +32,7 @@ func getTestDB(t *testing.T, logger kitlog.Logger) postgres.DB {
 		logger,
 	)
 
-	err := db.(system.Component).Start()
+	err := db.(system.Startable).Start()
 	if err != nil {
 		t.Fatalf("Failed to start DB: %v", err)
 	}
@@ -52,14 +52,17 @@ func getTestDB(t *testing.T, logger kitlog.Logger) postgres.DB {
 
 func TestCreateStream(t *testing.T) {
 	logger := kitlog.NewNopLogger()
+
 	db := getTestDB(t, logger)
-	db.(system.Component).Start()
-	mq := mocks.NewMQTTClient()
+	defer db.(system.Stoppable).Stop()
 
-	enc := rpc.NewEncoder(logger, mq, db)
-	enc.Start()
+	mqttClient := mocks.NewMQTTClient()
+	processor := mocks.NewProcessor()
 
-	defer enc.Stop()
+	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc.(system.Startable).Start()
+
+	defer enc.(system.Stoppable).Stop()
 
 	assert.NotNil(t, enc)
 
@@ -77,8 +80,8 @@ func TestCreateStream(t *testing.T) {
 	})
 
 	assert.Nil(t, err)
-	assert.Len(t, mq.Subscriptions, 1)
-	assert.Len(t, mq.Subscriptions["tcp://mqtt.local:1883"], 1)
+	assert.Len(t, mqttClient.Subscriptions, 1)
+	assert.Len(t, mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
 	assert.Equal(t, "zxkXG8ZW", resp.StreamUid)
 
 	device, err := db.GetDevice("device/sck/abc123/readings")
@@ -99,8 +102,10 @@ func TestSubscriptionsCreatedOnStart(t *testing.T) {
 	logger := kitlog.NewNopLogger()
 
 	db := getTestDB(t, logger)
+	defer db.(system.Stoppable).Stop()
 
-	mq := mocks.NewMQTTClient()
+	mqttClient := mocks.NewMQTTClient()
+	processor := mocks.NewProcessor()
 
 	// insert two streams for a device
 	_, err := db.CreateStream(&postgres.Stream{
@@ -129,24 +134,26 @@ func TestSubscriptionsCreatedOnStart(t *testing.T) {
 	})
 	assert.Nil(t, err)
 
-	enc := rpc.NewEncoder(logger, mq, db)
-	enc.Start()
+	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc.(system.Startable).Start()
 
-	assert.Len(t, mq.Subscriptions["tcp://broker1:1883"], 2)
+	assert.Len(t, mqttClient.Subscriptions["tcp://broker1:1883"], 2)
 
-	enc.Stop()
+	enc.(system.Stoppable).Stop()
 }
 
 func TestCreateStreamInvalid(t *testing.T) {
 	logger := kitlog.NewNopLogger()
 	db := getTestDB(t, logger)
-	db.(system.Component).Start()
-	mq := mocks.NewMQTTClient()
+	defer db.(system.Stoppable).Stop()
 
-	enc := rpc.NewEncoder(logger, mq, db)
-	enc.Start()
+	mqttClient := mocks.NewMQTTClient()
+	processor := mocks.NewProcessor()
 
-	defer enc.Stop()
+	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc.(system.Startable).Start()
+
+	defer enc.(system.Stoppable).Stop()
 
 	testcases := []struct {
 		label       string
@@ -284,13 +291,15 @@ func TestCreateStreamInvalid(t *testing.T) {
 func TestDeleteStreamInvalid(t *testing.T) {
 	logger := kitlog.NewNopLogger()
 	db := getTestDB(t, logger)
-	db.(system.Component).Start()
-	mq := mocks.NewMQTTClient()
+	defer db.(system.Stoppable).Stop()
 
-	enc := rpc.NewEncoder(logger, mq, db)
-	enc.Start()
+	mqttClient := mocks.NewMQTTClient()
+	processor := mocks.NewProcessor()
 
-	defer enc.Stop()
+	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc.(system.Startable).Start()
+
+	defer enc.(system.Stoppable).Stop()
 
 	testcases := []struct {
 		label       string

@@ -27,7 +27,7 @@ func getTestingDB(t *testing.T) postgres.DB {
 		logger,
 	)
 
-	err := db.(system.Component).Start()
+	err := db.(system.Startable).Start()
 	if err != nil {
 		t.Fatalf("Error starting DB: %v", err)
 	}
@@ -46,7 +46,7 @@ func getTestingDB(t *testing.T) postgres.DB {
 }
 func TestRoundTrip(t *testing.T) {
 	db := getTestingDB(t)
-	defer db.(system.Component).Stop()
+	defer db.(system.Stoppable).Stop()
 
 	assert.NotNil(t, db)
 
