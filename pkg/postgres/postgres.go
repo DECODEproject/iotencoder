@@ -148,7 +148,7 @@ func (d *db) Stop() error {
 // occurs.
 func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 	// device upsert sql - note we encrypt the private key using postgres native
-	// symmetric encryption
+	// symmetric encryption scheme
 	sql := `INSERT INTO devices
 		(broker, topic, private_key, user_uid, longitude, latitude, disposition)
 	VALUES (:broker, :topic, pgp_sym_encrypt(:private_key, :encryption_password),
@@ -190,10 +190,17 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 		return "", errors.Wrap(err, "failed to upsert device")
 	}
 
-	// streams insert sql
+	// streams insert sql - again worth noting here we encrypt the public key using
+	// postgres native pgcrypto symmetric encryption, but also store a hash of the
+	// public key allowing us to enforce the uniqueness index on the table without
+	// having the unencrypted key written to the disk.
 	sql = `INSERT INTO streams
-		(device_id, public_key)
-	VALUES (:device_id, pgp_sym_encrypt(:public_key, :encryption_password))
+		(device_id, public_key, public_key_hash)
+	VALUES (
+		:device_id,
+		pgp_sym_encrypt(:public_key, :encryption_password),
+		digest(:public_key, 'sha256')
+	)
 	RETURNING id`
 
 	mapArgs = map[string]interface{}{
