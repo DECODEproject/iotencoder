@@ -3,7 +3,6 @@ package postgres_test
 import (
 	"os"
 	"testing"
-	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
@@ -22,24 +21,10 @@ func (s *PostgresSuite) SetupTest() {
 	logger := kitlog.NewNopLogger()
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
 
-	s.db = postgres.NewDB(
-		&postgres.Config{
-			ConnStr:            connStr,
-			EncryptionPassword: "password",
-			HashidSalt:         "salt",
-			HashidMinLength:    8,
-		},
-		logger,
-	)
-
-	s.db.(system.Startable).Start()
-
 	db, err := postgres.Open(connStr)
 	if err != nil {
 		s.T().Fatalf("Failed to open new connection for migrations: %v", err)
 	}
-
-	time.Sleep(1 * time.Second)
 
 	err = postgres.MigrateDownAll(db.DB, logger)
 	if err != nil {
@@ -55,6 +40,18 @@ func (s *PostgresSuite) SetupTest() {
 	if err != nil {
 		s.T().Fatalf("Failed to close db: %v", err)
 	}
+
+	s.db = postgres.NewDB(
+		&postgres.Config{
+			ConnStr:            connStr,
+			EncryptionPassword: "password",
+			HashidSalt:         "salt",
+			HashidMinLength:    8,
+		},
+		logger,
+	)
+
+	s.db.(system.Startable).Start()
 }
 
 func (s *PostgresSuite) TearDownTest() {

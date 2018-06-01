@@ -26,18 +26,6 @@ func (e *EncoderTestSuite) SetupTest() {
 	logger := kitlog.NewNopLogger()
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
 
-	e.db = postgres.NewDB(
-		&postgres.Config{
-			ConnStr:            connStr,
-			EncryptionPassword: "password",
-			HashidSalt:         "salt",
-			HashidMinLength:    8,
-		},
-		logger,
-	)
-
-	e.db.(system.Startable).Start()
-
 	db, err := postgres.Open(connStr)
 	if err != nil {
 		e.T().Fatalf("Failed to open new connection for migrations: %v", err)
@@ -57,6 +45,18 @@ func (e *EncoderTestSuite) SetupTest() {
 	if err != nil {
 		e.T().Fatalf("Failed to close db: %v", err)
 	}
+
+	e.db = postgres.NewDB(
+		&postgres.Config{
+			ConnStr:            connStr,
+			EncryptionPassword: "password",
+			HashidSalt:         "salt",
+			HashidMinLength:    8,
+		},
+		logger,
+	)
+
+	e.db.(system.Startable).Start()
 }
 
 func (e *EncoderTestSuite) TearDownTest() {
