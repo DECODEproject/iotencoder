@@ -1,7 +1,6 @@
 package postgres_test
 
 import (
-	"fmt"
 	"os"
 	"testing"
 
@@ -19,7 +18,6 @@ type PostgresSuite struct {
 }
 
 func (s *PostgresSuite) SetupTest() {
-	fmt.Println("Setup")
 	logger := kitlog.NewNopLogger()
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
 
@@ -47,7 +45,6 @@ func (s *PostgresSuite) SetupTest() {
 }
 
 func (s *PostgresSuite) TearDownTest() {
-	fmt.Println("TearDown")
 	s.db.(system.Stoppable).Stop()
 }
 
