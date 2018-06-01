@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
@@ -45,6 +46,8 @@ func (e *EncoderTestSuite) SetupTest() {
 	if err != nil {
 		e.T().Fatalf("Failed to close db: %v", err)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	e.db = postgres.NewDB(
 		&postgres.Config{

@@ -3,6 +3,7 @@ package postgres_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
@@ -40,6 +41,8 @@ func (s *PostgresSuite) SetupTest() {
 	if err != nil {
 		s.T().Fatalf("Failed to close db: %v", err)
 	}
+
+	time.Sleep(1 * time.Second)
 
 	s.db = postgres.NewDB(
 		&postgres.Config{
