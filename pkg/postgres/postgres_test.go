@@ -33,14 +33,24 @@ func (s *PostgresSuite) SetupTest() {
 
 	s.db.(system.Startable).Start()
 
-	err := s.db.MigrateDownAll()
+	db, err := postgres.Open(connStr)
+	if err != nil {
+		s.T().Fatalf("Failed to open new connection for migrations: %v", err)
+	}
+
+	err = postgres.MigrateDownAll(db.DB, logger)
 	if err != nil {
 		s.T().Fatalf("Failed to migrate down: %v", err)
 	}
 
-	err = s.db.MigrateUp()
+	err = postgres.MigrateUp(db.DB, logger)
 	if err != nil {
 		s.T().Fatalf("Failed to migrate up: %v", err)
+	}
+
+	err = db.Close()
+	if err != nil {
+		s.T().Fatalf("Failed to close db: %v", err)
 	}
 }
 
