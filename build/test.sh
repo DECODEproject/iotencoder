@@ -19,7 +19,7 @@ go test -i -installsuffix "static" ${TARGETS}
 if [ ! -z "$RUN" ]; then
     go test -v -timeout 30s ${TARGETS} -run "$RUN"
 else
-    go test -v -installsuffix "static" -coverprofile=.coverage/coverage.out -timeout 30s ${TARGETS}
+    go test -v -p 1 -installsuffix "static" -coverprofile=.coverage/coverage.out -timeout 30s ${TARGETS}
     go tool cover -html=.coverage/coverage.out -o .coverage/coverage.html
     go tool cover -func=.coverage/coverage.out
     echo
