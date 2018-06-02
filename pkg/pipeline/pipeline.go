@@ -63,13 +63,14 @@ type Processor interface {
 type processor struct {
 	datastore datastore.Datastore
 	logger    kitlog.Logger
+	verbose   bool
 }
 
 // NewProcessor is a constructor function that takes as input an instantiated
 // datastore client, and a logger. It returns the instantiated processor which
 // is ready for use. Note we pass in the datastore instance so that we can
 // supply a mock for testing.
-func NewProcessor(ds datastore.Datastore, logger kitlog.Logger) Processor {
+func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Processor {
 	logger = kitlog.With(logger, "module", "pipeline")
 
 	logger.Log("msg", "creating processor")
@@ -77,6 +78,7 @@ func NewProcessor(ds datastore.Datastore, logger kitlog.Logger) Processor {
 	return &processor{
 		datastore: ds,
 		logger:    logger,
+		verbose:   verbose,
 	}
 }
 
@@ -88,6 +90,10 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 	encodedPayload := base64Encode(payload)
 
 	for _, stream := range device.Streams {
+		if p.verbose {
+			p.logger.Log("public_key", stream.PublicKey, "user_uid", device.UserUID, "msg", "writing data")
+		}
+
 		start := time.Now()
 
 		_, err := p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
