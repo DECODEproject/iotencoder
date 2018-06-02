@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"testing"
-	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
@@ -47,9 +46,6 @@ func (e *EncoderTestSuite) SetupTest() {
 		e.T().Fatalf("Failed to close db: %v", err)
 	}
 
-	// TODO: figure out why CI seems to need this
-	time.Sleep(1 * time.Second)
-
 	e.db = postgres.NewDB(
 		&postgres.Config{
 			ConnStr:            connStr,
@@ -72,7 +68,15 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         e.db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    false,
+	}, logger)
+
+	assert.Len(e.T(), mqttClient.Subscriptions, 0)
+
 	enc.(system.Startable).Start()
 	defer enc.(system.Stoppable).Stop()
 
@@ -92,7 +96,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	assert.Nil(e.T(), err)
 	assert.Len(e.T(), mqttClient.Subscriptions, 1)
 	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
-	assert.Equal(e.T(), "zxkXG8ZW", resp.StreamUid)
+	assert.NotEqual(e.T(), "", resp.StreamUid)
 
 	device, err := e.db.GetDevice("device/sck/abc123/readings")
 	assert.Nil(e.T(), err)
@@ -140,7 +144,13 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	})
 	assert.Nil(e.T(), err)
 
-	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         e.db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    true,
+	}, logger)
+
 	enc.(system.Startable).Start()
 
 	assert.Len(e.T(), mqttClient.Subscriptions["tcp://broker1:1883"], 2)
@@ -153,7 +163,13 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         e.db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    true,
+	}, logger)
+
 	enc.(system.Startable).Start()
 	defer enc.(system.Stoppable).Stop()
 
@@ -295,7 +311,13 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         e.db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    true,
+	}, logger)
+
 	enc.(system.Startable).Start()
 	defer enc.(system.Stoppable).Stop()
 

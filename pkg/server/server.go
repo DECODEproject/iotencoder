@@ -31,6 +31,7 @@ type Config struct {
 	HashidSalt         string
 	HashidMinLength    int
 	DatastoreAddr      string
+	Verbose            bool
 }
 
 // Server is our top level type, contains all other components, is responsible
@@ -68,11 +69,17 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		},
 	)
 
-	processor := pipeline.NewProcessor(ds, logger)
+	processor := pipeline.NewProcessor(ds, config.Verbose, logger)
 
 	mqttClient := mqtt.NewClient(logger)
 
-	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    config.Verbose,
+	}, logger)
+
 	hooks := twrpprom.NewServerHooks(nil)
 
 	logger = kitlog.With(logger, "module", "server")

@@ -3,7 +3,6 @@ package postgres_test
 import (
 	"os"
 	"testing"
-	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
@@ -41,9 +40,6 @@ func (s *PostgresSuite) SetupTest() {
 	if err != nil {
 		s.T().Fatalf("Failed to close db: %v", err)
 	}
-
-	// TODO: figure out why CI seems to need this
-	time.Sleep(1 * time.Second)
 
 	s.db = postgres.NewDB(
 		&postgres.Config{
@@ -162,7 +158,7 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 		PublicKey: "public1",
 		Device: &postgres.Device{
 			Broker:      "tcp://example.com",
-			Topic:       "device/123",
+			Topic:       "device/foo",
 			PrivateKey:  "private",
 			UserUID:     "bob",
 			Longitude:   45.2,
@@ -178,7 +174,7 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 		PublicKey: "public2",
 		Device: &postgres.Device{
 			Broker:      "tcp://mqtt.com",
-			Topic:       "device/123",
+			Topic:       "device/foo",
 			PrivateKey:  "private",
 			UserUID:     "bob",
 			Longitude:   45.2,
@@ -206,7 +202,7 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	_, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
+			Broker:      "tcp://unique.com",
 			Topic:       "device/123",
 			PrivateKey:  "private",
 			UserUID:     "bob",
@@ -221,7 +217,7 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	_, err = s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
+			Broker:      "tcp://unique.com",
 			Topic:       "device/123",
 			PrivateKey:  "private",
 			UserUID:     "bob",

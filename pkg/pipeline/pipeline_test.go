@@ -49,7 +49,7 @@ func TestProcess(t *testing.T) {
 		nil,
 	)
 
-	processor := pipeline.NewProcessor(datastore.Datastore(&ds), logger)
+	processor := pipeline.NewProcessor(datastore.Datastore(&ds), true, logger)
 
 	device := &postgres.Device{
 		UserUID: "bob",
@@ -89,7 +89,7 @@ func TestProcessWithError(t *testing.T) {
 		errors.New("error"),
 	)
 
-	processor := pipeline.NewProcessor(datastore.Datastore(&ds), logger)
+	processor := pipeline.NewProcessor(datastore.Datastore(&ds), true, logger)
 	device := &postgres.Device{
 		UserUID: "bob",
 		Streams: []*postgres.Stream{

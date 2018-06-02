@@ -21,21 +21,30 @@ type encoderImpl struct {
 	db        postgres.DB
 	mqtt      mqtt.Client
 	processor pipeline.Processor
+	verbose   bool
+}
+
+type Config struct {
+	DB         postgres.DB
+	MQTTClient mqtt.Client
+	Processor  pipeline.Processor
+	Verbose    bool
 }
 
 // NewEncoder returns a newly instantiated Encoder instance. It takes as
 // parameters a DB connection string and a logger. The connection string is
 // passed down to the postgres package where it is used to connect.
-func NewEncoder(db postgres.DB, mqttClient mqtt.Client, processor pipeline.Processor, logger kitlog.Logger) encoder.Encoder {
+func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 	logger = kitlog.With(logger, "module", "rpc")
 
 	logger.Log("msg", "creating encoder")
 
 	return &encoderImpl{
 		logger:    logger,
-		db:        db,
-		mqtt:      mqttClient,
-		processor: processor,
+		db:        config.DB,
+		mqtt:      config.MQTTClient,
+		processor: config.Processor,
+		verbose:   config.Verbose,
 	}
 }
 
@@ -136,6 +145,10 @@ func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 	device, err := e.db.GetDevice(topic)
 	if err != nil {
 		e.logger.Log("err", err, "msg", "failed to get device")
+	}
+
+	if e.verbose {
+		e.logger.Log("topic", topic, "payload", payload, "msg", "received data")
 	}
 
 	err = e.processor.Process(device, payload)

@@ -144,7 +144,7 @@ func _20180526232618_add_streams_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180526232618_add_streams_table.up.sql", size: 331, mode: os.FileMode(420), modTime: time.Unix(1527854292, 0)}
+	info := bindataFileInfo{name: "20180526232618_add_streams_table.up.sql", size: 331, mode: os.FileMode(420), modTime: time.Unix(1527931977, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

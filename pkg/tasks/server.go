@@ -15,10 +15,12 @@ func init() {
 	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8080", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
 	serverCmd.Flags().IntP("hashidlength", "l", 8, "Minimum length of generated hashids")
+	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
 	viper.BindPFlag("hashidlength", serverCmd.Flags().Lookup("hashidlength"))
+	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
 }
 
 var serverCmd = &cobra.Command{
@@ -67,6 +69,7 @@ clients unable to use the Protocol Buffer API.`,
 			EncryptionPassword: encryptionPassword,
 			HashidSalt:         hashidSalt,
 			HashidMinLength:    viper.GetInt("hashidlength"),
+			Verbose:            viper.GetBool("verbose"),
 		}
 
 		s := server.NewServer(config, logger)
