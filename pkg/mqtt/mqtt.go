@@ -17,13 +17,14 @@ var (
 	// when connecting
 	mqttClientID = fmt.Sprintf("%sDECODE", version.BinaryName)
 
-	// messageCounter is a prometheus counter recording the number of received
-	// messages
-	messageCounter = prometheus.NewCounter(
+	// messageCounter is a prometheus counter vec recording the number of received
+	// messages, labelled by topic
+	messageCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "messages_received",
 			Help: "Count of MQTT messages received",
 		},
+		[]string{"broker"},
 	)
 )
 
@@ -96,7 +97,7 @@ func (c *client) Subscribe(broker, topic string, cb Callback) error {
 	c.logger.Log("topic", topic, "broker", broker, "msg", "subscribing")
 
 	var handler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
-		messageCounter.Inc()
+		messageCounter.With(prometheus.Labels{"broker": broker}).Inc()
 
 		cb(message.Topic(), message.Payload())
 	}

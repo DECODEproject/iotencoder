@@ -2,6 +2,7 @@ package pipeline_test
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"testing"
 
@@ -19,6 +20,7 @@ func TestProcess(t *testing.T) {
 	ds := mocks.Datastore{}
 
 	payload := []byte("hello")
+	encodedPayload := []byte(base64.StdEncoding.EncodeToString(payload))
 
 	// set up two mock responses
 	ds.On(
@@ -27,7 +29,7 @@ func TestProcess(t *testing.T) {
 		&datastore.WriteRequest{
 			PublicKey: "key1",
 			UserUid:   "bob",
-			Data:      payload,
+			Data:      encodedPayload,
 		},
 	).Return(
 		&datastore.WriteResponse{},
@@ -40,7 +42,7 @@ func TestProcess(t *testing.T) {
 		&datastore.WriteRequest{
 			PublicKey: "key2",
 			UserUid:   "bob",
-			Data:      payload,
+			Data:      encodedPayload,
 		},
 	).Return(
 		&datastore.WriteResponse{},
@@ -72,6 +74,7 @@ func TestProcessWithError(t *testing.T) {
 	ds := mocks.Datastore{}
 
 	payload := []byte("hello")
+	encodedPayload := []byte(base64.StdEncoding.EncodeToString(payload))
 
 	ds.On(
 		"WriteData",
@@ -79,7 +82,7 @@ func TestProcessWithError(t *testing.T) {
 		&datastore.WriteRequest{
 			PublicKey: "key1",
 			UserUid:   "bob",
-			Data:      payload,
+			Data:      encodedPayload,
 		},
 	).Return(
 		&datastore.WriteResponse{},

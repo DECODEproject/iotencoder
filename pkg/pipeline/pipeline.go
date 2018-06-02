@@ -2,12 +2,49 @@ package pipeline
 
 import (
 	"context"
+	"encoding/base64"
+	"time"
 
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thingful/iotencoder/pkg/postgres"
 
 	datastore "github.com/thingful/twirp-datastore-go"
 )
+
+var (
+	// datastoreErrorCounter is a prometheus counter recording a count of any
+	// errors that occur when writing to the datastore
+	datastoreErrorCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "datastore_errors",
+			Help: "Count of errors writing to datastore",
+		},
+	)
+
+	// datastoreWriteCounter is a prometheus counter recording a count of successful
+	// writes to the datastore.
+	//datastoreWriteCounter = prometheus.NewCounter(
+	//	prometheus.CounterOpts{
+	//		Name: "datastore_writes",
+	//		Help: "Count of writes to the datastore",
+	//	},
+	//)
+
+	// datastoreWriteHistogram is a prometheus histogram recording successful
+	// writes to the datastore. We use the default bucket distributions.
+	datastoreWriteHistogram = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name: "datastore_writes",
+			Help: "Datastore writes duration distribution",
+		},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(datastoreErrorCounter)
+	prometheus.MustRegister(datastoreWriteHistogram)
+}
 
 // Processor is an interface we define to handle processing all the streams for
 // a device, where processing means reading all streams for the device, applying
@@ -48,17 +85,35 @@ func NewProcessor(ds datastore.Datastore, logger kitlog.Logger) Processor {
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
+	encodedPayload := base64Encode(payload)
+
 	for _, stream := range device.Streams {
+		start := time.Now()
+
 		_, err := p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
 			PublicKey: stream.PublicKey,
 			UserUid:   device.UserUID,
-			Data:      payload,
+			Data:      encodedPayload,
 		})
 
+		duration := time.Since(start)
+
 		if err != nil {
+			datastoreErrorCounter.Inc()
+
 			return err
 		}
+
+		datastoreWriteHistogram.Observe(duration.Seconds())
 	}
 
 	return nil
+}
+
+// base64Encode simulates proper encoding by simply base64 encoding the incoming
+// message.
+func base64Encode(payload []byte) []byte {
+	base64Text := make([]byte, base64.StdEncoding.EncodedLen(len(payload)))
+	base64.StdEncoding.Encode(base64Text, payload)
+	return base64Text
 }

@@ -4,25 +4,53 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
-	encoder "github.com/thingful/twirp-encoder-go"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/thingful/iotencoder/pkg/mocks"
 	"github.com/thingful/iotencoder/pkg/postgres"
 	"github.com/thingful/iotencoder/pkg/rpc"
 	"github.com/thingful/iotencoder/pkg/system"
+	encoder "github.com/thingful/twirp-encoder-go"
 )
 
-// getTestDB returns a DB instance that has been started and purged of all
-// content by migrating down and up.
-func getTestDB(t *testing.T, logger kitlog.Logger) postgres.DB {
-	t.Helper()
+type EncoderTestSuite struct {
+	suite.Suite
 
+	db postgres.DB
+}
+
+func (e *EncoderTestSuite) SetupTest() {
+	logger := kitlog.NewNopLogger()
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
 
-	db := postgres.NewDB(
+	db, err := postgres.Open(connStr)
+	if err != nil {
+		e.T().Fatalf("Failed to open new connection for migrations: %v", err)
+	}
+
+	err = postgres.MigrateDownAll(db.DB, logger)
+	if err != nil {
+		e.T().Fatalf("Failed to migrate down: %v", err)
+	}
+
+	err = postgres.MigrateUp(db.DB, logger)
+	if err != nil {
+		e.T().Fatalf("Failed to migrate up: %v", err)
+	}
+
+	err = db.Close()
+	if err != nil {
+		e.T().Fatalf("Failed to close db: %v", err)
+	}
+
+	// TODO: figure out why CI seems to need this
+	time.Sleep(1 * time.Second)
+
+	e.db = postgres.NewDB(
 		&postgres.Config{
 			ConnStr:            connStr,
 			EncryptionPassword: "password",
@@ -32,39 +60,21 @@ func getTestDB(t *testing.T, logger kitlog.Logger) postgres.DB {
 		logger,
 	)
 
-	err := db.(system.Startable).Start()
-	if err != nil {
-		t.Fatalf("Failed to start DB: %v", err)
-	}
-
-	err = db.MigrateDownAll()
-	if err != nil {
-		t.Fatalf("Failed to migrate down: %v", err)
-	}
-
-	err = db.MigrateUp()
-	if err != nil {
-		t.Fatalf("Failed to migrate down: %v", err)
-	}
-
-	return db
+	e.db.(system.Startable).Start()
 }
 
-func TestCreateStream(t *testing.T) {
+func (e *EncoderTestSuite) TearDownTest() {
+	e.db.(system.Stoppable).Stop()
+}
+
+func (e *EncoderTestSuite) TestStreamLifecycle() {
 	logger := kitlog.NewNopLogger()
-
-	db := getTestDB(t, logger)
-	defer db.(system.Stoppable).Stop()
-
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
 	enc.(system.Startable).Start()
-
 	defer enc.(system.Stoppable).Stop()
-
-	assert.NotNil(t, enc)
 
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
 		BrokerAddress:      "tcp://mqtt.local:1883",
@@ -79,36 +89,32 @@ func TestCreateStream(t *testing.T) {
 		Disposition: encoder.CreateStreamRequest_INDOOR,
 	})
 
-	assert.Nil(t, err)
-	assert.Len(t, mqttClient.Subscriptions, 1)
-	assert.Len(t, mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
-	assert.Equal(t, "zxkXG8ZW", resp.StreamUid)
+	assert.Nil(e.T(), err)
+	assert.Len(e.T(), mqttClient.Subscriptions, 1)
+	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
+	assert.Equal(e.T(), "zxkXG8ZW", resp.StreamUid)
 
-	device, err := db.GetDevice("device/sck/abc123/readings")
-	assert.Nil(t, err)
-	assert.Equal(t, "tcp://mqtt.local:1883", device.Broker)
-	assert.Len(t, device.Streams, 1)
+	device, err := e.db.GetDevice("device/sck/abc123/readings")
+	assert.Nil(e.T(), err)
+	assert.Equal(e.T(), "tcp://mqtt.local:1883", device.Broker)
+	assert.Len(e.T(), device.Streams, 1)
 
 	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{
 		StreamUid: resp.StreamUid,
 	})
-	assert.Nil(t, err)
+	assert.Nil(e.T(), err)
 
-	device, err = db.GetDevice("device/sck/abc123/readings")
-	assert.NotNil(t, err)
+	device, err = e.db.GetDevice("device/sck/abc123/readings")
+	assert.NotNil(e.T(), err)
 }
 
-func TestSubscriptionsCreatedOnStart(t *testing.T) {
+func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	logger := kitlog.NewNopLogger()
-
-	db := getTestDB(t, logger)
-	defer db.(system.Stoppable).Stop()
-
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	// insert two streams for a device
-	_, err := db.CreateStream(&postgres.Stream{
+	// insert two streams with devices
+	_, err := e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
 			Broker:      "tcp://broker1:1883",
@@ -119,9 +125,9 @@ func TestSubscriptionsCreatedOnStart(t *testing.T) {
 			Disposition: "indoor",
 		},
 	})
-	assert.Nil(t, err)
+	assert.Nil(e.T(), err)
 
-	_, err = db.CreateStream(&postgres.Stream{
+	_, err = e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
 			Broker:      "tcp://broker1:1883",
@@ -132,27 +138,23 @@ func TestSubscriptionsCreatedOnStart(t *testing.T) {
 			Disposition: "indoor",
 		},
 	})
-	assert.Nil(t, err)
+	assert.Nil(e.T(), err)
 
-	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
 	enc.(system.Startable).Start()
 
-	assert.Len(t, mqttClient.Subscriptions["tcp://broker1:1883"], 2)
+	assert.Len(e.T(), mqttClient.Subscriptions["tcp://broker1:1883"], 2)
 
 	enc.(system.Stoppable).Stop()
 }
 
-func TestCreateStreamInvalid(t *testing.T) {
+func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 	logger := kitlog.NewNopLogger()
-	db := getTestDB(t, logger)
-	defer db.(system.Stoppable).Stop()
-
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
 	enc.(system.Startable).Start()
-
 	defer enc.(system.Stoppable).Stop()
 
 	testcases := []struct {
@@ -280,7 +282,7 @@ func TestCreateStreamInvalid(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		t.Run(tc.label, func(t *testing.T) {
+		e.T().Run(tc.label, func(t *testing.T) {
 			_, err := enc.CreateStream(context.Background(), tc.request)
 			assert.NotNil(t, err)
 			assert.Equal(t, tc.expectedErr, err.Error())
@@ -288,17 +290,13 @@ func TestCreateStreamInvalid(t *testing.T) {
 	}
 }
 
-func TestDeleteStreamInvalid(t *testing.T) {
+func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 	logger := kitlog.NewNopLogger()
-	db := getTestDB(t, logger)
-	defer db.(system.Stoppable).Stop()
-
 	mqttClient := mocks.NewMQTTClient()
 	processor := mocks.NewProcessor()
 
-	enc := rpc.NewEncoder(db, mqttClient, processor, logger)
+	enc := rpc.NewEncoder(e.db, mqttClient, processor, logger)
 	enc.(system.Startable).Start()
-
 	defer enc.(system.Stoppable).Stop()
 
 	testcases := []struct {
@@ -314,7 +312,7 @@ func TestDeleteStreamInvalid(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		t.Run(tc.label, func(t *testing.T) {
+		e.T().Run(tc.label, func(t *testing.T) {
 			_, err := enc.DeleteStream(context.Background(), tc.request)
 			assert.NotNil(t, err)
 			assert.Equal(t, tc.expectedErr, err.Error())
@@ -322,163 +320,6 @@ func TestDeleteStreamInvalid(t *testing.T) {
 	}
 }
 
-//func TestWriteDataInvalid(t *testing.T) {
-//	ds := getTestDatastore(t)
-//	defer ds.Stop()
-//
-//	testcases := []struct {
-//		label         string
-//		request       *datastore.WriteRequest
-//		expectedError string
-//	}{
-//		{
-//			label: "missing public_key",
-//			request: &datastore.WriteRequest{
-//				UserUid: "bob",
-//			},
-//			expectedError: "twirp error invalid_argument: public_key is required",
-//		},
-//		{
-//			label: "missing user_uid",
-//			request: &datastore.WriteRequest{
-//				PublicKey: "device1",
-//			},
-//			expectedError: "twirp error invalid_argument: user_uid is required",
-//		},
-//	}
-//
-//	for _, tc := range testcases {
-//		t.Run(tc.label, func(t *testing.T) {
-//			_, err := ds.WriteData(context.Background(), tc.request)
-//			assert.NotNil(t, err)
-//			assert.Equal(t, tc.expectedError, err.Error())
-//		})
-//	}
-//}
-//
-//func TestReadDataInvalid(t *testing.T) {
-//	ds := getTestDatastore(t)
-//	defer ds.Stop()
-//
-//	testcases := []struct {
-//		label         string
-//		request       *datastore.ReadRequest
-//		expectedError string
-//	}{
-//		{
-//			label:         "missing public_key",
-//			request:       &datastore.ReadRequest{},
-//			expectedError: "twirp error invalid_argument: public_key is required",
-//		},
-//		{
-//			label: "large page size",
-//			request: &datastore.ReadRequest{
-//				PublicKey: "123abc",
-//				PageSize:  1001,
-//			},
-//			expectedError: "twirp error invalid_argument: page_size must be between 1 and 1000",
-//		},
-//	}
-//
-//	for _, tc := range testcases {
-//		t.Run(tc.label, func(t *testing.T) {
-//			_, err := ds.ReadData(context.Background(), tc.request)
-//			assert.NotNil(t, err)
-//			assert.Equal(t, tc.expectedError, err.Error())
-//		})
-//	}
-//}
-//
-//func TestDeleteDataInvalid(t *testing.T) {
-//	ds := getTestDatastore(t)
-//	defer ds.Stop()
-//
-//	testcases := []struct {
-//		label         string
-//		request       *datastore.DeleteRequest
-//		expectedError string
-//	}{
-//		{
-//			label:         "missing user_uid",
-//			request:       &datastore.DeleteRequest{},
-//			expectedError: "twirp error invalid_argument: user_uid is required",
-//		},
-//	}
-//
-//	for _, tc := range testcases {
-//		t.Run(tc.label, func(t *testing.T) {
-//			_, err := ds.DeleteData(context.Background(), tc.request)
-//			assert.NotNil(t, err)
-//			assert.Equal(t, tc.expectedError, err.Error())
-//		})
-//	}
-//}
-//
-//func TestPagination(t *testing.T) {
-//	ds := getTestDatastore(t)
-//	defer ds.Stop()
-//
-//	fixtures := []struct {
-//		publicKey string
-//		userID    string
-//		timestamp string
-//		data      []byte
-//	}{
-//		{
-//			publicKey: "abc123",
-//			userID:    "alice",
-//			timestamp: "2018-05-01T08:00:00Z",
-//			data:      []byte("first"),
-//		},
-//		{
-//			publicKey: "abc123",
-//			userID:    "alice",
-//			timestamp: "2018-05-01T08:02:00Z",
-//			data:      []byte("third"),
-//		},
-//		{
-//			publicKey: "abc123",
-//			userID:    "bob",
-//			timestamp: "2018-05-01T08:01:00Z",
-//			data:      []byte("second"),
-//		},
-//		{
-//			publicKey: "abc123",
-//			userID:    "bob",
-//			timestamp: "2018-05-01T08:02:00Z",
-//			data:      []byte("fourth"),
-//		},
-//	}
-//
-//	// load fixtures into db
-//	for _, f := range fixtures {
-//		ts, _ := time.Parse(time.RFC3339, f.timestamp)
-//
-//		ds.DB.MustExec("INSERT INTO events (public_key, user_uid, recorded_at, data) VALUES ($1, $2, $3, $4)", f.publicKey, f.userID, ts, f.data)
-//	}
-//
-//	resp, err := ds.ReadData(context.Background(), &datastore.ReadRequest{
-//		PublicKey: "abc123",
-//		PageSize:  3,
-//	})
-//
-//	assert.Nil(t, err)
-//	assert.Equal(t, "abc123", resp.PublicKey)
-//	assert.Len(t, resp.Events, 3)
-//	assert.NotEqual(t, "", resp.NextPageCursor)
-//
-//	assert.Equal(t, "first", string(resp.Events[0].Data))
-//	assert.Equal(t, "second", string(resp.Events[1].Data))
-//	assert.Equal(t, "third", string(resp.Events[2].Data))
-//
-//	resp, err = ds.ReadData(context.Background(), &datastore.ReadRequest{
-//		PublicKey:  "abc123",
-//		PageSize:   3,
-//		PageCursor: resp.NextPageCursor,
-//	})
-//
-//	assert.Nil(t, err)
-//	assert.Len(t, resp.Events, 1)
-//	assert.Equal(t, "", resp.NextPageCursor)
-//}
-//
+func TestRunEncoderTestSuite(t *testing.T) {
+	suite.Run(t, new(EncoderTestSuite))
+}
