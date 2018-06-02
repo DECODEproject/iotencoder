@@ -42,6 +42,7 @@ func (s *PostgresSuite) SetupTest() {
 		s.T().Fatalf("Failed to close db: %v", err)
 	}
 
+	// TODO: figure out why CI seems to need this
 	time.Sleep(1 * time.Second)
 
 	s.db = postgres.NewDB(
