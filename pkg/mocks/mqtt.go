@@ -18,8 +18,9 @@ type MQTTClient struct {
 
 // NewMQTTClient returns a new mock client with the internal map correctly
 // initialized.
-func NewMQTTClient() *MQTTClient {
+func NewMQTTClient(err error) *MQTTClient {
 	return &MQTTClient{
+		err:           err,
 		Subscriptions: make(map[string]map[string]bool),
 	}
 }
