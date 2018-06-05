@@ -67,9 +67,7 @@ func (e *encoderImpl) Start() error {
 			e.handleCallback(topic, payload)
 		})
 
-		if err != nil {
-			return errors.Wrap(err, "failed to subscribe to topic")
-		}
+		e.logger.Log("err", err, "msg", "failed to subscribe to topic")
 	}
 
 	return nil
