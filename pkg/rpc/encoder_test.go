@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -65,7 +66,7 @@ func (e *EncoderTestSuite) TearDownTest() {
 
 func (e *EncoderTestSuite) TestStreamLifecycle() {
 	logger := kitlog.NewNopLogger()
-	mqttClient := mocks.NewMQTTClient()
+	mqttClient := mocks.NewMQTTClient(nil)
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
@@ -77,7 +78,8 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 0)
 
-	enc.(system.Startable).Start()
+	err := enc.(system.Startable).Start()
+	assert.Nil(e.T(), err)
 	defer enc.(system.Stoppable).Stop()
 
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
@@ -114,7 +116,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 
 func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	logger := kitlog.NewNopLogger()
-	mqttClient := mocks.NewMQTTClient()
+	mqttClient := mocks.NewMQTTClient(nil)
 	processor := mocks.NewProcessor()
 
 	// insert two streams with devices
@@ -160,7 +162,7 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 
 func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 	logger := kitlog.NewNopLogger()
-	mqttClient := mocks.NewMQTTClient()
+	mqttClient := mocks.NewMQTTClient(nil)
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
@@ -308,7 +310,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 
 func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 	logger := kitlog.NewNopLogger()
-	mqttClient := mocks.NewMQTTClient()
+	mqttClient := mocks.NewMQTTClient(nil)
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
@@ -340,6 +342,35 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 			assert.Equal(t, tc.expectedErr, err.Error())
 		})
 	}
+}
+
+func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
+	logger := kitlog.NewNopLogger()
+	mqttClient := mocks.NewMQTTClient(errors.New("failed"))
+	processor := mocks.NewProcessor()
+
+	_, err := e.db.CreateStream(&postgres.Stream{
+		PublicKey: "abc123",
+		Device: &postgres.Device{
+			Broker:      "tcp://broker:1883",
+			Topic:       "devices/foo",
+			UserUID:     "bob",
+			Longitude:   23,
+			Latitude:    45,
+			Disposition: "indoor",
+		},
+	})
+	assert.Nil(e.T(), err)
+
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         e.db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    true,
+	}, logger)
+
+	err = enc.(system.Startable).Start()
+	assert.Nil(e.T(), err)
 }
 
 func TestRunEncoderTestSuite(t *testing.T) {
