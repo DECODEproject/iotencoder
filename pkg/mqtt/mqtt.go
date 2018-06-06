@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sync"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	paho "github.com/eclipse/paho.mqtt.golang"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,7 +32,8 @@ func init() {
 	prometheus.MustRegister(messageCounter)
 }
 
-// Callback is a function we pass in to subscribe to a feed.
+// Callback is a type alias describing a function we pass in to subscribe to a
+// device's topic.
 type Callback func(topic string, payload []byte)
 
 // Client is the main interface for our MQTT module. It exposes a single method
@@ -52,25 +53,31 @@ type Client interface {
 }
 
 // client abstracts our connection to one or more MQTT brokers, it allows new
-// subscriptions to be made to topics, and somehow emits received events to be
-// written on to the datastore.
+// subscriptions to be made to topics, and emits received events to be written
+// on to the datastore.
 type client struct {
-	logger kitlog.Logger
+	logger    kitlog.Logger
+	connector Connector
 
-	sync.RWMutex
-	clients map[string]mqtt.Client
+	clientsMu sync.RWMutex
+	clients   map[string]paho.Client
+
+	subscriptionsMu sync.RWMutex
+	subscriptions   map[string]bool
 }
 
 // NewClient creates a new client that is intended to support connections to
 // multiple brokers if required. Takes as input our logger.
-func NewClient(logger kitlog.Logger) Client {
+func NewClient(connector Connector, logger kitlog.Logger) Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
 	logger.Log("msg", "creating mqtt client instance")
 
 	return &client{
-		logger:  logger,
-		clients: make(map[string]mqtt.Client),
+		logger:        logger,
+		connector:     connector,
+		clients:       make(map[string]paho.Client),
+		subscriptions: make(map[string]bool),
 	}
 }
 
@@ -79,8 +86,8 @@ func NewClient(logger kitlog.Logger) Client {
 func (c *client) Stop() error {
 	c.logger.Log("msg", "stopping mqtt, disconnecting clients")
 
-	c.Lock()
-	defer c.Unlock()
+	c.clientsMu.Lock()
+	defer c.clientsMu.Unlock()
 
 	for broker, client := range c.clients {
 		client.Disconnect(500)
@@ -96,19 +103,30 @@ func (c *client) Stop() error {
 func (c *client) Subscribe(broker, topic string, cb Callback) error {
 	c.logger.Log("topic", topic, "broker", broker, "msg", "subscribing")
 
-	var handler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
+	var handler paho.MessageHandler = func(client paho.Client, message paho.Message) {
 		messageCounter.With(prometheus.Labels{"broker": broker}).Inc()
 
 		cb(message.Topic(), message.Payload())
 	}
 
-	client, err := c.getClient(broker)
-	if err != nil {
-		return errors.Wrap(err, "failed to get client")
-	}
+	// see if we are already subscribed
+	c.subscriptionsMu.RLock()
+	_, ok := c.subscriptions[topic]
+	c.subscriptionsMu.RUnlock()
 
-	if token := client.Subscribe(topic, 0, handler); token.Wait() && token.Error() != nil {
-		return token.Error()
+	if !ok {
+		client, err := c.getClient(broker)
+		if err != nil {
+			return errors.Wrap(err, "failed to get client")
+		}
+
+		if token := client.Subscribe(topic, 0, handler); token.Wait() && token.Error() != nil {
+			return token.Error()
+		}
+
+		c.subscriptionsMu.Lock()
+		c.subscriptions[topic] = true
+		c.subscriptionsMu.Unlock()
 	}
 
 	return nil
@@ -129,67 +147,38 @@ func (c *client) Unsubscribe(broker, topic string) error {
 		return token.Error()
 	}
 
+	c.subscriptionsMu.Lock()
+	delete(c.subscriptions, topic)
+	c.subscriptionsMu.Unlock()
+
 	return nil
-}
-
-// connect is a helper function that creates a new mqtt.Client instance that is
-// connected to the passed in broker.
-func connect(broker string, logger kitlog.Logger) (mqtt.Client, error) {
-	opts, err := createClientOptions(broker, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	logger.Log("broker", broker, "msg", "creating client")
-
-	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
-		return nil, errors.Wrap(token.Error(), "failed to connect to broker")
-	}
-
-	logger.Log("broker", broker, "msg", "mqtt connected")
-
-	return client, nil
-}
-
-// createClientOptions initializes a set of ClientOptions for connecting to an
-// MQTT broker.
-func createClientOptions(broker string, logger kitlog.Logger) (*mqtt.ClientOptions, error) {
-	logger.Log("broker", broker, "msg", "configuring client")
-
-	opts := mqtt.NewClientOptions()
-	opts.AddBroker(broker)
-	opts.SetClientID(mqttClientID)
-	opts.SetAutoReconnect(true)
-
-	return opts, nil
 }
 
 // getClient attempts to get a valid client for a given broker. We first attempt
 // to return a client from the in memory process, but if one does not exist we
 // use `connect` in order to make a new connection. Once a connnection is made
 // it will be stored in memory for use for other subscriptions.
-func (c *client) getClient(broker string) (mqtt.Client, error) {
-	var client mqtt.Client
+func (c *client) getClient(broker string) (paho.Client, error) {
+	var client paho.Client
 	var err error
 
 	// attempt to get client, note the use of RLock here which takes a read only
 	// lock on the map containing clients.
-	c.RLock()
+	c.clientsMu.RLock()
 	client, ok := c.clients[broker]
-	c.RUnlock()
+	c.clientsMu.RUnlock()
 
 	if !ok {
-		client, err = connect(broker, c.logger)
+		client, err = c.connector.Connect(broker, c.logger)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to connect to broker")
 		}
 
 		c.logger.Log("broker", broker, "msg", "storing client")
 
-		c.Lock()
+		c.clientsMu.Lock()
 		c.clients[broker] = client
-		c.Unlock()
+		c.clientsMu.Unlock()
 	}
 
 	return client, nil
