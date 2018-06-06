@@ -10,6 +10,20 @@ datastore.
 Uses an experimental template structure from here:
 https://github.com/thingful/go-build-template
 
+## Design Notes
+
+* postgres migrations expressed as sql files in the pkg/migrations/sql folder,
+  but we use go:generate and go-bindata to bundle the sql directly inside the
+  binary for easy deployment. `go:generate` is called as part of the build
+  process.
+
+* golang-migrate is used for migrations - we use it as a library, so we have
+  some custom cobra tasks for creating migrations, and running them up (or
+  down).
+
+* auto-migrate on boot - when the application boots it attempts to perform all
+  up migrations.
+
 ## Building
 
 Run `make` or `make build` to build our binary compiled for `linux/amd64`
