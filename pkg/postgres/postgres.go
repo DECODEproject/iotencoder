@@ -191,18 +191,16 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 	// public key allowing us to enforce the uniqueness index on the table without
 	// having the unencrypted key written to the disk.
 	sql = `INSERT INTO streams
-		(device_id, public_key, public_key_hash)
+		(device_id, public_key)
 	VALUES (
 		:device_id,
-		pgp_sym_encrypt(:public_key, :encryption_password),
-		digest(:public_key, 'sha256')
+		:public_key
 	)
 	RETURNING id`
 
 	mapArgs = map[string]interface{}{
-		"device_id":           deviceID,
-		"public_key":          stream.PublicKey,
-		"encryption_password": d.encryptionPassword,
+		"device_id":  deviceID,
+		"public_key": stream.PublicKey,
 	}
 
 	var streamID int
@@ -375,13 +373,12 @@ func (d *db) GetDevice(topic string) (_ *Device, err error) {
 	}
 
 	// now load streams
-	sql = `SELECT pgp_sym_decrypt(public_key, :encryption_password) AS public_key
+	sql = `SELECT public_key
 		FROM streams
 		WHERE device_id = :device_id`
 
 	mapArgs = map[string]interface{}{
-		"encryption_password": d.encryptionPassword,
-		"device_id":           device.ID,
+		"device_id": device.ID,
 	}
 
 	streams := []*Stream{}
