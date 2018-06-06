@@ -57,7 +57,7 @@ func (e *EncoderTestSuite) SetupTest() {
 		logger,
 	)
 
-	e.db.(system.Startable).Start()
+	e.db.(system.Startable).Start(context.Background())
 }
 
 func (e *EncoderTestSuite) TearDownTest() {
@@ -78,7 +78,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 0)
 
-	err := enc.(system.Startable).Start()
+	err := enc.(system.Startable).Start(context.Background())
 	assert.Nil(e.T(), err)
 	defer enc.(system.Stoppable).Stop()
 
@@ -153,7 +153,7 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 		Verbose:    true,
 	}, logger)
 
-	enc.(system.Startable).Start()
+	enc.(system.Startable).Start(context.Background())
 
 	assert.Len(e.T(), mqttClient.Subscriptions["tcp://broker1:1883"], 2)
 
@@ -172,7 +172,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 		Verbose:    true,
 	}, logger)
 
-	enc.(system.Startable).Start()
+	enc.(system.Startable).Start(context.Background())
 	defer enc.(system.Stoppable).Stop()
 
 	testcases := []struct {
@@ -320,7 +320,7 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 		Verbose:    true,
 	}, logger)
 
-	enc.(system.Startable).Start()
+	enc.(system.Startable).Start(context.Background())
 	defer enc.(system.Stoppable).Stop()
 
 	testcases := []struct {
@@ -369,7 +369,7 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 		Verbose:    true,
 	}, logger)
 
-	err = enc.(system.Startable).Start()
+	err = enc.(system.Startable).Start(context.Background())
 	assert.Nil(e.T(), err)
 }
 

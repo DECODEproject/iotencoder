@@ -1,6 +1,7 @@
 package postgres_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -51,7 +52,7 @@ func (s *PostgresSuite) SetupTest() {
 		logger,
 	)
 
-	s.db.(system.Startable).Start()
+	s.db.(system.Startable).Start(context.Background())
 }
 
 func (s *PostgresSuite) TearDownTest() {

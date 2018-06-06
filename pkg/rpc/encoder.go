@@ -50,24 +50,13 @@ func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 
 // Start the encoder. Here we create MQTT subscriptions for all records stored
 // in the DB.
-func (e *encoderImpl) Start() error {
+func (e *encoderImpl) Start(ctx context.Context) error {
 	e.logger.Log("msg", "starting encoder")
 
-	e.logger.Log("msg", "creating existing subscriptions")
-
-	devices, err := e.db.GetDevices()
+	// do an immediate resubscribe
+	err := e.resubscribe()
 	if err != nil {
-		return errors.Wrap(err, "failed to load devices")
-	}
-
-	for _, d := range devices {
-		e.logger.Log("broker", d.Broker, "topic", d.Topic, "msg", "creating subscription")
-
-		err = e.mqtt.Subscribe(d.Broker, d.Topic, func(topic string, payload []byte) {
-			e.handleCallback(topic, payload)
-		})
-
-		e.logger.Log("err", err, "msg", "failed to subscribe to topic")
+		return err
 	}
 
 	return nil
@@ -81,33 +70,65 @@ func (e *encoderImpl) Stop() error {
 	return nil
 }
 
+type createStreamResp struct {
+	Resp *encoder.CreateStreamResponse
+	Err  error
+}
+
 // CreateStream is our implementation of the protocol buffer interface. It takes
 // the incoming request, validates it and if valid we write some data to the
 // database, and set up a subscription with the specified MQTT broker.
 func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
-	err := validateCreateRequest(req)
-	if err != nil {
-		return nil, err
+	done := make(chan createStreamResp)
+
+	go func() {
+		err := validateCreateRequest(req)
+		if err != nil {
+			done <- createStreamResp{
+				Resp: nil,
+				Err:  err,
+			}
+			return
+		}
+
+		stream := createStream(req)
+
+		streamID, err := e.db.CreateStream(stream)
+		if err != nil {
+			done <- createStreamResp{
+				Resp: nil,
+				Err:  twirp.InternalErrorWith(err),
+			}
+			return
+		}
+
+		err = e.mqtt.Subscribe(req.BrokerAddress, req.DeviceTopic, func(topic string, payload []byte) {
+			e.handleCallback(topic, payload)
+		})
+
+		if err != nil {
+			done <- createStreamResp{
+				Resp: nil,
+				Err:  twirp.InternalErrorWith(err),
+			}
+			return
+		}
+
+		done <- createStreamResp{
+			Resp: &encoder.CreateStreamResponse{
+				StreamUid: streamID,
+			},
+			Err: nil,
+		}
+		return
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case r := <-done:
+		return r.Resp, r.Err
 	}
-
-	stream := createStream(req)
-
-	streamID, err := e.db.CreateStream(stream)
-	if err != nil {
-		return nil, twirp.InternalErrorWith(err)
-	}
-
-	err = e.mqtt.Subscribe(req.BrokerAddress, req.DeviceTopic, func(topic string, payload []byte) {
-		e.handleCallback(topic, payload)
-	})
-
-	if err != nil {
-		return nil, twirp.InternalErrorWith(err)
-	}
-
-	return &encoder.CreateStreamResponse{
-		StreamUid: streamID,
-	}, nil
 }
 
 // DeleteStream is the method we provide for deleting a stream. It validates the
@@ -133,6 +154,34 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 	}
 
 	return &encoder.DeleteStreamResponse{}, nil
+}
+
+// resubscribe attempts to resubscribe to all subscriptions currently stored in
+// the DB. It attempts to be idempotent meaning the program is free to call this
+// repeatedly without setting up duplicate subscriptions. In fact we do exactly
+// this to make the encoder a little more robust to any interruption to the
+// upstream broker.
+func (e *encoderImpl) resubscribe() error {
+	e.logger.Log("msg", "resubscribing to existing subscriptions")
+
+	devices, err := e.db.GetDevices()
+	if err != nil {
+		return errors.Wrap(err, "failed to load devices")
+	}
+
+	for _, d := range devices {
+		e.logger.Log("broker", d.Broker, "topic", d.Topic, "msg", "creating subscription")
+
+		err = e.mqtt.Subscribe(d.Broker, d.Topic, func(topic string, payload []byte) {
+			e.handleCallback(topic, payload)
+		})
+
+		if err != nil {
+			e.logger.Log("err", err, "msg", "failed to subscribe to topic")
+		}
+	}
+
+	return nil
 }
 
 // handleCallback is our internal function that receives incoming data from the

@@ -1,11 +1,13 @@
 package system
 
+import "context"
+
 // Startable is a single method interface for a component that can meaningfully
 // be "started"
 type Startable interface {
 	// Start starts the component, creating any runtime resources (connection
 	// pools, clients, etc.)
-	Start() error
+	Start(ctx context.Context) error
 }
 
 // Stoppable is a single method interface for a component that can meaningfully be

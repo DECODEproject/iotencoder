@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"context"
+
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -112,7 +114,7 @@ func NewDB(config *Config, logger kitlog.Logger) DB {
 
 // Start creates our DB connection pool running returning an error if any
 // failure occurs.
-func (d *db) Start() error {
+func (d *db) Start(ctx context.Context) error {
 	d.logger.Log("msg", "starting postgres")
 
 	db, err := Open(d.connStr)

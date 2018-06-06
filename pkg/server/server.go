@@ -71,7 +71,8 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	processor := pipeline.NewProcessor(ds, config.Verbose, logger)
 
-	mqttClient := mqtt.NewClient(logger)
+	connector := mqtt.NewConnector()
+	mqttClient := mqtt.NewClient(connector, logger)
 
 	enc := rpc.NewEncoder(&rpc.Config{
 		DB:         db,
@@ -117,7 +118,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 // shutting down.
 func (s *Server) Start() error {
 	// start the postgres connection pool
-	err := s.db.(system.Startable).Start()
+	err := s.db.(system.Startable).Start(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "failed to start db")
 	}
@@ -129,7 +130,7 @@ func (s *Server) Start() error {
 	}
 
 	// start the encoder RPC component - this creates all mqtt subscriptions
-	err = s.encoder.(system.Startable).Start()
+	err = s.encoder.(system.Startable).Start(context.Background())
 	if err != nil {
 		return errors.Wrap(err, "failed to start encoder")
 	}
