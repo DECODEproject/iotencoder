@@ -4,6 +4,7 @@ MAINTAINER Thingful <info@thingful.net>
 
 RUN apk add --update \
     git \
+    build-base \
     postgresql-client && \
   rm -rf /var/cache/apk/*
 

@@ -18,6 +18,9 @@ VERSION := $(shell git describe --tags --always --dirty)
 # Build date - to be added to the binary
 BUILD_DATE := $(shell date -u "+%FT%H:%M:%S%Z")
 
+# Whether to enable CGO, set to 0 to disable it.
+CGO_ENABLED := 1
+
 # Do not change the following variables
 
 PWD := $(shell pwd)
@@ -74,6 +77,7 @@ bin/$(ARCH)/$(BIN): .build-dirs .compose
 			PKG=$(PKG) \
 			BUILD_DATE=$(BUILD_DATE) \
 			BINARY_NAME=$(BIN) \
+			CGO_ENABLED=$(CGO_ENABLED) \
 			./build/build.sh \
 		"
 
