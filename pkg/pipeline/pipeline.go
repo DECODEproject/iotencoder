@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/thingful/zenroom-go"
+
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thingful/iotencoder/pkg/postgres"
@@ -87,7 +89,20 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
-	encodedPayload := base64Encode(payload)
+	// needed to work out yet and pass keys to the script
+	encodeScript := `
+		octet = require 'octet'
+		ecdh = require 'ecdh'
+		msg = octet.new(#DATA)
+		msg:string(DATA)
+		kr = ecdh.new()
+		kr:keygen()
+		sess = kr:session(kr:private(), kr:public())
+		encrypted = kr:(sess, msg)
+		print (encrypted)
+	`
+
+	//encodedPayload := base64Encode(payload)
 
 	for _, stream := range device.Streams {
 		if p.verbose {
@@ -96,10 +111,15 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		start := time.Now()
 
-		_, err := p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
+		encodedPayload, err := zenroom.Exec(encodeScript, stream.PublicKey, string(payload))
+		if err != nil {
+			return err
+		}
+
+		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
 			PublicKey: stream.PublicKey,
 			UserUid:   device.UserUID,
-			Data:      encodedPayload,
+			Data:      []byte(encodedPayload),
 		})
 
 		duration := time.Since(start)
