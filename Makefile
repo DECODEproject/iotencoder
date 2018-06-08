@@ -104,6 +104,7 @@ test: .build-dirs .compose ## Run tests in the containerized environment
 		app \
 		/bin/sh -c " \
 			RUN=$(RUN) \
+			CGO_ENABLED=$(CGO_ENABLED) \
 			./build/test.sh $(SRC_DIRS) \
 		"
 
