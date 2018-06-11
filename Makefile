@@ -30,8 +30,8 @@ SRC_DIRS := cmd pkg
 ALL_ARCH := amd64 arm arm64
 
 ifeq ($(ARCH),amd64)
-	BASE_IMAGE?=alpine
-	BUILD_IMAGE?=golang:1.10-alpine
+	BASE_IMAGE?=
+	BUILD_IMAGE?=golang:1.10
 endif
 ifeq ($(ARCH),arm)
 	BASE_IMAGE?=arm32v7/busybox
@@ -39,7 +39,7 @@ ifeq ($(ARCH),arm)
 endif
 ifeq ($(ARCH),arm64)
 	BASE_IMAGE?=arm64v8/busybox
-	BUILD_IMAGE?=arm64v8/golang:1.10-alpine
+	BUILD_IMAGE?=arm64v8/golang:1.10
 endif
 
 IMAGE := $(REGISTRY)/$(BIN)-$(ARCH)
