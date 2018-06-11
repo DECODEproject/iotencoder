@@ -1,4 +1,4 @@
-box: golang:1.10-alpine
+box: golang:1.10
 
 services:
   - id: postgres
@@ -30,7 +30,7 @@ build:
     - script:
         name: install build tooling
         code: |
-          apk --no-cache add build-base git
+          apt-get build-essential git
 
     - script:
         name: go test
