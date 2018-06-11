@@ -90,5 +90,5 @@
   version = "1.0.2"
 
 [[constraint]]
-  branch = "buildability"
+  branch = "master"
   name = "github.com/thingful/zenroom-go"
