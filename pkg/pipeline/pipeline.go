@@ -22,15 +22,6 @@ var (
 		},
 	)
 
-	// datastoreWriteCounter is a prometheus counter recording a count of successful
-	// writes to the datastore.
-	//datastoreWriteCounter = prometheus.NewCounter(
-	//	prometheus.CounterOpts{
-	//		Name: "datastore_writes",
-	//		Help: "Count of writes to the datastore",
-	//	},
-	//)
-
 	// datastoreWriteHistogram is a prometheus histogram recording successful
 	// writes to the datastore. We use the default bucket distributions.
 	datastoreWriteHistogram = prometheus.NewHistogram(
