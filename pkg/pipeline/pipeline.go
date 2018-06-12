@@ -105,17 +105,15 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		public = octet.new()
 		public:base64(keys.public)
 		
-		secret = octet.new()
-		secret:base64(keys.secret)
+		private = octet.new()
+		private:base64(keys.private)
 		keyring:public(public)
-		keyring:private(secret)
+		keyring:private(private)
 		
 		sess = keyring:session(public)
 		zmsg = keyring:encrypt(sess, msg):base64()
 		print(zmsg)
 	`
-
-	//encodedPayload := base64Encode(payload)
 
 	for _, stream := range device.Streams {
 		if p.verbose {
@@ -126,7 +124,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		encodedPayload, err := zenroom.Exec(
 			encodeScript,
-			fmt.Sprintf(`{"public": "%s", "private": "%s"}`, stream.PublicKey, stream.Device.PrivateKey),
+			fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey),
 			string(payload))
 
 		if err != nil {
@@ -148,6 +146,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		}
 
 		datastoreWriteHistogram.Observe(duration.Seconds())
+
 	}
 
 	return nil
