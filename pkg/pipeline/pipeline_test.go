@@ -74,7 +74,7 @@ func TestProcessWithError(t *testing.T) {
 	ds := mocks.Datastore{}
 
 	payload := []byte("my-data")
-	encodedPayload := []byte(`Oq3tigiueAOTkKFBKp5u4A==`)
+	encodedPayload := []byte(`73z7QQWCd4y6bOKZHW7NeA==`)
 
 	ds.On(
 		"WriteData",
