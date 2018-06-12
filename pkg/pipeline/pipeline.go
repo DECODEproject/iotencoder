@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"time"
 
 	"github.com/thingful/zenroom-go"
@@ -93,13 +94,25 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 	encodeScript := `
 		octet = require 'octet'
 		ecdh = require 'ecdh'
+		json = require 'json'
+
 		msg = octet.new(#DATA)
 		msg:string(DATA)
-		kr = ecdh.new()
-		kr:keygen()
-		sess = kr:session(kr:private(), kr:public())
-		encrypted = kr:(sess, msg)
-		print (encrypted)
+		
+		keys = json.decode(KEYS)
+		keyring = ecdh.new('ec25519')
+		
+		public = octet.new()
+		public:base64(keys.public)
+		
+		secret = octet.new()
+		secret:base64(keys.secret)
+		keyring:public(public)
+		keyring:private(secret)
+		
+		sess = keyring:session(public)
+		zmsg = keyring:encrypt(sess, msg):base64()
+		print(zmsg)
 	`
 
 	//encodedPayload := base64Encode(payload)
@@ -111,7 +124,11 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		start := time.Now()
 
-		encodedPayload, err := zenroom.Exec(encodeScript, stream.PublicKey, string(payload))
+		encodedPayload, err := zenroom.Exec(
+			encodeScript,
+			fmt.Sprintf(`{"public": "%s", "private": "%s"}`, stream.PublicKey, stream.Device.PrivateKey),
+			string(payload))
+
 		if err != nil {
 			return err
 		}
