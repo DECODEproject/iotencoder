@@ -14,11 +14,10 @@ export GOARCH="${ARCH}"
 
 # generate bindata assets
 go generate -x "${PKG}/pkg/migrations/"
-
+go generate -x "${PKG}/pkg/lua/"
 # compile our binary using install, the mounted volume ensures we can see it
 # outside the build container
 go install \
     -v \
-    -installsuffix "static" \
-    -ldflags "-extldflags -static -X ${PKG}/pkg/version.Version=${VERSION} -X \"${PKG}/pkg/version.BuildDate=${BUILD_DATE}\" -X ${PKG}/pkg/version.BinaryName=${BINARY_NAME}" \
+    -ldflags "-X ${PKG}/pkg/version.Version=${VERSION} -X \"${PKG}/pkg/version.BuildDate=${BUILD_DATE}\" -X ${PKG}/pkg/version.BinaryName=${BINARY_NAME}" \
     ./...

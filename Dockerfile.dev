@@ -2,11 +2,12 @@ FROM ARG_FROM
 
 MAINTAINER Thingful <info@thingful.net>
 
-RUN apk add --update \
+RUN apt-get update &&  apt-get install  -y \
+    build-essential \
     git \
-    build-base \
-    postgresql-client && \
-  rm -rf /var/cache/apk/*
+    postgresql-client \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* 
 
 # move retool out of /go/bin so binary is not masked
 RUN go get -u github.com/twitchtv/retool && \

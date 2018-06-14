@@ -3,11 +3,17 @@ package pipeline
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"time"
+
+	"github.com/pkg/errors"
+	"github.com/thingful/zenroom-go"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thingful/iotencoder/pkg/postgres"
+
+	"github.com/thingful/iotencoder/pkg/lua"
 
 	datastore "github.com/thingful/twirp-datastore-go"
 )
@@ -21,15 +27,6 @@ var (
 			Help: "Count of errors writing to datastore",
 		},
 	)
-
-	// datastoreWriteCounter is a prometheus counter recording a count of successful
-	// writes to the datastore.
-	//datastoreWriteCounter = prometheus.NewCounter(
-	//	prometheus.CounterOpts{
-	//		Name: "datastore_writes",
-	//		Help: "Count of writes to the datastore",
-	//	},
-	//)
 
 	// datastoreWriteHistogram is a prometheus histogram recording successful
 	// writes to the datastore. We use the default bucket distributions.
@@ -87,7 +84,12 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
-	encodedPayload := base64Encode(payload)
+
+	// read script from go-bindata asset
+	script, err := lua.Asset("encrypt.lua")
+	if err != nil {
+		return errors.Wrap(err, "failed to read zenroom script")
+	}
 
 	for _, stream := range device.Streams {
 		if p.verbose {
@@ -96,7 +98,16 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		start := time.Now()
 
-		_, err := p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
+		encodedPayload, err := zenroom.Exec(
+			script,
+			[]byte(fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey)),
+			payload)
+
+		if err != nil {
+			return err
+		}
+
+		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
 			PublicKey: stream.PublicKey,
 			UserUid:   device.UserUID,
 			Data:      encodedPayload,
@@ -111,6 +122,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		}
 
 		datastoreWriteHistogram.Observe(duration.Seconds())
+
 	}
 
 	return nil
