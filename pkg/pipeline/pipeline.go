@@ -119,7 +119,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
 			PublicKey: stream.PublicKey,
 			UserUid:   device.UserUID,
-			Data:      []byte(encodedPayload),
+			Data:      encodedPayload,
 		})
 
 		duration := time.Since(start)
