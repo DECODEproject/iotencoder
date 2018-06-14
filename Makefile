@@ -30,8 +30,8 @@ SRC_DIRS := cmd pkg
 ALL_ARCH := amd64 arm arm64
 
 ifeq ($(ARCH),amd64)
-	BASE_IMAGE?=
-	BUILD_IMAGE?=golang:1.10
+	BASE_IMAGE?=busybox:glibc
+	BUILD_IMAGE?=golang:1.10-stretch
 endif
 ifeq ($(ARCH),arm)
 	BASE_IMAGE?=arm32v7/busybox
