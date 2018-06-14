@@ -2,7 +2,6 @@ package pipeline_test
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"testing"
 
@@ -19,15 +18,15 @@ func TestProcess(t *testing.T) {
 	logger := kitlog.NewNopLogger()
 	ds := mocks.Datastore{}
 
-	payload := []byte("hello")
-	encodedPayload := []byte(base64.StdEncoding.EncodeToString(payload))
+	payload := []byte("my-data")
+	encodedPayload := []byte(`73z7QQWCd4y6bOKZHW7NeA==`)
 
 	// set up two mock responses
 	ds.On(
 		"WriteData",
 		context.Background(),
 		&datastore.WriteRequest{
-			PublicKey: "key1",
+			PublicKey: `BCPcL\/paSqcvCgh2Uu6LbN7o67BFY0cnqfkNUiza62fMQzDFC\/zgB5eSA\/h6nXpuSpUIg7JSOBMoxkavrL5FOj4=`,
 			UserUid:   "bob",
 			Data:      encodedPayload,
 		},
@@ -40,7 +39,7 @@ func TestProcess(t *testing.T) {
 		"WriteData",
 		context.Background(),
 		&datastore.WriteRequest{
-			PublicKey: "key2",
+			PublicKey: `BCPcL\/paSqcvCgh2Uu6LbN7o67BFY0cnqfkNUiza62fMQzDFC\/zgB5eSA\/h6nXpuSpUIg7JSOBMoxkavrL5FOj4=`,
 			UserUid:   "bob",
 			Data:      encodedPayload,
 		},
@@ -52,13 +51,14 @@ func TestProcess(t *testing.T) {
 	processor := pipeline.NewProcessor(datastore.Datastore(&ds), true, logger)
 
 	device := &postgres.Device{
-		UserUID: "bob",
+		UserUID:    "bob",
+		PrivateKey: `Dmchv5dXlMgST8ZdXOaEHmT+HvSj44nvgd0PsiSL\/FE=`,
 		Streams: []*postgres.Stream{
 			{
-				PublicKey: "key1",
+				PublicKey: `BCPcL\/paSqcvCgh2Uu6LbN7o67BFY0cnqfkNUiza62fMQzDFC\/zgB5eSA\/h6nXpuSpUIg7JSOBMoxkavrL5FOj4=`,
 			},
 			{
-				PublicKey: "key2",
+				PublicKey: `BCPcL\/paSqcvCgh2Uu6LbN7o67BFY0cnqfkNUiza62fMQzDFC\/zgB5eSA\/h6nXpuSpUIg7JSOBMoxkavrL5FOj4=`,
 			},
 		},
 	}
@@ -73,14 +73,14 @@ func TestProcessWithError(t *testing.T) {
 	logger := kitlog.NewNopLogger()
 	ds := mocks.Datastore{}
 
-	payload := []byte("hello")
-	encodedPayload := []byte(base64.StdEncoding.EncodeToString(payload))
+	payload := []byte("my-data")
+	encodedPayload := []byte(`73z7QQWCd4y6bOKZHW7NeA==`)
 
 	ds.On(
 		"WriteData",
 		context.Background(),
 		&datastore.WriteRequest{
-			PublicKey: "key1",
+			PublicKey: `BCPcL\/paSqcvCgh2Uu6LbN7o67BFY0cnqfkNUiza62fMQzDFC\/zgB5eSA\/h6nXpuSpUIg7JSOBMoxkavrL5FOj4=`,
 			UserUid:   "bob",
 			Data:      encodedPayload,
 		},
@@ -91,10 +91,11 @@ func TestProcessWithError(t *testing.T) {
 
 	processor := pipeline.NewProcessor(datastore.Datastore(&ds), true, logger)
 	device := &postgres.Device{
-		UserUID: "bob",
+		UserUID:    "bob",
+		PrivateKey: `Dmchv5dXlMgST8ZdXOaEHmT+HvSj44nvgd0PsiSL\/FE=`,
 		Streams: []*postgres.Stream{
 			{
-				PublicKey: "key1",
+				PublicKey: `BCPcL\/paSqcvCgh2Uu6LbN7o67BFY0cnqfkNUiza62fMQzDFC\/zgB5eSA\/h6nXpuSpUIg7JSOBMoxkavrL5FOj4=`,
 			},
 		},
 	}
