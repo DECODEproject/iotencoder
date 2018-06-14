@@ -95,7 +95,7 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 	// read script from go-bindata asset
-	script, err := lua.Asset("generatekeys.lua")
+	script, err := lua.Asset("encrypt.lua")
 	if err != nil {
 		return errors.Wrap(err, "failed to read zenroom script")
 	}
