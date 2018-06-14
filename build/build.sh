@@ -19,6 +19,5 @@ go generate -x "${PKG}/pkg/migrations/"
 # outside the build container
 go install \
     -v \
-    -installsuffix "static" \
     -ldflags "-X ${PKG}/pkg/version.Version=${VERSION} -X \"${PKG}/pkg/version.BuildDate=${BUILD_DATE}\" -X ${PKG}/pkg/version.BinaryName=${BINARY_NAME}" \
     ./...
