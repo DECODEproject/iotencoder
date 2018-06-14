@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/thingful/zenroom-go"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/thingful/iotencoder/pkg/postgres"
+
+	"github.com/thingful/iotencoder/pkg/lua"
 
 	datastore "github.com/thingful/twirp-datastore-go"
 )
@@ -90,30 +93,12 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
-	// needed to work out yet and pass keys to the script
-	encodeScript := `
-		octet = require 'octet'
-		ecdh = require 'ecdh'
-		json = require 'json'
 
-		msg = octet.new(#DATA)
-		msg:string(DATA)
-		
-		keys = json.decode(KEYS)
-		keyring = ecdh.new('ec25519')
-		
-		public = octet.new()
-		public:base64(keys.public)
-		
-		private = octet.new()
-		private:base64(keys.private)
-		keyring:public(public)
-		keyring:private(private)
-		
-		sess = keyring:session(public)
-		zmsg = keyring:encrypt(sess, msg):base64()
-		print(zmsg)
-	`
+	// read script from go-bindata asset
+	script, err := lua.Asset("generatekeys.lua")
+	if err != nil {
+		return errors.Wrap(err, "failed to read zenroom script")
+	}
 
 	for _, stream := range device.Streams {
 		if p.verbose {
@@ -123,9 +108,9 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
-			encodeScript,
-			fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey),
-			string(payload))
+			script,
+			[]byte(fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey)),
+			payload)
 
 		if err != nil {
 			return err
