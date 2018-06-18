@@ -27,11 +27,11 @@ var (
 		},
 	)
 
-  // zenroomErrorCounter is a prometheus counter recording a count of any errors
- 	// that occur when invoking zenroom.
+	// zenroomErrorCounter is a prometheus counter recording a count of any errors
+	// that occur when invoking zenroom.
 	zenroomErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "decode_zenroom_errors"
+			Name: "decode_zenroom_errors",
 			Help: "Count of errors invoking zenroom",
 		},
 	)
@@ -40,16 +40,16 @@ var (
 	// writes to the datastore. We use the default bucket distributions.
 	datastoreWriteHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "datastore_writes",
+			Name: "decode_datastore_writes",
 			Help: "Datastore writes duration distribution",
 		},
 	)
 
- // zenroomHistogram is a prometheus histogram recording execution times of
- // calls to zenroom to exec some script.
+	// zenroomHistogram is a prometheus histogram recording execution times of
+	// calls to zenroom to exec some script.
 	zenroomHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "zenroom_exec",
+			Name: "decode_zenroom_exec",
 			Help: "Execution time of zenroom scripts",
 		},
 	)
