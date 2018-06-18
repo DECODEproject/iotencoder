@@ -152,6 +152,9 @@ func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 	}
 
 	err = e.processor.Process(device, payload)
+	if err != nil {
+		e.logger.Log("err", err, "msg", "failed to process pipeline")
+	}
 }
 
 // validateCreateRequest is a slightly verbose method that takes as input an
