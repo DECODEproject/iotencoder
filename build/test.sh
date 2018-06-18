@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Script used when running tests inside the containerized environment.
 
