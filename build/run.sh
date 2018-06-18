@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Script used when starting local compose services. Ensures dev database
 # exists before we continue.

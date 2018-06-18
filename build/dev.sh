@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Script used when booting dev/shell environment. Just ensures dev database
 # exists before we continue.
@@ -11,4 +11,4 @@ fi
 
 source ./build/shared.sh
 
-/bin/sh
+/bin/bash

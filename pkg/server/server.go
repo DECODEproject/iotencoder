@@ -83,7 +83,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	hooks := twrpprom.NewServerHooks(nil)
 
 	logger = kitlog.With(logger, "module", "server")
-	logger.Log("msg", "creating server")
+	logger.Log("msg", "creating server", "datastore", config.DatastoreAddr, "hashid", config.HashidMinLength)
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 

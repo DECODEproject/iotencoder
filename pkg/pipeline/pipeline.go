@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -23,8 +22,17 @@ var (
 	// errors that occur when writing to the datastore
 	datastoreErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "datastore_errors",
+			Name: "decode_datastore_errors",
 			Help: "Count of errors writing to datastore",
+		},
+	)
+
+	// zenroomErrorCounter is a prometheus counter recording a count of any errors
+	// that occur when invoking zenroom.
+	zenroomErrorCounter = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "decode_zenroom_errors",
+			Help: "Count of errors invoking zenroom",
 		},
 	)
 
@@ -32,8 +40,17 @@ var (
 	// writes to the datastore. We use the default bucket distributions.
 	datastoreWriteHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "datastore_writes",
+			Name: "decode_datastore_writes",
 			Help: "Datastore writes duration distribution",
+		},
+	)
+
+	// zenroomHistogram is a prometheus histogram recording execution times of
+	// calls to zenroom to exec some script.
+	zenroomHistogram = prometheus.NewHistogram(
+		prometheus.HistogramOpts{
+			Name: "decode_zenroom_exec",
+			Help: "Execution time of zenroom scripts",
 		},
 	)
 )
@@ -41,6 +58,8 @@ var (
 func init() {
 	prometheus.MustRegister(datastoreErrorCounter)
 	prometheus.MustRegister(datastoreWriteHistogram)
+	prometheus.MustRegister(zenroomErrorCounter)
+	prometheus.MustRegister(zenroomHistogram)
 }
 
 // Processor is an interface we define to handle processing all the streams for
@@ -101,11 +120,19 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		encodedPayload, err := zenroom.Exec(
 			script,
 			[]byte(fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey)),
-			payload)
+			payload,
+		)
+
+		duration := time.Since(start)
 
 		if err != nil {
+			zenroomErrorCounter.Inc()
 			return err
 		}
+
+		zenroomHistogram.Observe(duration.Seconds())
+
+		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
 			PublicKey: stream.PublicKey,
@@ -113,7 +140,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 			Data:      encodedPayload,
 		})
 
-		duration := time.Since(start)
+		duration = time.Since(start)
 
 		if err != nil {
 			datastoreErrorCounter.Inc()
@@ -122,16 +149,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		}
 
 		datastoreWriteHistogram.Observe(duration.Seconds())
-
 	}
 
 	return nil
-}
-
-// base64Encode simulates proper encoding by simply base64 encoding the incoming
-// message.
-func base64Encode(payload []byte) []byte {
-	base64Text := make([]byte, base64.StdEncoding.EncodedLen(len(payload)))
-	base64.StdEncoding.Encode(base64Text, payload)
-	return base64Text
 }

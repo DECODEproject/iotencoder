@@ -84,7 +84,7 @@ func _20180525115614_create_device_tableDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180525115614_create_device_table.down.sql", size: 216, mode: os.FileMode(436), modTime: time.Unix(1528735723, 0)}
+	info := bindataFileInfo{name: "20180525115614_create_device_table.down.sql", size: 216, mode: os.FileMode(420), modTime: time.Unix(1527783892, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -104,7 +104,7 @@ func _20180525115614_create_device_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180525115614_create_device_table.up.sql", size: 579, mode: os.FileMode(436), modTime: time.Unix(1528735723, 0)}
+	info := bindataFileInfo{name: "20180525115614_create_device_table.up.sql", size: 579, mode: os.FileMode(420), modTime: time.Unix(1527783892, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -124,7 +124,7 @@ func _20180526232618_add_streams_tableDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180526232618_add_streams_table.down.sql", size: 37, mode: os.FileMode(436), modTime: time.Unix(1528735723, 0)}
+	info := bindataFileInfo{name: "20180526232618_add_streams_table.down.sql", size: 37, mode: os.FileMode(420), modTime: time.Unix(1527783892, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -144,7 +144,7 @@ func _20180526232618_add_streams_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180526232618_add_streams_table.up.sql", size: 303, mode: os.FileMode(436), modTime: time.Unix(1528735723, 0)}
+	info := bindataFileInfo{name: "20180526232618_add_streams_table.up.sql", size: 303, mode: os.FileMode(420), modTime: time.Unix(1528379065, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
