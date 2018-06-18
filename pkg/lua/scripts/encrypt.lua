@@ -1,9 +1,9 @@
 -- File: encrypt.lua
 -- Script Params:
---  DATA and KEYS has to be passed to this script 
+--  DATA and KEYS has to be passed to this script
 --  through zenroom
--- Returns: 
---  Nothing just print to stdout encrypted DATA 
+-- Returns:
+--  Nothing just print to stdout encrypted DATA
 octet = require 'octet'
 ecdh = require 'ecdh'
 json = require 'json'
