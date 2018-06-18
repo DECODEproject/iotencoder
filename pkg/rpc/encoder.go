@@ -148,12 +148,12 @@ func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 	}
 
 	if e.verbose {
-		e.logger.Log("topic", topic, "payload", payload, "msg", "received data")
+		e.logger.Log("topic", topic, "payload", string(payload), "msg", "received data")
 	}
 
 	err = e.processor.Process(device, payload)
 	if err != nil {
-		e.logger.Log("err", err, "msg", "failed to process pipeline")
+		e.logger.Log("err", err, "msg", "failed to process payload")
 	}
 }
 
