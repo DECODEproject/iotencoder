@@ -104,6 +104,11 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
+	// check payload
+	if payload == nil {
+		return errors.New("empty payload received")
+	}
+
 	// read script from go-bindata asset
 	script, err := lua.Asset("encrypt.lua")
 	if err != nil {
