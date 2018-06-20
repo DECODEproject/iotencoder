@@ -271,8 +271,8 @@
 [[projects]]
   name = "github.com/thingful/twirp-encoder-go"
   packages = ["."]
-  revision = "3234a0f153613cf417a81752c7685bb23aaa294f"
-  version = "v0.0.1"
+  revision = "c913ffe21e3e1c8bfda591cd5adfaccfb67d964e"
+  version = "v0.0.2"
 
 [[projects]]
   branch = "master"
@@ -331,6 +331,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "95a4b9c050255af1cd1428f637808bb1b71088d393cdff5348b9854e1cf217d1"
+  inputs-digest = "7eb8b1d3ebf4f33553b246e1c2ed91777b3ece40703defced3538081b827fd75"
   solver-name = "gps-cdcl"
   solver-version = 1
