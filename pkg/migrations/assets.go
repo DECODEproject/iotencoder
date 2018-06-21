@@ -6,6 +6,8 @@
 // sql/20180526232618_add_streams_table.up.sql
 // sql/20180621134601_rename_disposition_column.down.sql
 // sql/20180621134601_rename_disposition_column.up.sql
+// sql/20180621150114_add_entitlements_column.down.sql
+// sql/20180621150114_add_entitlements_column.up.sql
 package migrations
 
 import (
@@ -191,6 +193,46 @@ func _20180621134601_rename_disposition_columnUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __20180621150114_add_entitlements_columnDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x28\x2e\x29\x4a\x4d\xcc\x2d\xe6\x52\x50\x70\x09\xf2\x0f\x50\x70\xf6\xf7\x09\xf5\xf5\x53\x48\xcd\x2b\xc9\x2c\xc9\x49\xcd\x4d\xcd\x2b\x29\xb6\x06\x04\x00\x00\xff\xff\x39\x15\x7f\x17\x2f\x00\x00\x00")
+
+func _20180621150114_add_entitlements_columnDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20180621150114_add_entitlements_columnDownSql,
+		"20180621150114_add_entitlements_column.down.sql",
+	)
+}
+
+func _20180621150114_add_entitlements_columnDownSql() (*asset, error) {
+	bytes, err := _20180621150114_add_entitlements_columnDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20180621150114_add_entitlements_column.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1529593786, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var __20180621150114_add_entitlements_columnUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x28\x2e\x29\x4a\x4d\xcc\x2d\xe6\x52\x50\x70\x74\x71\x51\x70\xf6\xf7\x09\xf5\xf5\x53\x48\xcd\x2b\xc9\x2c\xc9\x49\xcd\x4d\xcd\x2b\x29\x56\xf0\x0a\xf6\xf7\x73\x52\xf0\xf3\x0f\x51\xf0\x0b\xf5\xf1\x51\x70\x71\x75\x73\x0c\xf5\x09\x51\x50\x8f\x8e\x55\xb7\x06\x04\x00\x00\xff\xff\xfb\xbf\xba\xba\x4a\x00\x00\x00")
+
+func _20180621150114_add_entitlements_columnUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20180621150114_add_entitlements_columnUpSql,
+		"20180621150114_add_entitlements_column.up.sql",
+	)
+}
+
+func _20180621150114_add_entitlements_columnUpSql() (*asset, error) {
+	bytes, err := _20180621150114_add_entitlements_columnUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20180621150114_add_entitlements_column.up.sql", size: 74, mode: os.FileMode(420), modTime: time.Unix(1529594354, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -249,6 +291,8 @@ var _bindata = map[string]func() (*asset, error){
 	"20180526232618_add_streams_table.up.sql": _20180526232618_add_streams_tableUpSql,
 	"20180621134601_rename_disposition_column.down.sql": _20180621134601_rename_disposition_columnDownSql,
 	"20180621134601_rename_disposition_column.up.sql": _20180621134601_rename_disposition_columnUpSql,
+	"20180621150114_add_entitlements_column.down.sql": _20180621150114_add_entitlements_columnDownSql,
+	"20180621150114_add_entitlements_column.up.sql": _20180621150114_add_entitlements_columnUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -297,6 +341,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"20180526232618_add_streams_table.up.sql": &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
 	"20180621134601_rename_disposition_column.down.sql": &bintree{_20180621134601_rename_disposition_columnDownSql, map[string]*bintree{}},
 	"20180621134601_rename_disposition_column.up.sql": &bintree{_20180621134601_rename_disposition_columnUpSql, map[string]*bintree{}},
+	"20180621150114_add_entitlements_column.down.sql": &bintree{_20180621150114_add_entitlements_columnDownSql, map[string]*bintree{}},
+	"20180621150114_add_entitlements_column.up.sql": &bintree{_20180621150114_add_entitlements_columnUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory

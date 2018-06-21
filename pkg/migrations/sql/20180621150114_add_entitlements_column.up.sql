@@ -1,0 +1,2 @@
+ALTER TABLE streams
+  ADD COLUMN entitlements JSONB NOT NULL DEFAULT '[]';
