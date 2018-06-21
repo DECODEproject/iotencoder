@@ -4,6 +4,8 @@
 // sql/20180525115614_create_device_table.up.sql
 // sql/20180526232618_add_streams_table.down.sql
 // sql/20180526232618_add_streams_table.up.sql
+// sql/20180621134601_rename_disposition_column.down.sql
+// sql/20180621134601_rename_disposition_column.up.sql
 package migrations
 
 import (
@@ -149,6 +151,46 @@ func _20180526232618_add_streams_tableUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __20180621134601_rename_disposition_columnDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x89\x0c\x70\x55\x48\xad\x28\xc8\x2f\x2e\x2d\x4a\x55\x08\x72\xf5\x73\xf4\x75\x55\x08\xf1\x57\x48\xc9\x2c\x2e\xc8\x2f\xce\x2c\xc9\xcc\xcf\xb3\xe6\xe2\x82\xaa\x75\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\xe6\x52\x80\xa9\x76\xf6\xf7\x09\xf5\xf5\x43\x18\x82\xa6\x1b\x10\x00\x00\xff\xff\xac\xb6\xaa\x2f\x68\x00\x00\x00")
+
+func _20180621134601_rename_disposition_columnDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20180621134601_rename_disposition_columnDownSql,
+		"20180621134601_rename_disposition_column.down.sql",
+	)
+}
+
+func _20180621134601_rename_disposition_columnDownSql() (*asset, error) {
+	bytes, err := _20180621134601_rename_disposition_columnDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20180621134601_rename_disposition_column.down.sql", size: 104, mode: os.FileMode(420), modTime: time.Unix(1529588889, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var __20180621134601_rename_disposition_columnUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x89\x0c\x70\x55\x48\xc9\x2c\x2e\xc8\x2f\xce\x2c\xc9\xcc\xcf\x53\x08\x72\xf5\x73\xf4\x75\x55\x08\xf1\x57\x48\xad\x28\xc8\x2f\x2e\x2d\x4a\xb5\xe6\xe2\x82\xaa\x75\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\xe6\x52\x80\x29\x75\xf6\xf7\x09\xf5\xf5\x43\x31\x04\x59\x37\x20\x00\x00\xff\xff\xfc\x37\x00\xfd\x68\x00\x00\x00")
+
+func _20180621134601_rename_disposition_columnUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20180621134601_rename_disposition_columnUpSql,
+		"20180621134601_rename_disposition_column.up.sql",
+	)
+}
+
+func _20180621134601_rename_disposition_columnUpSql() (*asset, error) {
+	bytes, err := _20180621134601_rename_disposition_columnUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20180621134601_rename_disposition_column.up.sql", size: 104, mode: os.FileMode(420), modTime: time.Unix(1529588863, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -205,6 +247,8 @@ var _bindata = map[string]func() (*asset, error){
 	"20180525115614_create_device_table.up.sql": _20180525115614_create_device_tableUpSql,
 	"20180526232618_add_streams_table.down.sql": _20180526232618_add_streams_tableDownSql,
 	"20180526232618_add_streams_table.up.sql": _20180526232618_add_streams_tableUpSql,
+	"20180621134601_rename_disposition_column.down.sql": _20180621134601_rename_disposition_columnDownSql,
+	"20180621134601_rename_disposition_column.up.sql": _20180621134601_rename_disposition_columnUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -251,6 +295,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"20180525115614_create_device_table.up.sql": &bintree{_20180525115614_create_device_tableUpSql, map[string]*bintree{}},
 	"20180526232618_add_streams_table.down.sql": &bintree{_20180526232618_add_streams_tableDownSql, map[string]*bintree{}},
 	"20180526232618_add_streams_table.up.sql": &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
+	"20180621134601_rename_disposition_column.down.sql": &bintree{_20180621134601_rename_disposition_columnDownSql, map[string]*bintree{}},
+	"20180621134601_rename_disposition_column.up.sql": &bintree{_20180621134601_rename_disposition_columnUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
