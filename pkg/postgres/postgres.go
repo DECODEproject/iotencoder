@@ -1,7 +1,12 @@
 package postgres
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+	"fmt"
+
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/guregu/null"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/pkg/errors"
@@ -22,13 +27,41 @@ type Device struct {
 	Streams []*Stream
 }
 
+type Entitlements []Entitlement
+
+func (e Entitlements) Value() (driver.Value, error) {
+	fmt.Println("VALUING")
+	b, err := json.Marshal(e)
+	fmt.Println(string(b))
+	return b, err
+}
+
+func (e Entitlements) Scan(src interface{}) error {
+	fmt.Println("SCANNING")
+	data, ok := src.([]byte)
+	if !ok {
+		return fmt.Errorf("Could not decode type %T -> %T", src, e)
+		//fmt.Println(string(data))
+		//return json.Unmarshal(data, &e)
+	}
+	return json.Unmarshal(data, &e)
+}
+
 // Stream is a type used when reading data back from the DB, and when creating a
 // stream. It contains a public key field used when reading data, and for
 // creating a new stream has an associated Device instance.
 type Stream struct {
-	PublicKey string `db:"public_key"`
+	PublicKey    string       `db:"public_key"`
+	Entitlements Entitlements `db:"entitlements"`
 
 	Device *Device
+}
+
+type Entitlement struct {
+	SensorID int       `json:"sensorId"`
+	Action   string    `json:"action"`
+	Interval null.Int  `json:"interval"`
+	Bins     []float64 `json:"bins,omitempty"`
 }
 
 // DB is our interface to Postgres. Exposes methods for inserting a new Device
@@ -191,16 +224,22 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 	// public key allowing us to enforce the uniqueness index on the table without
 	// having the unencrypted key written to the disk.
 	sql = `INSERT INTO streams
-		(device_id, public_key)
+		(device_id, public_key, entitlements)
 	VALUES (
 		:device_id,
-		:public_key
+		:public_key,
+		:entitlements
 	)
 	RETURNING id`
 
+	fmt.Println("*****************************")
+	fmt.Println(stream.Entitlements)
+	fmt.Println("*****************************")
+
 	mapArgs = map[string]interface{}{
-		"device_id":  deviceID,
-		"public_key": stream.PublicKey,
+		"device_id":    deviceID,
+		"public_key":   stream.PublicKey,
+		"entitlements": stream.Entitlements,
 	}
 
 	var streamID int
@@ -342,8 +381,7 @@ func (d *db) GetDevices() ([]*Device, error) {
 }
 
 // GetDevice returns a single device identified by topic, including all streams
-// for that device. This is used to set up subscriptions for existing records on
-// application start.
+// for that device. This is used to set up subscriptions for devices.
 func (d *db) GetDevice(topic string) (_ *Device, err error) {
 	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key,
 	  user_uid, longitude, latitude, exposure
@@ -373,7 +411,7 @@ func (d *db) GetDevice(topic string) (_ *Device, err error) {
 	}
 
 	// now load streams
-	sql = `SELECT public_key
+	sql = `SELECT public_key, entitlements
 		FROM streams
 		WHERE device_id = :device_id`
 
