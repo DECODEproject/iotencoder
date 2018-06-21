@@ -10,14 +10,14 @@ import (
 
 // Device is a type used when reading data back from the DB.
 type Device struct {
-	ID          int     `db:"id"`
-	Broker      string  `db:"broker"`
-	Topic       string  `db:"topic"`
-	PrivateKey  string  `db:"private_key"`
-	UserUID     string  `db:"user_uid"`
-	Longitude   float64 `db:"longitude"`
-	Latitude    float64 `db:"latitude"`
-	Disposition string  `db:"disposition"`
+	ID         int     `db:"id"`
+	Broker     string  `db:"broker"`
+	Topic      string  `db:"topic"`
+	PrivateKey string  `db:"private_key"`
+	UserUID    string  `db:"user_uid"`
+	Longitude  float64 `db:"longitude"`
+	Latitude   float64 `db:"latitude"`
+	Exposure   string  `db:"exposure"`
 
 	Streams []*Stream
 }
@@ -146,14 +146,14 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 	// device upsert sql - note we encrypt the private key using postgres native
 	// symmetric encryption scheme
 	sql := `INSERT INTO devices
-		(broker, topic, private_key, user_uid, longitude, latitude, disposition)
+		(broker, topic, private_key, user_uid, longitude, latitude, exposure)
 	VALUES (:broker, :topic, pgp_sym_encrypt(:private_key, :encryption_password),
-		  :user_uid, :longitude, :latitude, :disposition)
+		  :user_uid, :longitude, :latitude, :exposure)
 	ON CONFLICT (topic) DO UPDATE
 	SET broker = EXCLUDED.broker,
 			longitude = EXCLUDED.longitude,
 			latitude = EXCLUDED.latitude,
-			disposition = EXCLUDED.disposition
+			exposure = EXCLUDED.exposure
 	RETURNING id`
 
 	mapArgs := map[string]interface{}{
@@ -163,7 +163,7 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 		"user_uid":            stream.Device.UserUID,
 		"longitude":           stream.Device.Longitude,
 		"latitude":            stream.Device.Latitude,
-		"disposition":         stream.Device.Disposition,
+		"exposure":            stream.Device.Exposure,
 		"encryption_password": d.encryptionPassword,
 	}
 
@@ -346,7 +346,7 @@ func (d *db) GetDevices() ([]*Device, error) {
 // application start.
 func (d *db) GetDevice(topic string) (_ *Device, err error) {
 	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key,
-	  user_uid, longitude, latitude, disposition
+	  user_uid, longitude, latitude, exposure
 		FROM devices
 		WHERE topic = :topic`
 

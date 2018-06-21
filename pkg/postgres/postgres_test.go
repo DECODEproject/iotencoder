@@ -62,13 +62,13 @@ func (s *PostgresSuite) TestRoundTrip() {
 	streamID1, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
-			Topic:       "device/123",
-			PrivateKey:  "private",
-			UserUID:     "bob",
-			Longitude:   45.2,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:     "tcp://example.com",
+			Topic:      "device/123",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
 		},
 	})
 
@@ -78,13 +78,13 @@ func (s *PostgresSuite) TestRoundTrip() {
 	streamID2, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://mqtt.com",
-			Topic:       "device/124",
-			PrivateKey:  "private",
-			UserUID:     "bob",
-			Longitude:   45.2,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:     "tcp://mqtt.com",
+			Topic:      "device/124",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
 		},
 	})
 
@@ -112,7 +112,7 @@ func (s *PostgresSuite) TestRoundTrip() {
 	assert.Equal(s.T(), "bob", device.UserUID)
 	assert.Equal(s.T(), 45.2, device.Longitude)
 	assert.Equal(s.T(), 23.2, device.Latitude)
-	assert.Equal(s.T(), "indoor", device.Disposition)
+	assert.Equal(s.T(), "indoor", device.Exposure)
 	assert.Len(s.T(), device.Streams, 1)
 	assert.Equal(s.T(), "public", device.Streams[0].PublicKey)
 
@@ -157,13 +157,13 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	streamID1, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public1",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
-			Topic:       "device/foo",
-			PrivateKey:  "private",
-			UserUID:     "bob",
-			Longitude:   45.2,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:     "tcp://example.com",
+			Topic:      "device/foo",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
 		},
 	})
 
@@ -173,13 +173,13 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	streamID2, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public2",
 		Device: &postgres.Device{
-			Broker:      "tcp://mqtt.com",
-			Topic:       "device/foo",
-			PrivateKey:  "private",
-			UserUID:     "bob",
-			Longitude:   45.2,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:     "tcp://mqtt.com",
+			Topic:      "device/foo",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
 		},
 	})
 
@@ -202,13 +202,13 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	_, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://unique.com",
-			Topic:       "device/123",
-			PrivateKey:  "private",
-			UserUID:     "bob",
-			Longitude:   45.2,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:     "tcp://unique.com",
+			Topic:      "device/123",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
 		},
 	})
 
@@ -217,13 +217,13 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	_, err = s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://unique.com",
-			Topic:       "device/123",
-			PrivateKey:  "private",
-			UserUID:     "bob",
-			Longitude:   45.2,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:     "tcp://unique.com",
+			Topic:      "device/123",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
 		},
 	})
 

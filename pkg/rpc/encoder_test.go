@@ -92,7 +92,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 			Longitude: -0.024,
 			Latitude:  54.24,
 		},
-		Disposition: encoder.CreateStreamRequest_INDOOR,
+		Exposure: encoder.CreateStreamRequest_INDOOR,
 	})
 
 	assert.Nil(e.T(), err)
@@ -123,12 +123,12 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	_, err := e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
-			Broker:      "tcp://broker1:1883",
-			Topic:       "devices/foo",
-			UserUID:     "bob",
-			Longitude:   23,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:    "tcp://broker1:1883",
+			Topic:     "devices/foo",
+			UserUID:   "bob",
+			Longitude: 23,
+			Latitude:  23.2,
+			Exposure:  "indoor",
 		},
 	})
 	assert.Nil(e.T(), err)
@@ -136,12 +136,12 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	_, err = e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
-			Broker:      "tcp://broker1:1883",
-			Topic:       "devices/bar",
-			UserUID:     "bob",
-			Longitude:   23,
-			Latitude:    23.2,
-			Disposition: "indoor",
+			Broker:    "tcp://broker1:1883",
+			Topic:     "devices/bar",
+			UserUID:   "bob",
+			Longitude: 23,
+			Latitude:  23.2,
+			Exposure:  "indoor",
 		},
 	})
 	assert.Nil(e.T(), err)
@@ -191,7 +191,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: broker_address is required",
 		},
@@ -206,7 +206,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: device_topic is required",
 		},
@@ -221,7 +221,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: device_private_key is required",
 		},
@@ -236,7 +236,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: recipient_public_key is required",
 		},
@@ -251,7 +251,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: user_uid is required",
 		},
@@ -263,7 +263,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 				DevicePrivateKey:   "privkey",
 				RecipientPublicKey: "pubkey",
 				UserUid:            "bob",
-				Disposition:        encoder.CreateStreamRequest_INDOOR,
+				Exposure:           encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: location is required",
 		},
@@ -278,7 +278,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 				Location: &encoder.CreateStreamRequest_Location{
 					Latitude: 23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: longitude is required",
 		},
@@ -293,7 +293,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 45,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: latitude is required",
 		},
@@ -352,12 +352,12 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 	_, err := e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
-			Broker:      "tcp://broker:1883",
-			Topic:       "devices/foo",
-			UserUID:     "bob",
-			Longitude:   23,
-			Latitude:    45,
-			Disposition: "indoor",
+			Broker:    "tcp://broker:1883",
+			Topic:     "devices/foo",
+			UserUID:   "bob",
+			Longitude: 23,
+			Latitude:  45,
+			Exposure:  "indoor",
 		},
 	})
 	assert.Nil(e.T(), err)

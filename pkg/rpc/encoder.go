@@ -203,13 +203,13 @@ func createStream(req *encoder.CreateStreamRequest) *postgres.Stream {
 	return &postgres.Stream{
 		PublicKey: req.RecipientPublicKey,
 		Device: &postgres.Device{
-			Broker:      req.BrokerAddress,
-			Topic:       req.DeviceTopic,
-			PrivateKey:  req.DevicePrivateKey,
-			UserUID:     req.UserUid,
-			Longitude:   req.Location.Longitude,
-			Latitude:    req.Location.Latitude,
-			Disposition: strings.ToLower(req.Disposition.String()),
+			Broker:     req.BrokerAddress,
+			Topic:      req.DeviceTopic,
+			PrivateKey: req.DevicePrivateKey,
+			UserUID:    req.UserUid,
+			Longitude:  req.Location.Longitude,
+			Latitude:   req.Location.Latitude,
+			Exposure:   strings.ToLower(req.Exposure.String()),
 		},
 	}
 }
