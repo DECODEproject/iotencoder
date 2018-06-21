@@ -42,6 +42,10 @@ ifeq ($(ARCH),arm64)
 	BUILD_IMAGE?=arm64v8/golang:1.10
 endif
 
+# capture user and group for dev container
+UID := $(shell id -u)
+GID := $(shell id -g)
+
 IMAGE := $(REGISTRY)/$(BIN)-$(ARCH)
 all: build
 
@@ -129,6 +133,8 @@ container-name: ## Show the name of the delivery container
 	@sed \
 		-e 's|ARG_FROM|$(BUILD_IMAGE)|g' \
 		-e 's|ARG_WORKDIR|/go/src/$(PKG)|g' \
+		-e 's|ARG_GID|$(GID)|g' \
+		-e 's|ARG_UID|$(UID)|g' \
 		Dockerfile.dev > .dockerfile-dev-$(ARCH)
 	@sed \
 		-e 's|ARG_DOCKERFILE|.dockerfile-dev-$(ARCH)|g' \
