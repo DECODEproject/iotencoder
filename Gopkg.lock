@@ -70,6 +70,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/guregu/null"
+  packages = ["."]
+  revision = "e81d6d8d57747b34d7c5fe0d20ebf57692f04ea9"
+  version = "v3.3.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/hashicorp/hcl"
   packages = [
@@ -97,7 +103,8 @@
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
-    "reflectx"
+    "reflectx",
+    "types"
   ]
   revision = "2aeb6a910c2b94f2d5eb53d9895d80e27264ec41"
 
@@ -331,6 +338,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7eb8b1d3ebf4f33553b246e1c2ed91777b3ece40703defced3538081b827fd75"
+  inputs-digest = "4f984c2a842330ed734d64e4522aa18888b6fe929bf565aaead6020edbcd878c"
   solver-name = "gps-cdcl"
   solver-version = 1

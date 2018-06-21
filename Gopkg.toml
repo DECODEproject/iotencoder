@@ -92,3 +92,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/thingful/zenroom-go"
+
+[[constraint]]
+  name = "github.com/guregu/null"
+  version = "3.3.0"
