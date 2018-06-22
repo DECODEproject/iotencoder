@@ -27,24 +27,25 @@ type Device struct {
 	Streams []*Stream
 }
 
+// Entitlements is type alias for a slice of Entitlement instances. Used to
+// marshal and unmarshal to the DB
 type Entitlements []Entitlement
 
+// Value is the implementation of the Valuer interface which converts our custom
+// type into a slice of bytes for persistence in the DB.
 func (e Entitlements) Value() (driver.Value, error) {
-	fmt.Println("VALUING")
-	b, err := json.Marshal(e)
-	fmt.Println(string(b))
-	return b, err
+	return json.Marshal(e)
 }
 
-func (e Entitlements) Scan(src interface{}) error {
-	fmt.Println("SCANNING")
-	data, ok := src.([]byte)
-	if !ok {
-		return fmt.Errorf("Could not decode type %T -> %T", src, e)
-		//fmt.Println(string(data))
-		//return json.Unmarshal(data, &e)
+// Scan is the implementation of the Scanner sql interface which takes as input
+// the string (byte slice), in the DB, and unmarshals that back into our slice
+// of Entitlement instances.
+func (e *Entitlements) Scan(src interface{}) error {
+	if data, ok := src.([]byte); ok {
+		return json.Unmarshal(data, &e)
 	}
-	return json.Unmarshal(data, &e)
+
+	return fmt.Errorf("Could not decode type %T -> %T", src, e)
 }
 
 // Stream is a type used when reading data back from the DB, and when creating a
@@ -57,6 +58,11 @@ type Stream struct {
 	Device *Device
 }
 
+// Entitlement is our custom type which captures a single entitleent
+// configuration of a Stream. A Stream may have none or many Entitlements. If a
+// stream has no entitlements then all channels are passed through as received,
+// however if a Stream has more than a single Entitlement, then only that sensor
+// will be published upstream to the datastore.
 type Entitlement struct {
 	SensorID int       `json:"sensorId"`
 	Action   string    `json:"action"`
@@ -72,7 +78,7 @@ type DB interface {
 	// which must have a an associated Device. We upsert the Device, then attempt
 	// to insert the Stream. Returns a string id for the inserted Stream or an
 	// error if any failure happens.
-	CreateStream(stream *Stream) (string, error)
+	CreateStream(tx *sqlx.Tx, stream *Stream) (string, error)
 
 	// DeleteStream takes as input a string representing the id of a previously
 	// stored stream, and attempts to delete the associated stream from the
@@ -80,22 +86,30 @@ type DB interface {
 	// device then the device record is also deleted. We return a Device instance
 	// as we need to pass back out the broker and topic so that we can also
 	// unsubscribe from the MQTT topic.
-	DeleteStream(id string) (*Device, error)
+	DeleteStream(tx *sqlx.Tx, id string) (*Device, error)
 
 	// GetDevices returns a slice containing all Devices currently stored in the
 	// system. We know we have a maximum limit here of around 25 devices, so we
 	// don't need to worry about this being an excessively large dataset. Note we
 	// do not load all Streams here, we just return the device.
-	GetDevices() ([]*Device, error)
+	GetDevices(tx *sqlx.Tx) ([]*Device, error)
 
 	// GetDevice returns a single Device with all associated Streams on being given
 	// the devices unique token. This is used on boot to create MQTT subscriptions
 	// for all Streams.
-	GetDevice(token string) (*Device, error)
+	GetDevice(tx *sqlx.Tx, token string) (*Device, error)
 
 	// MigrateUp is a helper method that attempts to run all up migrations against
 	// the underlying Postgres DB or returns an error.
 	MigrateUp() error
+
+	// MigrateDownAll is a helper method that attempts to run all down migrations
+	// against the underlying Postgres DB
+	MigrateDownAll() error
+
+	// BeginTX is a helper function that simply starts a transaction in the context
+	// of the current DB connection
+	BeginTX() (*sqlx.Tx, error)
 }
 
 // Open is a helper function that takes as input a connection string for a DB,
@@ -171,11 +185,15 @@ func (d *db) Stop() error {
 	return d.DB.Close()
 }
 
+func (d *db) BeginTX() (*sqlx.Tx, error) {
+	return d.DB.Beginx()
+}
+
 // CreateStream attempts to insert records into the database for the given
 // Stream object. Returns a string containing the ID of the created stream if
 // successful or an error if any data constraint is violated, or any other error
 // occurs.
-func (d *db) CreateStream(stream *Stream) (_ string, err error) {
+func (d *db) CreateStream(tx *sqlx.Tx, stream *Stream) (_ string, err error) {
 	// device upsert sql - note we encrypt the private key using postgres native
 	// symmetric encryption scheme
 	sql := `INSERT INTO devices
@@ -200,21 +218,15 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 		"encryption_password": d.encryptionPassword,
 	}
 
-	tx, err := BeginTX(d.DB)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to start transaction when inserting device")
-	}
-
-	defer func() {
-		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
-			err = cerr
-		}
-	}()
-
 	var deviceID int
 
+	sql, args, err := tx.BindNamed(sql, mapArgs)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to rebind device query")
+	}
+
 	// we use a Get for the upsert so we get back the device id
-	err = tx.Get(&deviceID, sql, mapArgs)
+	err = tx.Get(&deviceID, sql, args...)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to upsert device")
 	}
@@ -232,10 +244,6 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 	)
 	RETURNING id`
 
-	fmt.Println("*****************************")
-	fmt.Println(stream.Entitlements)
-	fmt.Println("*****************************")
-
 	mapArgs = map[string]interface{}{
 		"device_id":    deviceID,
 		"public_key":   stream.PublicKey,
@@ -244,8 +252,13 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 
 	var streamID int
 
+	sql, args, err = tx.BindNamed(sql, mapArgs)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to rebind streams query")
+	}
+
 	// again use a Get to get back the stream's id
-	err = tx.Get(&streamID, sql, mapArgs)
+	err = tx.Get(&streamID, sql, args...)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to insert stream")
 	}
@@ -262,7 +275,7 @@ func (d *db) CreateStream(stream *Stream) (_ string, err error) {
 // stream is the last one associated with a device, then the device record is
 // also deleted. We return a Device object purely so we can pass back out the
 // broker and topic allowing us to unsubscribe.V
-func (d *db) DeleteStream(id string) (_ *Device, err error) {
+func (d *db) DeleteStream(tx *sqlx.Tx, id string) (_ *Device, err error) {
 	sql := `DELETE FROM streams WHERE id = :id
 		RETURNING device_id`
 
@@ -275,21 +288,15 @@ func (d *db) DeleteStream(id string) (_ *Device, err error) {
 		"id": streamIDs[0],
 	}
 
-	tx, err := BeginTX(d.DB)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to start transaction when deleting stream")
-	}
-
-	defer func() {
-		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
-			err = cerr
-		}
-	}()
-
 	var deviceID int
 
+	sql, args, err := tx.BindNamed(sql, mapArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to rebind stream delete query")
+	}
+
 	// again use a Get to run the delete so we get back the device's id
-	err = tx.Get(&deviceID, sql, mapArgs)
+	err = tx.Get(&deviceID, sql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to delete stream")
 	}
@@ -305,8 +312,13 @@ func (d *db) DeleteStream(id string) (_ *Device, err error) {
 
 	var streamCount int
 
+	sql, args, err = tx.BindNamed(sql, mapArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to rebind stream count query")
+	}
+
 	// again use a Get to get the count
-	err = tx.Get(&streamCount, sql, mapArgs)
+	err = tx.Get(&streamCount, sql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to count streams")
 	}
@@ -322,7 +334,12 @@ func (d *db) DeleteStream(id string) (_ *Device, err error) {
 
 		var device Device
 
-		err = tx.Get(&device, sql, mapArgs)
+		sql, args, err = tx.BindNamed(sql, mapArgs)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to rebind device delete query")
+		}
+
+		err = tx.Get(&device, sql, args...)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to delete device")
 		}
@@ -336,7 +353,7 @@ func (d *db) DeleteStream(id string) (_ *Device, err error) {
 // GetDevices returns a slice of pointers to Device instances. We don't worry
 // about pagination here as we have a maximum number of devices of approximately
 // 25. Note we do not load all streams for these devices.
-func (d *db) GetDevices() ([]*Device, error) {
+func (d *db) GetDevices(tx *sqlx.Tx) ([]*Device, error) {
 	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key
 		FROM devices`
 
@@ -344,37 +361,22 @@ func (d *db) GetDevices() ([]*Device, error) {
 		"encryption_password": d.encryptionPassword,
 	}
 
-	tx, err := BeginTX(d.DB)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to begin transaction")
-	}
-
-	defer func() {
-		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
-			err = cerr
-		}
-	}()
-
 	devices := []*Device{}
 
-	mapper := func(rows *sqlx.Rows) error {
-		for rows.Next() {
-			var d Device
-
-			err = rows.StructScan(&d)
-			if err != nil {
-				return errors.Wrap(err, "failed to scan row into Device struct")
-			}
-
-			devices = append(devices, &d)
-		}
-
-		return nil
+	rows, err := tx.NamedQuery(sql, mapArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute devices query")
 	}
 
-	err = tx.Map(sql, mapArgs, mapper)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to select device rows from database")
+	for rows.Next() {
+		var d Device
+
+		err = rows.StructScan(&d)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan device struct")
+		}
+
+		devices = append(devices, &d)
 	}
 
 	return devices, nil
@@ -382,7 +384,7 @@ func (d *db) GetDevices() ([]*Device, error) {
 
 // GetDevice returns a single device identified by topic, including all streams
 // for that device. This is used to set up subscriptions for devices.
-func (d *db) GetDevice(topic string) (_ *Device, err error) {
+func (d *db) GetDevice(tx *sqlx.Tx, topic string) (_ *Device, err error) {
 	sql := `SELECT id, broker, topic, pgp_sym_decrypt(private_key, :encryption_password) AS private_key,
 	  user_uid, longitude, latitude, exposure
 		FROM devices
@@ -393,19 +395,14 @@ func (d *db) GetDevice(topic string) (_ *Device, err error) {
 		"topic":               topic,
 	}
 
-	tx, err := BeginTX(d.DB)
+	sql, args, err := tx.BindNamed(sql, mapArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to begin transaction")
+		return nil, errors.Wrap(err, "failed to rebind device select query")
 	}
 
-	defer func() {
-		if cerr := tx.CommitOrRollback(); err == nil && cerr != nil {
-			err = cerr
-		}
-	}()
-
 	var device Device
-	err = tx.Get(&device, sql, mapArgs)
+
+	err = tx.Get(&device, sql, args...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load device")
 	}
@@ -419,27 +416,22 @@ func (d *db) GetDevice(topic string) (_ *Device, err error) {
 		"device_id": device.ID,
 	}
 
-	streams := []*Stream{}
-
-	mapper := func(rows *sqlx.Rows) error {
-
-		for rows.Next() {
-			var s Stream
-
-			err = rows.StructScan(&s)
-			if err != nil {
-				return errors.Wrap(err, "failed to scan stream row into struct")
-			}
-
-			streams = append(streams, &s)
-		}
-
-		return nil
+	rows, err := tx.NamedQuery(sql, mapArgs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to execute streams query")
 	}
 
-	err = tx.Map(sql, mapArgs, mapper)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to execute row mapper")
+	streams := []*Stream{}
+
+	for rows.Next() {
+		var s Stream
+
+		err = rows.StructScan(&s)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to scan stream row into struct")
+		}
+
+		streams = append(streams, &s)
 	}
 
 	device.Streams = streams
@@ -451,4 +443,8 @@ func (d *db) GetDevice(topic string) (_ *Device, err error) {
 // of an instantiated DB instance.
 func (d *db) MigrateUp() error {
 	return MigrateUp(d.DB.DB, d.logger)
+}
+
+func (d *db) MigrateDownAll() error {
+	return MigrateDownAll(d.DB.DB, d.logger)
 }

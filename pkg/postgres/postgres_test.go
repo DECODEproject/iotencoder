@@ -61,7 +61,10 @@ func (s *PostgresSuite) TearDownTest() {
 }
 
 func (s *PostgresSuite) TestRoundTrip() {
-	streamID1, err := s.db.CreateStream(&postgres.Stream{
+	tx, err := s.db.BeginTX()
+	assert.Nil(s.T(), err)
+
+	streamID1, err := s.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
 			Broker:     "tcp://example.com",
@@ -78,41 +81,46 @@ func (s *PostgresSuite) TestRoundTrip() {
 				Action:   encoder.CreateStreamRequest_Entitlement_MOVING_AVG.String(),
 				Interval: null.IntFrom(900),
 			},
+			{
+				SensorID: 14,
+				Action:   encoder.CreateStreamRequest_Entitlement_BIN.String(),
+				Bins:     []float64{40, 80},
+			},
 		},
 	})
 
 	assert.Nil(s.T(), err)
 	assert.NotEqual(s.T(), "", streamID1)
 
-	//streamID2, err := s.db.CreateStream(&postgres.Stream{
-	//	PublicKey: "public",
-	//	Device: &postgres.Device{
-	//		Broker:     "tcp://mqtt.com",
-	//		Topic:      "device/124",
-	//		PrivateKey: "private",
-	//		UserUID:    "bob",
-	//		Longitude:  45.2,
-	//		Latitude:   23.2,
-	//		Exposure:   "indoor",
-	//	},
-	//})
+	streamID2, err := s.db.CreateStream(tx, &postgres.Stream{
+		PublicKey: "public",
+		Device: &postgres.Device{
+			Broker:     "tcp://mqtt.com",
+			Topic:      "device/124",
+			PrivateKey: "private",
+			UserUID:    "bob",
+			Longitude:  45.2,
+			Latitude:   23.2,
+			Exposure:   "indoor",
+		},
+	})
 
-	//assert.Nil(s.T(), err)
-	//assert.NotEqual(s.T(), "", streamID2)
+	assert.Nil(s.T(), err)
+	assert.NotEqual(s.T(), "", streamID2)
 
-	//devices, err := s.db.GetDevices()
-	//assert.Nil(s.T(), err)
-	//assert.Len(s.T(), devices, 2)
+	devices, err := s.db.GetDevices(tx)
+	assert.Nil(s.T(), err)
+	assert.Len(s.T(), devices, 2)
 
-	//assert.Equal(s.T(), "tcp://example.com", devices[0].Broker)
-	//assert.Equal(s.T(), "device/123", devices[0].Topic)
-	//assert.Equal(s.T(), "private", devices[0].PrivateKey)
+	assert.Equal(s.T(), "tcp://example.com", devices[0].Broker)
+	assert.Equal(s.T(), "device/123", devices[0].Topic)
+	assert.Equal(s.T(), "private", devices[0].PrivateKey)
 
-	//assert.Equal(s.T(), "tcp://mqtt.com", devices[1].Broker)
-	//assert.Equal(s.T(), "device/124", devices[1].Topic)
-	//assert.Equal(s.T(), "private", devices[1].PrivateKey)
+	assert.Equal(s.T(), "tcp://mqtt.com", devices[1].Broker)
+	assert.Equal(s.T(), "device/124", devices[1].Topic)
+	assert.Equal(s.T(), "private", devices[1].PrivateKey)
 
-	device, err := s.db.GetDevice("device/123")
+	device, err := s.db.GetDevice(tx, "device/123")
 	assert.Nil(s.T(), err)
 
 	assert.Equal(s.T(), "tcp://example.com", device.Broker)
@@ -124,19 +132,36 @@ func (s *PostgresSuite) TestRoundTrip() {
 	assert.Equal(s.T(), "indoor", device.Exposure)
 	assert.Len(s.T(), device.Streams, 1)
 	assert.Equal(s.T(), "public", device.Streams[0].PublicKey)
-	assert.Len(s.T(), device.Streams[0].Entitlements, 1)
+	assert.Len(s.T(), device.Streams[0].Entitlements, 2)
 
-	//device, err = s.db.DeleteStream(streamID1)
-	//assert.Nil(s.T(), err)
-	//assert.Equal(s.T(), "tcp://example.com", device.Broker)
-	//assert.Equal(s.T(), "device/123", device.Topic)
+	entitlement1 := device.Streams[0].Entitlements[0]
+	assert.Equal(s.T(), 29, entitlement1.SensorID)
+	assert.Equal(s.T(), "MOVING_AVG", entitlement1.Action)
+	assert.Equal(s.T(), int64(900), entitlement1.Interval.Int64)
 
-	//devices, err = s.db.GetDevices()
-	//assert.Nil(s.T(), err)
-	//assert.Len(s.T(), devices, 1)
+	entitlement2 := device.Streams[0].Entitlements[1]
+	assert.Equal(s.T(), 14, entitlement2.SensorID)
+	assert.Equal(s.T(), "BIN", entitlement2.Action)
+	assert.Equal(s.T(), []float64{40, 80}, entitlement2.Bins)
+	assert.False(s.T(), entitlement2.Interval.Valid)
+
+	device, err = s.db.DeleteStream(tx, streamID1)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), "tcp://example.com", device.Broker)
+	assert.Equal(s.T(), "device/123", device.Topic)
+
+	devices, err = s.db.GetDevices(tx)
+	assert.Nil(s.T(), err)
+	assert.Len(s.T(), devices, 1)
+
+	err = tx.Rollback()
+	assert.Nil(s.T(), err)
 }
 
 func (s *PostgresSuite) TestInvalidDelete() {
+	tx, err := s.db.BeginTX()
+	assert.Nil(s.T(), err)
+
 	testcases := []struct {
 		label       string
 		streamID    string
@@ -156,15 +181,21 @@ func (s *PostgresSuite) TestInvalidDelete() {
 
 	for _, tc := range testcases {
 		s.T().Run(tc.label, func(t *testing.T) {
-			_, err := s.db.DeleteStream(tc.streamID)
+			_, err := s.db.DeleteStream(tx, tc.streamID)
 			assert.NotNil(t, err)
 			assert.Equal(t, tc.expectedErr, err.Error())
 		})
 	}
+
+	err = tx.Rollback()
+	assert.Nil(s.T(), err)
 }
 
 func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
-	streamID1, err := s.db.CreateStream(&postgres.Stream{
+	tx, err := s.db.BeginTX()
+	assert.Nil(s.T(), err)
+
+	streamID1, err := s.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "public1",
 		Device: &postgres.Device{
 			Broker:     "tcp://example.com",
@@ -180,7 +211,7 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	assert.Nil(s.T(), err)
 	assert.NotEqual(s.T(), "", streamID1)
 
-	streamID2, err := s.db.CreateStream(&postgres.Stream{
+	streamID2, err := s.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "public2",
 		Device: &postgres.Device{
 			Broker:     "tcp://mqtt.com",
@@ -196,20 +227,26 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	assert.Nil(s.T(), err)
 	assert.NotEqual(s.T(), "", streamID2)
 
-	devices, err := s.db.GetDevices()
+	devices, err := s.db.GetDevices(tx)
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), devices, 1)
 
-	_, err = s.db.DeleteStream(streamID1)
+	_, err = s.db.DeleteStream(tx, streamID1)
 	assert.Nil(s.T(), err)
 
-	devices, err = s.db.GetDevices()
+	devices, err = s.db.GetDevices(tx)
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), devices, 1)
+
+	err = tx.Rollback()
+	assert.Nil(s.T(), err)
 }
 
 func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
-	_, err := s.db.CreateStream(&postgres.Stream{
+	tx, err := s.db.BeginTX()
+	assert.Nil(s.T(), err)
+
+	_, err = s.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
 			Broker:     "tcp://unique.com",
@@ -224,7 +261,7 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 
 	assert.Nil(s.T(), err)
 
-	_, err = s.db.CreateStream(&postgres.Stream{
+	_, err = s.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "public",
 		Device: &postgres.Device{
 			Broker:     "tcp://unique.com",
@@ -238,6 +275,9 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	})
 
 	assert.NotNil(s.T(), err)
+
+	err = tx.Rollback()
+	assert.Nil(s.T(), err)
 }
 
 func TestRunPostgresSuite(t *testing.T) {
