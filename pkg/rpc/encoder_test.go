@@ -69,6 +69,9 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	mqttClient := mocks.NewMQTTClient(nil)
 	processor := mocks.NewProcessor()
 
+	tx, err := e.db.BeginTX()
+	assert.Nil(e.T(), err)
+
 	enc := rpc.NewEncoder(&rpc.Config{
 		DB:         e.db,
 		MQTTClient: mqttClient,
@@ -78,7 +81,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 0)
 
-	err := enc.(system.Startable).Start()
+	err = enc.(system.Startable).Start()
 	assert.Nil(e.T(), err)
 	defer enc.(system.Stoppable).Stop()
 
@@ -100,7 +103,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
 	assert.NotEqual(e.T(), "", resp.StreamUid)
 
-	device, err := e.db.GetDevice("device/sck/abc123/readings")
+	device, err := e.db.GetDevice(tx, "device/sck/abc123/readings")
 	assert.Nil(e.T(), err)
 	assert.Equal(e.T(), "tcp://mqtt.local:1883", device.Broker)
 	assert.Len(e.T(), device.Streams, 1)
@@ -110,8 +113,11 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	})
 	assert.Nil(e.T(), err)
 
-	device, err = e.db.GetDevice("device/sck/abc123/readings")
+	device, err = e.db.GetDevice(tx, "device/sck/abc123/readings")
 	assert.NotNil(e.T(), err)
+
+	err = tx.Rollback()
+	assert.Nil(e.T(), err)
 }
 
 func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
@@ -119,8 +125,11 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	mqttClient := mocks.NewMQTTClient(nil)
 	processor := mocks.NewProcessor()
 
+	tx, err := e.db.BeginTX()
+	assert.Nil(e.T(), err)
+
 	// insert two streams with devices
-	_, err := e.db.CreateStream(&postgres.Stream{
+	_, err = e.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
 			Broker:    "tcp://broker1:1883",
@@ -133,7 +142,7 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	})
 	assert.Nil(e.T(), err)
 
-	_, err = e.db.CreateStream(&postgres.Stream{
+	_, err = e.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
 			Broker:    "tcp://broker1:1883",
@@ -144,6 +153,9 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 			Exposure:  "indoor",
 		},
 	})
+	assert.Nil(e.T(), err)
+
+	err = tx.Commit()
 	assert.Nil(e.T(), err)
 
 	enc := rpc.NewEncoder(&rpc.Config{
@@ -349,7 +361,10 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 	mqttClient := mocks.NewMQTTClient(errors.New("failed"))
 	processor := mocks.NewProcessor()
 
-	_, err := e.db.CreateStream(&postgres.Stream{
+	tx, err := e.db.BeginTX()
+	assert.Nil(e.T(), err)
+
+	_, err = e.db.CreateStream(tx, &postgres.Stream{
 		PublicKey: "abc123",
 		Device: &postgres.Device{
 			Broker:    "tcp://broker:1883",
@@ -370,6 +385,9 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 	}, logger)
 
 	err = enc.(system.Startable).Start()
+	assert.Nil(e.T(), err)
+
+	err = tx.Rollback()
 	assert.Nil(e.T(), err)
 }
 

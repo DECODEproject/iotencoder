@@ -50,12 +50,27 @@ func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 
 // Start the encoder. Here we create MQTT subscriptions for all records stored
 // in the DB.
-func (e *encoderImpl) Start() error {
+func (e *encoderImpl) Start() (err error) {
 	e.logger.Log("msg", "starting encoder")
 
 	e.logger.Log("msg", "creating existing subscriptions")
 
-	devices, err := e.db.GetDevices()
+	tx, err := e.db.BeginTX()
+	if err != nil {
+		return errors.Wrap(err, "failed to begin transaction to create subscriptions")
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		if cerr := tx.Commit(); cerr != nil {
+			err = errors.Wrap(cerr, "failed to commit transaction")
+		}
+	}()
+
+	devices, err := e.db.GetDevices(tx)
 	if err != nil {
 		return errors.Wrap(err, "failed to load devices")
 	}
@@ -86,15 +101,30 @@ func (e *encoderImpl) Stop() error {
 // CreateStream is our implementation of the protocol buffer interface. It takes
 // the incoming request, validates it and if valid we write some data to the
 // database, and set up a subscription with the specified MQTT broker.
-func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
-	err := validateCreateRequest(req)
+func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (_ *encoder.CreateStreamResponse, err error) {
+	err = validateCreateRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
 	stream := createStream(req)
 
-	streamID, err := e.db.CreateStream(stream)
+	tx, err := e.db.BeginTX()
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		if cerr := tx.Commit(); cerr != nil {
+			err = twirp.InternalErrorWith(cerr)
+		}
+	}()
+
+	streamID, err := e.db.CreateStream(tx, stream)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
 	}
@@ -115,13 +145,28 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 // DeleteStream is the method we provide for deleting a stream. It validates the
 // request, then deletes specified records from the database, and removes any
 // subscriptions.
-func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
-	err := validateDeleteRequest(req)
+func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (_ *encoder.DeleteStreamResponse, err error) {
+	err = validateDeleteRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
-	device, err := e.db.DeleteStream(req.StreamUid)
+	tx, err := e.db.BeginTX()
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		if cerr := tx.Commit(); cerr != nil {
+			err = twirp.InternalErrorWith(cerr)
+		}
+	}()
+
+	device, err := e.db.DeleteStream(tx, req.StreamUid)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
 	}
@@ -140,9 +185,26 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 // handleCallback is our internal function that receives incoming data from the
 // MQTT client. It loads the correct device from Postgres and then dispatches
 // processing to the pipeline module which is responsible for manipulating the
-// data and then writing to the datastore.
+// data and then writing to the datastore. Any errors encountered during
+// processing are logged but we do not return them from this function.
 func (e *encoderImpl) handleCallback(topic string, payload []byte) {
-	device, err := e.db.GetDevice(topic)
+	tx, err := e.db.BeginTX()
+	if err != nil {
+		e.logger.Log("err", err, "msg", "failed to begin transaction")
+		return
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+			return
+		}
+		if cerr := tx.Commit(); cerr != nil {
+			e.logger.Log("err", cerr, "msg", "failed to commit transaction")
+		}
+	}()
+
+	device, err := e.db.GetDevice(tx, topic)
 	if err != nil {
 		e.logger.Log("err", err, "msg", "failed to get device")
 	}
