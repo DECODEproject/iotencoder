@@ -59,26 +59,25 @@ Emitted json
 
 ```json
 {
-  "data": [
+  "owner": {
+    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
+  },
+  "location": {
+    "longitude": 2.234,
+    "latitude": 54.213,
+    "exposure": "INDOOR"
+  },
+  "recordedAt": "2018-06-03T22:26:02Z",
+  "sensors": [
     {
-      "location": {
-        "longitude": 2.256,
-        "latitude": 49.253
-      },
-      "exposure": "OUTDOOR",
-      "recorded_at": "2018-06-03T22:26:02Z",
-      "sensors": [
-        {
-          "id": 29,
-          "name": "MEMS Mic",
-          "description":
-            "MEMS microphone with enveolope follower sound pressure sensor (noise)",
-          "unit": "dBC",
-          "type": "MOVING_AVG",
-          "interval": 900,
-          "value": 64.252
-        }
-      ]
+      "id": 29,
+      "name": "MEMS Mic",
+      "description":
+        "MEMS microphone with enveolope follower sound pressure sensor (noise)",
+      "unit": "dBC",
+      "type": "MOVING_AVG",
+      "interval": 900,
+      "value": 64.252
     }
   ]
 }
@@ -92,26 +91,25 @@ Emitted json:
 
 ```json
 {
-  "data": [
+  "owner": {
+    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
+  },
+  "location": {
+    "longitude": 2.234,
+    "latitude": 54.213,
+    "exposure": "INDOOR"
+  },
+  "recordedAt": "2018-06-03T22:26:02Z",
+  "sensors": [
     {
-      "location": {
-        "longitude": 2.256,
-        "latitude": 49.253
-      },
-      "exposure": "OUTDOOR",
-      "recorded_at: "2018-06-03T22:26:02Z",
-      "sensors": [
-        {
-          "id": 29
-          "name": "MEMS Mic",
-          "description":
-            "MEMS microphone with enveolope follower sound pressure sensor (noise)",
-          "unit": "dBC",
-          "type": "BIN",
-          "bins": [40, 80],
-          "values": [0, 1, 0]
-        }
-      ]
+      "id": 29
+      "name": "MEMS Mic",
+      "description":
+        "MEMS microphone with enveolope follower sound pressure sensor (noise)",
+      "unit": "dBC",
+      "type": "BIN",
+      "bins": [40, 80],
+      "values": [0, 1, 0]
     }
   ]
 }
@@ -125,35 +123,34 @@ Emitted json:
 
 ```json
 {
-  "data": [
+  "owner": {
+    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
+  },
+  "location": {
+    "longitude": 2.234,
+    "latitude": 54.213,
+    "exposure": "INDOOR"
+  },
+  "recordedAt": "2018-06-03T22:26:02Z",
+  "sensors": [
     {
-      "location": {
-        "longitude": 2.256,
-        "latitude": 49.253
-      },
-      "exposure": "OUTDOOR",
-      "recorded_at: "2018-06-03T22:26:02Z",
-      "sensors": [
-        {
-          "id": 14,
-          "name": "BH1730FVC",
-          "description": "Digital Ambient Light Sensor",
-          "unit": "lux",
-          "type": "MOVING_AVG",
-          "interval": 900,
-          "value": 6.34
-        },
-        {
-          "id": 29
-          "name": "MEMS Mic",
-          "description":
-            "MEMS microphone with enveolope follower sound pressure sensor (noise)",
-          "unit": "dBC",
-          "type": "BIN",
-          "bins": [40],
-          "values": [0, 1]
-        }
-      ]
+      "id": 14,
+      "name": "BH1730FVC",
+      "description": "Digital Ambient Light Sensor",
+      "unit": "lux",
+      "type": "MOVING_AVG",
+      "interval": 900,
+      "value": 6.34
+    },
+    {
+      "id": 29
+      "name": "MEMS Mic",
+      "description":
+        "MEMS microphone with enveolope follower sound pressure sensor (noise)",
+      "unit": "dBC",
+      "type": "BIN",
+      "bins": [40],
+      "values": [0, 1]
     }
   ]
 }
@@ -167,24 +164,23 @@ Emitted json:
 
 ```json
 {
-  "data": [
+  "owner": {
+    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
+  },
+  "location": {
+    "longitude": 2.234,
+    "latitude": 54.213,
+    "exposure": "INDOOR"
+  },
+  "recordedAt": "2018-06-03T22:26:02Z",
+  "sensors": [
     {
-      "location": {
-        "longitude": 2.256,
-        "latitude": 49.253
-      },
-      "exposure": "OUTDOOR",
-      "recorded_at: "2018-06-03T22:26:02Z",
-      "sensors": [
-        {
-          "id": 12,
-          "name": "HPP828E031",
-          "description": "Temperature"
-          "unit": "ºC",
-          "type": "SHARE",
-          "value": 22.41268
-        }
-      ]
+      "id": 12,
+      "name": "HPP828E031",
+      "description": "Temperature",
+      "unit": "ºC",
+      "type": "SHARE",
+      "value": 22.41268
     }
   ]
 }
