@@ -1,0 +1,2 @@
+ALTER TABLE devices
+  ADD COLUMN max_interval INTEGER DEFAULT 0;

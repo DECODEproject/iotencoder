@@ -8,6 +8,8 @@
 // sql/20180621134601_rename_disposition_column.up.sql
 // sql/20180621150114_add_entitlements_column.down.sql
 // sql/20180621150114_add_entitlements_column.up.sql
+// sql/20180622171534_add_max_interval_to_devices.down.sql
+// sql/20180622171534_add_max_interval_to_devices.up.sql
 package migrations
 
 import (
@@ -233,6 +235,46 @@ func _20180621150114_add_entitlements_columnUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __20180622171534_add_max_interval_to_devicesDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\xe6\x52\x50\x70\x09\xf2\x0f\x50\x70\xf6\xf7\x09\xf5\xf5\x53\xc8\x4d\xac\x88\xcf\xcc\x2b\x49\x2d\x2a\x4b\xcc\xb1\x06\x04\x00\x00\xff\xff\x42\x16\xff\xd3\x2f\x00\x00\x00")
+
+func _20180622171534_add_max_interval_to_devicesDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20180622171534_add_max_interval_to_devicesDownSql,
+		"20180622171534_add_max_interval_to_devices.down.sql",
+	)
+}
+
+func _20180622171534_add_max_interval_to_devicesDownSql() (*asset, error) {
+	bytes, err := _20180622171534_add_max_interval_to_devicesDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20180622171534_add_max_interval_to_devices.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1529687798, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
+var __20180622171534_add_max_interval_to_devicesUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\xe6\x52\x50\x70\x74\x71\x51\x70\xf6\xf7\x09\xf5\xf5\x53\xc8\x4d\xac\x88\xcf\xcc\x2b\x49\x2d\x2a\x4b\xcc\x51\xf0\xf4\x0b\x71\x75\x77\x0d\x52\x70\x71\x75\x73\x0c\xf5\x09\x51\x30\xb0\x06\x04\x00\x00\xff\xff\x1f\x84\xd6\x03\x40\x00\x00\x00")
+
+func _20180622171534_add_max_interval_to_devicesUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20180622171534_add_max_interval_to_devicesUpSql,
+		"20180622171534_add_max_interval_to_devices.up.sql",
+	)
+}
+
+func _20180622171534_add_max_interval_to_devicesUpSql() (*asset, error) {
+	bytes, err := _20180622171534_add_max_interval_to_devicesUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20180622171534_add_max_interval_to_devices.up.sql", size: 64, mode: os.FileMode(420), modTime: time.Unix(1529687786, 0)}
+	a := &asset{bytes: bytes, info: info}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -293,6 +335,8 @@ var _bindata = map[string]func() (*asset, error){
 	"20180621134601_rename_disposition_column.up.sql": _20180621134601_rename_disposition_columnUpSql,
 	"20180621150114_add_entitlements_column.down.sql": _20180621150114_add_entitlements_columnDownSql,
 	"20180621150114_add_entitlements_column.up.sql": _20180621150114_add_entitlements_columnUpSql,
+	"20180622171534_add_max_interval_to_devices.down.sql": _20180622171534_add_max_interval_to_devicesDownSql,
+	"20180622171534_add_max_interval_to_devices.up.sql": _20180622171534_add_max_interval_to_devicesUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -343,6 +387,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"20180621134601_rename_disposition_column.up.sql": &bintree{_20180621134601_rename_disposition_columnUpSql, map[string]*bintree{}},
 	"20180621150114_add_entitlements_column.down.sql": &bintree{_20180621150114_add_entitlements_columnDownSql, map[string]*bintree{}},
 	"20180621150114_add_entitlements_column.up.sql": &bintree{_20180621150114_add_entitlements_columnUpSql, map[string]*bintree{}},
+	"20180622171534_add_max_interval_to_devices.down.sql": &bintree{_20180622171534_add_max_interval_to_devicesDownSql, map[string]*bintree{}},
+	"20180622171534_add_max_interval_to_devices.up.sql": &bintree{_20180622171534_add_max_interval_to_devicesUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory
