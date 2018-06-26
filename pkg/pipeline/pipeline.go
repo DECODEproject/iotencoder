@@ -103,7 +103,7 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 	// check payload
-	if payload == nil {
+	if payload == nil || len(payload) == 0 {
 		return errors.New("empty payload received")
 	}
 
@@ -134,6 +134,10 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		}
 
 		zenroomHistogram.Observe(duration.Seconds())
+
+		if p.verbose {
+			p.logger.Log("encodedPayload", string(encodedPayload))
+		}
 
 		start = time.Now()
 
