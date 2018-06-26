@@ -12,7 +12,7 @@ import (
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8080", "Address to which the HTTP server binds")
+	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8081", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
 	serverCmd.Flags().IntP("hashidlength", "l", 8, "Minimum length of generated hashids")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
@@ -60,6 +60,8 @@ clients unable to use the Protocol Buffer API.`,
 			return errors.New("Missing required environment variable: $IOTENCODER_HASHID_SALT")
 		}
 
+		verbose := viper.GetBool("verbose")
+
 		logger := logger.NewLogger()
 
 		config := &server.Config{
@@ -69,7 +71,7 @@ clients unable to use the Protocol Buffer API.`,
 			EncryptionPassword: encryptionPassword,
 			HashidSalt:         hashidSalt,
 			HashidMinLength:    viper.GetInt("hashidlength"),
-			Verbose:            viper.GetBool("verbose"),
+			Verbose:            verbose,
 		}
 
 		s := server.NewServer(config, logger)
