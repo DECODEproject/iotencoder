@@ -1,21 +1,18 @@
 package mqtt
 
 import (
-	"fmt"
 	"sync"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-
-	"github.com/thingful/iotencoder/pkg/version"
 )
 
 var (
 	// mqttClientID holds a reference to the application ID we send to a broker
 	// when connecting
-	mqttClientID = fmt.Sprintf("%sDECODE", version.BinaryName)
+	mqttClientID = "DECODEIoTPilot"
 
 	// messageCounter is a prometheus counter vec recording the number of received
 	// messages, labelled by topic
