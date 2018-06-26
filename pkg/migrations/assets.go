@@ -170,7 +170,7 @@ func _20180621134601_rename_disposition_columnDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180621134601_rename_disposition_column.down.sql", size: 104, mode: os.FileMode(420), modTime: time.Unix(1529588889, 0)}
+	info := bindataFileInfo{name: "20180621134601_rename_disposition_column.down.sql", size: 104, mode: os.FileMode(420), modTime: time.Unix(1529927328, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -190,7 +190,7 @@ func _20180621134601_rename_disposition_columnUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180621134601_rename_disposition_column.up.sql", size: 104, mode: os.FileMode(420), modTime: time.Unix(1529588863, 0)}
+	info := bindataFileInfo{name: "20180621134601_rename_disposition_column.up.sql", size: 104, mode: os.FileMode(420), modTime: time.Unix(1529927328, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -210,7 +210,7 @@ func _20180621150114_add_entitlements_columnDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180621150114_add_entitlements_column.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1529593786, 0)}
+	info := bindataFileInfo{name: "20180621150114_add_entitlements_column.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1529927328, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -230,7 +230,7 @@ func _20180621150114_add_entitlements_columnUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180621150114_add_entitlements_column.up.sql", size: 74, mode: os.FileMode(420), modTime: time.Unix(1529594354, 0)}
+	info := bindataFileInfo{name: "20180621150114_add_entitlements_column.up.sql", size: 74, mode: os.FileMode(420), modTime: time.Unix(1529927328, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -250,7 +250,7 @@ func _20180622171534_add_max_interval_to_devicesDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180622171534_add_max_interval_to_devices.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1529687798, 0)}
+	info := bindataFileInfo{name: "20180622171534_add_max_interval_to_devices.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1529927328, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
@@ -270,7 +270,7 @@ func _20180622171534_add_max_interval_to_devicesUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180622171534_add_max_interval_to_devices.up.sql", size: 64, mode: os.FileMode(420), modTime: time.Unix(1529687786, 0)}
+	info := bindataFileInfo{name: "20180622171534_add_max_interval_to_devices.up.sql", size: 64, mode: os.FileMode(420), modTime: time.Unix(1529927328, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
