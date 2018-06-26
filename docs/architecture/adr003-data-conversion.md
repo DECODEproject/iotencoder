@@ -59,9 +59,6 @@ Emitted json
 
 ```json
 {
-  "owner": {
-    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
-  },
   "location": {
     "longitude": 2.234,
     "latitude": 54.213,
@@ -91,9 +88,6 @@ Emitted json:
 
 ```json
 {
-  "owner": {
-    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
-  },
   "location": {
     "longitude": 2.234,
     "latitude": 54.213,
@@ -123,9 +117,6 @@ Emitted json:
 
 ```json
 {
-  "owner": {
-    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
-  },
   "location": {
     "longitude": 2.234,
     "latitude": 54.213,
@@ -164,9 +155,6 @@ Emitted json:
 
 ```json
 {
-  "owner": {
-    "id": "5146608d-8c23-49ce-bdc4-25bd3a6ad3f4"
-  },
   "location": {
     "longitude": 2.234,
     "latitude": 54.213,
@@ -189,6 +177,8 @@ Emitted json:
 ## Consequences
 
 - We must have some way of adding extra metadata to each event without pinging
-  SmartCitizen for every incoming request.
+  SmartCitizen for every incoming request. This could be a library that exposes
+  the content of the SmartCitizen sensors API, as a static list or perhaps we
+  should ping that API for every new device that is added.
 
 -
