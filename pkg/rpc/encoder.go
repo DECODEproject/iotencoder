@@ -37,8 +37,6 @@ type Config struct {
 func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 	logger = kitlog.With(logger, "module", "rpc")
 
-	logger.Log("msg", "creating encoder")
-
 	return &encoderImpl{
 		logger:    logger,
 		db:        config.DB,
@@ -51,9 +49,7 @@ func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 // Start the encoder. Here we create MQTT subscriptions for all records stored
 // in the DB.
 func (e *encoderImpl) Start() (err error) {
-	e.logger.Log("msg", "starting encoder")
-
-	e.logger.Log("msg", "creating existing subscriptions")
+	e.logger.Log("msg", "starting encoder; creating existing subscriptions")
 
 	tx, err := e.db.BeginTX()
 	if err != nil {

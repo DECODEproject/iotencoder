@@ -66,8 +66,6 @@ type client struct {
 func NewClient(logger kitlog.Logger) Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
-	logger.Log("msg", "creating mqtt client instance")
-
 	return &client{
 		logger:  logger,
 		clients: make(map[string]mqtt.Client),

@@ -143,8 +143,6 @@ type Config struct {
 func NewDB(config *Config, logger kitlog.Logger) DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
-	logger.Log("msg", "creating DB instance", "hashidlength", config.HashidMinLength)
-
 	hd := hashids.NewData()
 	hd.Salt = config.HashidSalt
 	hd.MinLength = config.HashidMinLength

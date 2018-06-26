@@ -83,7 +83,12 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	hooks := twrpprom.NewServerHooks(nil)
 
 	logger = kitlog.With(logger, "module", "server")
-	logger.Log("msg", "creating server", "datastore", config.DatastoreAddr, "hashid", config.HashidMinLength)
+	logger.Log(
+		"msg", "creating server",
+		"listenAddr", config.ListenAddr,
+		"datastoreAddr", config.DatastoreAddr,
+		"hashid", config.HashidMinLength,
+	)
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 
@@ -105,7 +110,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		encoder: enc,
 		db:      db,
 		mqtt:    mqttClient,
-		logger:  kitlog.With(logger, "module", "server"),
+		logger:  logger,
 	}
 }
 
