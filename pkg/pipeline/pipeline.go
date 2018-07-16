@@ -308,29 +308,25 @@ func BinnedValues(value float64, bins []float64) []int {
 	for i, _ := range binnedVals {
 		switch {
 		case i == 0:
-			if value < bins[i] {
+			if value <= bins[i] {
 				binnedVals[i] = 1
 				continue
 			}
 			binnedVals[i] = 0
 		case i == len(binnedVals)-1:
-			if value >= bins[i-1] {
+			if value > bins[i-1] {
 				binnedVals[i] = 1
 				continue
 			}
 			binnedVals[i] = 0
 		default:
-			if value >= bins[i-1] && value < bins[i] {
+			if value > bins[i-1] && value <= bins[i] {
 				binnedVals[i] = 1
 				continue
 			}
 			binnedVals[i] = 0
 		}
 	}
-
-	//if value >= bins[len(bins)-1] {
-	//binnedVals[len(binnedVals)-1] = 1
-	//}
 
 	return binnedVals
 }

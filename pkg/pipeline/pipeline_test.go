@@ -208,13 +208,13 @@ func TestBinnedValues(t *testing.T) {
 			label:    "two buckets, on lower boundary",
 			value:    40,
 			bins:     []float64{40, 60},
-			expected: []int{0, 1, 0},
+			expected: []int{1, 0, 0},
 		},
 		{
 			label:    "two buckets, on upper boundary",
 			value:    60,
 			bins:     []float64{40, 60},
-			expected: []int{0, 0, 1},
+			expected: []int{0, 1, 0},
 		},
 		{
 			label:    "three buckets",
