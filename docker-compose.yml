@@ -16,8 +16,8 @@ services:
       - ARG_PWD/.cache/go-build:/.cache/go-build
     working_dir: /go/src/ARG_PKG
     ports:
-      - "8080:8080"
-    command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server", "--datastore", "datastore:8080" ]
+      - "8081:8081"
+    command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server", "--datastore", "http://10.101.1.99:8080", "--verbose" ]
     depends_on:
       - postgres
     environment:
