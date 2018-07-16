@@ -27,7 +27,7 @@ const (
 type Payload struct {
 	Location   Location  `json:"location"`
 	RecordedAt time.Time `json:"recordedAt"`
-	Sensors    []Sensor  `json:"sensors"`
+	Sensors    []Sensor  `json:"sensors,omitempty"`
 }
 
 // Location is a struct used to hold the location of the device.
