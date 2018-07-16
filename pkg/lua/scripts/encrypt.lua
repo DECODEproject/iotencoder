@@ -9,7 +9,7 @@ ecdh = require 'ecdh'
 json = require 'json'
 
 msg = octet.new(#DATA)
-msg:string(DATA)
+msg:base64(DATA)
 
 keys = json.decode(KEYS)
 keyring = ecdh.new('ec25519')
