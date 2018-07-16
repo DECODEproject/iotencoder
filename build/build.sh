@@ -15,6 +15,7 @@ export GOARCH="${ARCH}"
 # generate bindata assets
 go generate -x "${PKG}/pkg/migrations/"
 go generate -x "${PKG}/pkg/lua/"
+go generate -x "${PKG}/pkg/pipeline/"
 
 # compile our binary using install, the mounted volume ensures we can see it
 # outside the build container
