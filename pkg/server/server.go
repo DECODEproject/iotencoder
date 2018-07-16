@@ -54,7 +54,7 @@ func PulseHandler(w http.ResponseWriter, r *http.Request) {
 // NewServer returns a new simple HTTP server. Is also responsible for
 // constructing all components, and injecting them into the right place. This
 // perhaps belongs elsewhere, but leaving here for now.
-func NewServer(config *Config, logger kitlog.Logger) *Server {
+func NewServer(config *Config, logger kitlog.Logger) (*Server, error) {
 	db := postgres.NewDB(&postgres.Config{
 		ConnStr:            config.ConnStr,
 		EncryptionPassword: config.EncryptionPassword,
@@ -69,7 +69,10 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		},
 	)
 
-	processor := pipeline.NewProcessor(ds, config.Verbose, logger)
+	processor, err := pipeline.NewProcessor(ds, config.Verbose, logger)
+	if err != nil {
+		return nil, err
+	}
 
 	mqttClient := mqtt.NewClient(logger)
 
@@ -111,7 +114,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		db:      db,
 		mqtt:    mqttClient,
 		logger:  logger,
-	}
+	}, nil
 }
 
 // Start starts the server running. This is responsible for starting components

@@ -74,7 +74,10 @@ clients unable to use the Protocol Buffer API.`,
 			Verbose:            verbose,
 		}
 
-		s := server.NewServer(config, logger)
+		s, err := server.NewServer(config, logger)
+		if err != nil {
+			return err
+		}
 
 		return s.Start()
 	},
