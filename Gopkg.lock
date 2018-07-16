@@ -41,6 +41,21 @@
   version = "v0.3.0"
 
 [[projects]]
+  name = "github.com/go-redis/redis"
+  packages = [
+    ".",
+    "internal",
+    "internal/consistenthash",
+    "internal/hashtag",
+    "internal/pool",
+    "internal/proto",
+    "internal/singleflight",
+    "internal/util"
+  ]
+  revision = "83fb42932f6145ce52df09860384a4653d2d332a"
+  version = "v6.12.0"
+
+[[projects]]
   name = "github.com/go-stack/stack"
   packages = ["."]
   revision = "259ab82a6cad3992b4e21ff5cac294ccb06474bc"
@@ -103,8 +118,7 @@
   name = "github.com/jmoiron/sqlx"
   packages = [
     ".",
-    "reflectx",
-    "types"
+    "reflectx"
   ]
   revision = "2aeb6a910c2b94f2d5eb53d9895d80e27264ec41"
 
@@ -338,6 +352,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4f984c2a842330ed734d64e4522aa18888b6fe929bf565aaead6020edbcd878c"
+  inputs-digest = "b1c16a5921ba31951281b35a172691d7b1ec0c6839d19d1fc0e4566bea892266"
   solver-name = "gps-cdcl"
   solver-version = 1
