@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/guregu/null"
-
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/go-redis/redis"
+	"github.com/guregu/null"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
@@ -55,6 +55,13 @@ func init() {
 	prometheus.MustRegister(zenroomHistogram)
 }
 
+type Config struct {
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
+	Verbose       bool
+}
+
 // Processor is an interface we define to handle processing all the streams for
 // a device, where processing means reading all streams for the device, applying
 // whatever operations that stream specifies in terms of filtering / aggregation
@@ -74,14 +81,21 @@ type processor struct {
 	logger    kitlog.Logger
 	verbose   bool
 	sensors   map[int]SensorInfo
+	redis     *redis.Client
 }
 
 // NewProcessor is a constructor function that takes as input an instantiated
 // datastore client, and a logger. It returns the instantiated processor which
 // is ready for use. Note we pass in the datastore instance so that we can
 // supply a mock for testing.
-func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) (Processor, error) {
+func NewProcessor(config *Config, ds datastore.Datastore, logger kitlog.Logger) (Processor, error) {
 	logger = kitlog.With(logger, "module", "pipeline")
+
+	client := redis.NewClient(&redis.Options{
+		Addr:     config.RedisAddr,
+		Password: config.RedisPassword,
+		DB:       config.RedisDB,
+	})
 
 	// load sensor data from json asset
 	sensorData, err := Asset("sensors.json")
@@ -105,8 +119,9 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) (P
 	return &processor{
 		datastore: ds,
 		logger:    logger,
-		verbose:   verbose,
+		verbose:   config.Verbose,
 		sensors:   sensors,
+		redis:     client,
 	}, nil
 }
 
@@ -250,8 +265,6 @@ func Process(rawPayload *RawPayload, device *postgres.Device, stream *postgres.S
 			}
 		}
 	}
-
-	// add specified channels to the output
 
 	return json.Marshal(payload)
 }

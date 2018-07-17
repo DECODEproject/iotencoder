@@ -32,6 +32,9 @@ type Config struct {
 	HashidMinLength    int
 	DatastoreAddr      string
 	Verbose            bool
+	RedisAddr          string
+	RedisPassword      string
+	RedisDB            int
 }
 
 // Server is our top level type, contains all other components, is responsible
@@ -69,7 +72,12 @@ func NewServer(config *Config, logger kitlog.Logger) (*Server, error) {
 		},
 	)
 
-	processor, err := pipeline.NewProcessor(ds, config.Verbose, logger)
+	processor, err := pipeline.NewProcessor(&pipeline.Config{
+		RedisAddr:     config.RedisAddr,
+		RedisPassword: config.RedisPassword,
+		RedisDB:       config.RedisDB,
+		Verbose:       config.Verbose,
+	}, ds, logger)
 	if err != nil {
 		return nil, err
 	}
@@ -91,6 +99,8 @@ func NewServer(config *Config, logger kitlog.Logger) (*Server, error) {
 		"listenAddr", config.ListenAddr,
 		"datastoreAddr", config.DatastoreAddr,
 		"hashid", config.HashidMinLength,
+		"redisAddr", config.RedisAddr,
+		"redisDB", config.RedisDB,
 	)
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)

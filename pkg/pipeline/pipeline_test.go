@@ -113,7 +113,7 @@ func TestProcess(t *testing.T) {
 			}
 
 			// create new processor
-			processor, err := pipeline.NewProcessor(datastore.Datastore(&ds), true, logger)
+			processor, err := pipeline.NewProcessor(&pipeline.Config{Verbose: true}, datastore.Datastore(&ds), logger)
 			assert.Nil(t, err)
 
 			// run the processor
@@ -147,7 +147,7 @@ func TestProcessWithError(t *testing.T) {
 		errors.New("error"),
 	)
 
-	processor, err := pipeline.NewProcessor(datastore.Datastore(&ds), true, logger)
+	processor, err := pipeline.NewProcessor(&pipeline.Config{Verbose: true}, datastore.Datastore(&ds), logger)
 	assert.Nil(t, err)
 
 	device := &postgres.Device{
