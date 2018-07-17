@@ -14,13 +14,24 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8081", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
-	serverCmd.Flags().IntP("hashidlength", "l", 8, "Minimum length of generated hashids")
+	serverCmd.Flags().IntP("hashid-length", "l", 8, "Minimum length of generated hashids")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
+	serverCmd.Flags().StringP("redis-addr", "r", "", "Address on which Redis is listening")
+	serverCmd.Flags().StringP("redis-password", "p", "", "Optional password for Redis")
+	serverCmd.Flags().IntP("redis-db", "n", 0, "Redis database to which to connect")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
-	viper.BindPFlag("hashidlength", serverCmd.Flags().Lookup("hashidlength"))
+	viper.BindPFlag("hashid_length", serverCmd.Flags().Lookup("hashid-length"))
 	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
+	viper.BindPFlag("redis_addr", serverCmd.Flags().Lookup("redis-addr"))
+	viper.BindPFlag("redis_password", serverCmd.Flags().Lookup("redis-password"))
+	viper.BindPFlag("redis_db", serverCmd.Flags().Lookup("redis-db"))
+
+	viper.SetDefault("hashid_length", 8)
+	viper.SetDefault("verbose", false)
+	viper.SetDefault("redis_password", "")
+	viper.SetDefault("redis_db", 0)
 }
 
 var serverCmd = &cobra.Command{
@@ -60,6 +71,11 @@ clients unable to use the Protocol Buffer API.`,
 			return errors.New("Missing required environment variable: $IOTENCODER_HASHID_SALT")
 		}
 
+		redisAddr := viper.GetString("redis_addr")
+		if redisAddr == "" {
+			return errors.New("Must provide Redis server address")
+		}
+
 		verbose := viper.GetBool("verbose")
 
 		logger := logger.NewLogger()
@@ -70,8 +86,11 @@ clients unable to use the Protocol Buffer API.`,
 			ConnStr:            connStr,
 			EncryptionPassword: encryptionPassword,
 			HashidSalt:         hashidSalt,
-			HashidMinLength:    viper.GetInt("hashidlength"),
+			HashidMinLength:    viper.GetInt("hashid-length"),
 			Verbose:            verbose,
+			RedisAddr:          redisAddr,
+			RedisPassword:      viper.GetString("redis-password"),
+			RedisDB:            viper.GetInt("redis-db"),
 		}
 
 		s, err := server.NewServer(config, logger)
