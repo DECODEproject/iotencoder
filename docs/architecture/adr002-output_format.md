@@ -137,12 +137,11 @@ The output JSON we will publish will look like this:
 
 ```json
 {
-  "location": {
-    "longitude": 2.234,
-    "latitude": 54.213,
-    "exposure": "INDOOR"
-  },
+  "longitude": 2.234,
+  "latitude": 54.213,
+  "exposure": "INDOOR",
   "recordedAt": "2018-11-01T15:06:23Z",
+  "userUid": "abc-123-fbd",
   "sensors": [
     {
       "sensorId": 29,
