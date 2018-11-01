@@ -124,9 +124,9 @@ SmartCitizen's sensor JSON.
 Reasoning:
 
 * Removes any coupling between the final receipient of the data and
-  SmartCitizen. This avoids Eurecat having to build knowledge of this API into
-  their systems, and would be more scalable if other data sources were ever
-  added.
+  SmartCitizen. This avoids consumers having to build knowledge of the
+  SmartCitizen API into their systems, and would be more scalable if other data
+  sources were ever added.
 
 * Sensor types included by SmartCitizen do not change frequently (last update
   was 2016, so 2 years ago at time of writing).  Because of this low update
@@ -147,7 +147,7 @@ The output JSON we will publish will look like this:
     {
       "sensorId": 29,
       "name": "MEMS Mic",
-      "description": "MEMS microphone with envelope follower sound pressure sensor (noise)."
+      "description": "MEMS microphone with envelope follower sound pressure sensor (noise).",
       "unit": "dBC",
       "type": "SHARE",
       "value": 64.252
