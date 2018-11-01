@@ -63,26 +63,26 @@ This returns JSON that looks like this:
 ```json
 [
   {
-    id: 3,
-    uuid: "ac284ba3-e2fc-4795-b2b1-530b32a9b05b",
-    parent_id: null,
-    name: "DHT22",
-    description: "A digital temperature and humidity sensor. It uses a capacitive humidity sensor and a thermistor to measure the surrounding air, and spits out a digital signal on the data pin (no analog input pins needed)",
-    unit: null,
-    created_at: "2015-02-02T18:14:15Z",
-    updated_at: "2015-02-02T18:14:15Z",
-    measurement: null
+    "id": 3,
+    "uuid": "ac284ba3-e2fc-4795-b2b1-530b32a9b05b",
+    "parent_id": null,
+    "name": "DHT22",
+    "description": "A digital temperature and humidity sensor. It uses a capacitive humidity sensor and a thermistor to measure the surrounding air, and spits out a digital signal on the data pin (no analog input pins needed)",
+    "unit": null,
+    "created_at": "2015-02-02T18:14:15Z",
+    "updated_at": "2015-02-02T18:14:15Z",
+    "measurement": null
   },
   {
-    id: 20,
-    uuid: "4a2e9c80-748c-44a3-b400-8824f50d19cd",
-    parent_id: null,
-    name: "MiCS4514",
-    description: "Gas Sensor",
-    unit: null,
-    created_at: "2015-02-02T18:31:50Z",
-    updated_at: "2015-02-02T18:31:50Z",
-    measurement: null
+    "id": 20,
+    "uuid": "4a2e9c80-748c-44a3-b400-8824f50d19cd",
+    "parent_id": null,
+    "name": "MiCS4514",
+    "description": "Gas Sensor",
+    "unit": null,
+    "created_at": "2015-02-02T18:31:50Z",
+    "updated_at": "2015-02-02T18:31:50Z",
+    "measurement": null
   }
 ]
 ```
