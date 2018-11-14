@@ -8,8 +8,6 @@ if set -o | grep -q "pipefail"; then
   set -o pipefail
 fi
 
-source ./build/shared.sh
-
 export CGO_ENABLED=${CGO_ENABLED:-0}
 
 TARGETS=$(for d in "$@"; do echo ./$d/...; done)
