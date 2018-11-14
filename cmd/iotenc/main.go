@@ -1,6 +1,6 @@
 package main
 
-import "github.com/thingful/iotencoder/pkg/tasks"
+import "github.com/DECODEproject/iotencoder/pkg/tasks"
 
 func main() {
 	tasks.Execute()

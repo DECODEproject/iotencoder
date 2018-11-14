@@ -15,11 +15,11 @@ import (
 	datastore "github.com/thingful/twirp-datastore-go"
 	encoder "github.com/thingful/twirp-encoder-go"
 
-	"github.com/thingful/iotencoder/pkg/mqtt"
-	"github.com/thingful/iotencoder/pkg/pipeline"
-	"github.com/thingful/iotencoder/pkg/postgres"
-	"github.com/thingful/iotencoder/pkg/rpc"
-	"github.com/thingful/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/mqtt"
+	"github.com/DECODEproject/iotencoder/pkg/pipeline"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/rpc"
+	"github.com/DECODEproject/iotencoder/pkg/system"
 )
 
 // Config is a top level config object. Populated by viper in the command setup,

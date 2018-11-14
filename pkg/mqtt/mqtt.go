@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/thingful/iotencoder/pkg/version"
+	"github.com/DECODEproject/iotencoder/pkg/version"
 )
 
 var (

@@ -6,8 +6,8 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/thingful/iotencoder/pkg/logger"
-	"github.com/thingful/iotencoder/pkg/server"
+	"github.com/DECODEproject/iotencoder/pkg/logger"
+	"github.com/DECODEproject/iotencoder/pkg/server"
 )
 
 func init() {

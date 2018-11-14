@@ -10,9 +10,9 @@ import (
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/thingful/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 
-	"github.com/thingful/iotencoder/pkg/lua"
+	"github.com/DECODEproject/iotencoder/pkg/lua"
 
 	datastore "github.com/thingful/twirp-datastore-go"
 )

@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thingful/iotencoder/pkg/postgres"
-	"github.com/thingful/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/system"
 )
 
 type PostgresSuite struct {

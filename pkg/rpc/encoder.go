@@ -9,9 +9,9 @@ import (
 	encoder "github.com/thingful/twirp-encoder-go"
 	"github.com/twitchtv/twirp"
 
-	"github.com/thingful/iotencoder/pkg/mqtt"
-	"github.com/thingful/iotencoder/pkg/pipeline"
-	"github.com/thingful/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/mqtt"
+	"github.com/DECODEproject/iotencoder/pkg/pipeline"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 // encoderImpl is our implementation of the generated twirp interface for the

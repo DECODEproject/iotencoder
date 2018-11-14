@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	datastore "github.com/thingful/twirp-datastore-go"
 
-	"github.com/thingful/iotencoder/pkg/mocks"
-	"github.com/thingful/iotencoder/pkg/pipeline"
-	"github.com/thingful/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/mocks"
+	"github.com/DECODEproject/iotencoder/pkg/pipeline"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 func TestProcess(t *testing.T) {

@@ -3,7 +3,7 @@ package mocks
 import (
 	"sync"
 
-	"github.com/thingful/iotencoder/pkg/mqtt"
+	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 )
 
 // MQTTClient is a mock type that implements our mqtt interface. Internally it

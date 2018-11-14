@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/thingful/iotencoder/pkg/server"
+	"github.com/DECODEproject/iotencoder/pkg/server"
 )
 
 func TestPulseHandler(t *testing.T) {

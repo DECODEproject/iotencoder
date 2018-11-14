@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thingful/iotencoder/pkg/mocks"
-	"github.com/thingful/iotencoder/pkg/postgres"
-	"github.com/thingful/iotencoder/pkg/rpc"
-	"github.com/thingful/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/mocks"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/rpc"
+	"github.com/DECODEproject/iotencoder/pkg/system"
 	encoder "github.com/thingful/twirp-encoder-go"
 )
 
