@@ -3,8 +3,8 @@ package logger
 import (
 	"os"
 
-	kitlog "github.com/go-kit/kit/log"
 	"github.com/DECODEproject/iotencoder/pkg/version"
+	kitlog "github.com/go-kit/kit/log"
 )
 
 // NewLogger is a simple helper function that returns a kitlog.Logger instance
