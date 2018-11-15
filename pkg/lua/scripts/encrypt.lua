@@ -1,27 +1,38 @@
--- File: encrypt.lua
--- Script Params:
---  DATA and KEYS has to be passed to this script
---  through zenroom
--- Returns:
---  Nothing just print to stdout encrypted DATA
-octet = require 'octet'
-ecdh = require 'ecdh'
-json = require 'json'
+-- Encryption script for DECODE IoT Pilot
+curve = 'ed25519'
 
-msg = octet.new(#DATA)
-msg:string(DATA)
+-- data schema to validate input
+keys_schema = SCHEMA.Record {
+  device_token     = SCHEMA.String,
+  community_id     = SCHEMA.String,
+  community_pubkey = SCHEMA.String
+}
 
-keys = json.decode(KEYS)
-keyring = ecdh.new('ec25519')
+-- import and validate KEYS data
+keys = read_json(KEYS, keys_schema)
 
-public = octet.new()
-public:base64(keys.public)
+-- generate a new device keypair every time
+device_key = ECDH.keygen(curve)
 
-private = octet.new()
-private:base64(keys.private)
-keyring:public(public)
-keyring:private(private)
+-- read the payload we will encrypt
+payload = read_json(DATA)
 
-sess = keyring:session(public)
-zmsg = keyring:encrypt(sess, msg):base64()
-print(zmsg)
+-- The device's public key, community_id and the curve type are tranmitted in
+-- clear inside the header, which is authenticated AEAD
+header = {}
+header['device_pubkey'] = device_key:public():base64()
+header['community_id'] = keys['community_id']
+
+-- encrypt the data, and build our output object
+output = ECDH.encrypt(
+  device_key,
+  base64(keys.community_pubkey),
+  MSG.pack(payload), MSG.pack(header)
+)
+
+output = map(output, base64)
+output.zenroom = VERSION
+output.encoding = 'base64'
+output.curve = curve
+
+print(JSON.encode(output))
