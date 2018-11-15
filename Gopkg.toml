@@ -92,3 +92,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/DECODEproject/zenroom-go"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/lestrrat-go/backoff"
