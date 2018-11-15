@@ -2,19 +2,17 @@ package pipeline
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/thingful/zenroom-go"
-
+	zenroom "github.com/DECODEproject/zenroom-go"
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	datastore "github.com/thingful/twirp-datastore-go"
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
-
-	datastore "github.com/thingful/twirp-datastore-go"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 var (
@@ -60,6 +58,13 @@ func init() {
 	prometheus.MustRegister(datastoreWriteHistogram)
 	prometheus.MustRegister(zenroomErrorCounter)
 	prometheus.MustRegister(zenroomHistogram)
+}
+
+// Keys is a struct we use to pass KEYS data into Zenroom
+type Keys struct {
+	DeviceToken     string `json:"device_token"`
+	CommunityID     string `json:"community_id"`
+	CommunityPubKey string `json:"commumnity_pubkey"`
 }
 
 // Processor is an interface we define to handle processing all the streams for
@@ -117,15 +122,26 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 	for _, stream := range device.Streams {
 		if p.verbose {
-			p.logger.Log("public_key", stream.PublicKey, "user_uid", device.UserUID, "msg", "writing data")
+			p.logger.Log("public_key", stream.PublicKey, "device_token", device.DeviceToken, "msg", "writing data")
+		}
+
+		keys := &Keys{
+			DeviceToken:     device.DeviceToken,
+			CommunityID:     stream.PolicyID,
+			CommunityPubKey: stream.PublicKey,
+		}
+
+		keyBytes, err := json.Marshal(keys)
+		if err != nil {
+			return err
 		}
 
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
 			script,
-			[]byte(fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey)),
-			payload,
+			zenroom.WithKeys(keyBytes),
+			zenroom.WithData(payload),
 		)
 
 		duration := time.Since(start)
@@ -140,9 +156,9 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
-			PublicKey: stream.PublicKey,
-			UserUid:   device.UserUID,
-			Data:      encodedPayload,
+			PublicKey:   stream.PublicKey,
+			DeviceToken: device.DeviceToken,
+			Data:        encodedPayload,
 		})
 
 		duration = time.Since(start)

@@ -71,7 +71,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	processor := pipeline.NewProcessor(ds, config.Verbose, logger)
 
-	mqttClient := mqtt.NewClient(logger)
+	mqttClient := mqtt.NewClient(logger, config.Verbose)
 
 	enc := rpc.NewEncoder(&rpc.Config{
 		DB:         db,

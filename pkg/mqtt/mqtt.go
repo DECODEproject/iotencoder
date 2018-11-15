@@ -40,22 +40,23 @@ type Callback func(topic string, payload []byte)
 // broker, and as events are received it feeds them to a processing pipeline
 // which ultimately will end with data being written to the datastore.
 type Client interface {
-	// Subscribe takes a broker and a topic, and after this function is called the
-	// client will have set up a subscription for the given details with received
-	// events being written to the datastore. Returns an error if we were unable to
-	// subscribe for any reason.
-	Subscribe(broker, topic string, callback Callback) error
+	// Subscribe takes a broker and a device token, and after this function is
+	// called the client will have set up a subscription for the given details with
+	// received events being written to the datastore. Returns an error if we were
+	// unable to subscribe for any reason.
+	Subscribe(broker, deviceToken string, callback Callback) error
 
-	// Unsubscribe takes a broker and a topic, and attempts to remove the
+	// Unsubscribe takes a broker and a device token, and attempts to remove the
 	// subscription from the specified broker.
-	Unsubscribe(broker, topic string) error
+	Unsubscribe(broker, deviceToken string) error
 }
 
 // client abstracts our connection to one or more MQTT brokers, it allows new
 // subscriptions to be made to topics, and somehow emits received events to be
 // written on to the datastore.
 type client struct {
-	logger kitlog.Logger
+	logger  kitlog.Logger
+	verbose bool
 
 	sync.RWMutex
 	clients map[string]mqtt.Client
@@ -63,13 +64,14 @@ type client struct {
 
 // NewClient creates a new client that is intended to support connections to
 // multiple brokers if required. Takes as input our logger.
-func NewClient(logger kitlog.Logger) Client {
+func NewClient(logger kitlog.Logger, verbose bool) Client {
 	logger = kitlog.With(logger, "module", "mqtt")
 
 	logger.Log("msg", "creating mqtt client instance")
 
 	return &client{
 		logger:  logger,
+		verbose: verbose,
 		clients: make(map[string]mqtt.Client),
 	}
 }
@@ -93,8 +95,10 @@ func (c *client) Stop() error {
 // Subscribe attempts to create a subscription for the given topic, on the given
 // broker. This method will create a new connection to particular broker if one
 // does not already exist, but will reuse an existing connection.
-func (c *client) Subscribe(broker, topic string, cb Callback) error {
-	c.logger.Log("topic", topic, "broker", broker, "msg", "subscribing")
+func (c *client) Subscribe(broker, deviceToken string, cb Callback) error {
+	if c.verbose {
+		c.logger.Log("deviceToken", deviceToken, "broker", broker, "msg", "subscribing")
+	}
 
 	var handler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
 		messageCounter.With(prometheus.Labels{"broker": broker}).Inc()
@@ -107,6 +111,8 @@ func (c *client) Subscribe(broker, topic string, cb Callback) error {
 		return errors.Wrap(err, "failed to get client")
 	}
 
+	topic := buildTopic(deviceToken)
+
 	if token := client.Subscribe(topic, 0, handler); token.Wait() && token.Error() != nil {
 		return token.Error()
 	}
@@ -117,13 +123,17 @@ func (c *client) Subscribe(broker, topic string, cb Callback) error {
 // Unsubscribe attempts to unsubscribe to the given topic published on the
 // specified broker. We should only unsubscribe when no streams remain for a
 // device. Returns any error that occurs while trying to unsubscribe.
-func (c *client) Unsubscribe(broker, topic string) error {
-	c.logger.Log("broker", broker, "topic", topic, "msg", "unsubscribing")
+func (c *client) Unsubscribe(broker, deviceToken string) error {
+	if c.verbose {
+		c.logger.Log("broker", broker, "deviceToken", deviceToken, "msg", "unsubscribing")
+	}
 
 	client, err := c.getClient(broker)
 	if err != nil {
 		return errors.Wrap(err, "failed to get client")
 	}
+
+	topic := buildTopic(deviceToken)
 
 	if token := client.Unsubscribe(topic); token.Wait() && token.Error() != nil {
 		return token.Error()
@@ -134,28 +144,34 @@ func (c *client) Unsubscribe(broker, topic string) error {
 
 // connect is a helper function that creates a new mqtt.Client instance that is
 // connected to the passed in broker.
-func connect(broker string, logger kitlog.Logger) (mqtt.Client, error) {
-	opts, err := createClientOptions(broker, logger)
+func connect(broker string, logger kitlog.Logger, verbose bool) (mqtt.Client, error) {
+	opts, err := createClientOptions(broker, logger, verbose)
 	if err != nil {
 		return nil, err
 	}
 
-	logger.Log("broker", broker, "msg", "creating client")
+	if verbose {
+		logger.Log("broker", broker, "msg", "creating client")
+	}
 
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		return nil, errors.Wrap(token.Error(), "failed to connect to broker")
 	}
 
-	logger.Log("broker", broker, "msg", "mqtt connected")
+	if verbose {
+		logger.Log("broker", broker, "msg", "mqtt connected")
+	}
 
 	return client, nil
 }
 
 // createClientOptions initializes a set of ClientOptions for connecting to an
 // MQTT broker.
-func createClientOptions(broker string, logger kitlog.Logger) (*mqtt.ClientOptions, error) {
-	logger.Log("broker", broker, "msg", "configuring client")
+func createClientOptions(broker string, logger kitlog.Logger, verbose bool) (*mqtt.ClientOptions, error) {
+	if verbose {
+		logger.Log("broker", broker, "msg", "configuring client")
+	}
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
@@ -180,12 +196,14 @@ func (c *client) getClient(broker string) (mqtt.Client, error) {
 	c.RUnlock()
 
 	if !ok {
-		client, err = connect(broker, c.logger)
+		client, err = connect(broker, c.logger, c.verbose)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to connect to broker")
 		}
 
-		c.logger.Log("broker", broker, "msg", "storing client")
+		if c.verbose {
+			c.logger.Log("broker", broker, "msg", "storing client")
+		}
 
 		c.Lock()
 		c.clients[broker] = client
@@ -193,4 +211,10 @@ func (c *client) getClient(broker string) (mqtt.Client, error) {
 	}
 
 	return client, nil
+}
+
+// buildTopic is a helper function that returns a topic string for the given
+// deviceToken.
+func buildTopic(deviceToken string) string {
+	return fmt.Sprintf("device/sck/%s/readings", deviceToken)
 }
