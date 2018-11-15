@@ -5,8 +5,8 @@ ALTER TABLE devices
   RENAME COLUMN exposure TO disposition;
 
 ALTER TABLE devices
-  ADD COLUMN private_key BYTEA NOT NULL,
-  ADD COLUMN user_uid TEXT NOT NULL;
+  ADD COLUMN private_key BYTEA,
+  ADD COLUMN user_uid TEXT;
 
 ALTER TABLE streams
   DROP COLUMN token,
