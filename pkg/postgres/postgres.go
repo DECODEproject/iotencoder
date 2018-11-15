@@ -379,7 +379,7 @@ func (d *db) GetDevice(deviceToken string) (_ *Device, err error) {
 	}
 
 	// now load streams
-	sql = `SELECT public_key FROM streams WHERE device_id = :device_id`
+	sql = `SELECT policy_id, public_key FROM streams WHERE device_id = :device_id`
 
 	mapArgs = map[string]interface{}{
 		"device_id": device.ID,
@@ -403,7 +403,7 @@ func (d *db) GetDevice(deviceToken string) (_ *Device, err error) {
 		return nil
 	}
 
-	err = tx.Map(sql, []interface{}{}, mapper)
+	err = tx.Map(sql, mapArgs, mapper)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute row mapper")
 	}
