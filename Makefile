@@ -173,8 +173,20 @@ clean: container-clean bin-clean ## remove all artefacts
 
 .PHONY: container-clean
 container-clean: ## clean container artefacts
-	rm -rf .container-* .dockerfile-* .docker-compose-* .push-*
+	@rm -rf .container-* .dockerfile-* .docker-compose-* .push-*
 
 .PHONY: bin-clean
 bin-clean: ## remove generated build artefacts
-	rm -rf .go bin .cache .coverage
+	@rm -rf .go bin .cache .coverage
+
+.PHONY: psql
+psql: ## open psql shell
+	@docker-compose -f .docker-compose-$(ARCH).yml \
+    run \
+    --rm \
+    -e "PGHOST=postgres" \
+    -e "PGUSER=iotenc" \
+    -e "PGPASSWORD=password" \
+    postgres \
+    psql \
+    iotenc_development
