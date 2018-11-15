@@ -1,8 +1,11 @@
 package tasks
 
 import (
+	"context"
 	"errors"
+	"time"
 
+	"github.com/lestrrat-go/backoff"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -72,8 +75,15 @@ clients unable to use the Protocol Buffer API.`,
 			Verbose:            viper.GetBool("verbose"),
 		}
 
-		s := server.NewServer(config, logger)
+		executer := backoff.ExecuteFunc(func(_ context.Context) error {
+			s := server.NewServer(config, logger)
+			return s.Start()
+		})
 
-		return s.Start()
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		policy := backoff.NewExponential()
+		return backoff.Retry(ctx, policy, executer)
 	},
 }
