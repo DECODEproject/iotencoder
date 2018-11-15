@@ -21,7 +21,7 @@ var (
 	// messages, labelled by topic
 	messageCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "messages_received",
+			Name: "mqtt_messages_received",
 			Help: "Count of MQTT messages received",
 		},
 		[]string{"broker"},
