@@ -4,7 +4,7 @@
 BIN := iotenc
 
 # The projects root import path (under GOPATH)
-PKG := github.com/thingful/iotencoder
+PKG := github.com/DECODEproject/iotencoder
 
 # Docker Hub ID to which docker images should be pushed
 REGISTRY ?= thingful
@@ -31,15 +31,15 @@ ALL_ARCH := amd64 arm arm64
 
 ifeq ($(ARCH),amd64)
 	BASE_IMAGE?=busybox:glibc
-	BUILD_IMAGE?=golang:1.10-stretch
+	BUILD_IMAGE?=golang:1.11-stretch
 endif
 ifeq ($(ARCH),arm)
 	BASE_IMAGE?=arm32v7/busybox
-	BUILD_IMAGE?=arm32v7/golang:1.10-stretch
+	BUILD_IMAGE?=arm32v7/golang:1.11-stretch
 endif
 ifeq ($(ARCH),arm64)
 	BASE_IMAGE?=arm64v8/busybox
-	BUILD_IMAGE?=arm64v8/golang:1.10
+	BUILD_IMAGE?=arm64v8/golang:1.11
 endif
 
 IMAGE := $(REGISTRY)/$(BIN)-$(ARCH)
