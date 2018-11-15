@@ -341,7 +341,7 @@ func (d *db) GetDevices() ([]*Device, error) {
 		return nil
 	}
 
-	err = tx.Map(sql, nil, mapper)
+	err = tx.Map(sql, []interface{}{}, mapper)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to select device rows from database")
 	}
@@ -403,7 +403,7 @@ func (d *db) GetDevice(deviceToken string) (_ *Device, err error) {
 		return nil
 	}
 
-	err = tx.Map(sql, nil, mapper)
+	err = tx.Map(sql, []interface{}{}, mapper)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to execute row mapper")
 	}
