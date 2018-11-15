@@ -71,7 +71,7 @@
 
 [[constraint]]
   name = "github.com/thingful/twirp-encoder-go"
-  version = "0.0.1"
+  version = "0.0.4"
 
 [[constraint]]
   name = "github.com/eclipse/paho.mqtt.golang"
@@ -79,7 +79,7 @@
 
 [[constraint]]
   name = "github.com/thingful/twirp-datastore-go"
-  version = "0.0.3"
+  version = "0.0.5"
 
 [[constraint]]
   branch = "master"
