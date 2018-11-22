@@ -43,40 +43,6 @@ type Stream struct {
 	Device *Device
 }
 
-// DB is our interface to Postgres. Exposes methods for inserting a new Device
-// (and associated Stream), listing all Devices, getting an individual Device,
-// and deleting a Stream
-type DB interface {
-	// CreateStream takes as input a pointer to an instantiated Stream instance
-	// which must have a an associated Device. We upsert the Device, then attempt
-	// to insert the Stream. Returns a Stream instance with the a string id for the inserted Stream or an
-	// error if any failure happens.
-	CreateStream(stream *Stream) (*Stream, error)
-
-	// DeleteStream takes as input a string representing the id of a previously
-	// stored stream, and attempts to delete the associated stream from the
-	// underlying database. If this stream is the last stream associated with a
-	// device then the device record is also deleted. We return a Device instance
-	// as we need to pass back out the device_token so that we can also
-	// unsubscribe from the MQTT topic.
-	DeleteStream(stream *Stream) (*Device, error)
-
-	// GetDevices returns a slice containing all Devices currently stored in the
-	// system. We know we have a maximum limit here of around 25 devices, so we
-	// don't need to worry about this being an excessively large dataset. Note we
-	// do not load all Streams here, we just return the device.
-	GetDevices() ([]*Device, error)
-
-	// GetDevice returns a single Device with all associated Streams on being given
-	// the devices unique token. This is used on boot to create MQTT subscriptions
-	// for all Streams.
-	GetDevice(deviceToken string) (*Device, error)
-
-	// MigrateUp is a helper method that attempts to run all up migrations against
-	// the underlying Postgres DB or returns an error.
-	MigrateUp() error
-}
-
 // Open is a helper function that takes as input a connection string for a DB,
 // and returns either a sqlx.DB instance or an error. This function is separated
 // out to help with CLI tasks for managing migrations.
@@ -86,7 +52,7 @@ func Open(connStr string) (*sqlx.DB, error) {
 
 // db is our type that wraps an sqlx.DB instance and provides an API for the
 // data access functions we require.
-type db struct {
+type DB struct {
 	connStr            string
 	encryptionPassword []byte
 	hashidData         *hashids.HashIDData
@@ -105,7 +71,7 @@ type Config struct {
 
 // NewDB creates a new DB instance with the given connection string. We also
 // pass in a logger.
-func NewDB(config *Config, logger kitlog.Logger) DB {
+func NewDB(config *Config, logger kitlog.Logger) *DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
 	logger.Log("msg", "creating DB instance", "hashidlength", config.HashidMinLength)
@@ -114,7 +80,7 @@ func NewDB(config *Config, logger kitlog.Logger) DB {
 	hd.Salt = config.HashidSalt
 	hd.MinLength = config.HashidMinLength
 
-	return &db{
+	return &DB{
 		connStr:            config.ConnStr,
 		encryptionPassword: []byte(config.EncryptionPassword),
 		hashidData:         hd,
@@ -124,7 +90,7 @@ func NewDB(config *Config, logger kitlog.Logger) DB {
 
 // Start creates our DB connection pool running returning an error if any
 // failure occurs.
-func (d *db) Start() error {
+func (d *DB) Start() error {
 	d.logger.Log("msg", "starting postgres")
 
 	db, err := Open(d.connStr)
@@ -144,7 +110,7 @@ func (d *db) Start() error {
 }
 
 // Stop closes the DB connection pool.
-func (d *db) Stop() error {
+func (d *DB) Stop() error {
 	d.logger.Log("msg", "stopping postgres")
 
 	return d.DB.Close()
@@ -154,7 +120,7 @@ func (d *db) Stop() error {
 // Stream object. Returns a string containing the ID of the created stream if
 // successful or an error if any data constraint is violated, or any other error
 // occurs.
-func (d *db) CreateStream(stream *Stream) (_ *Stream, err error) {
+func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 	sql := `INSERT INTO devices
 		(broker, device_token, longitude, latitude, exposure)
 	VALUES (:broker, :device_token, :longitude, :latitude, :exposure)
@@ -234,7 +200,7 @@ func (d *db) CreateStream(stream *Stream) (_ *Stream, err error) {
 // stream is the last one associated with a device, then the device record is
 // also deleted. We return a Device object purely so we can pass back out the
 // broker and token allowing us to unsubscribe.
-func (d *db) DeleteStream(stream *Stream) (_ *Device, err error) {
+func (d *DB) DeleteStream(stream *Stream) (_ *Device, err error) {
 	sql := `DELETE FROM streams
 	WHERE id = :id
 	AND pgp_sym_decrypt(token, :encryption_password) = :token
@@ -310,7 +276,7 @@ func (d *db) DeleteStream(stream *Stream) (_ *Device, err error) {
 // GetDevices returns a slice of pointers to Device instances. We don't worry
 // about pagination here as we have a maximum number of devices of approximately
 // 25 to 50. Note we do not load all streams for these devices.
-func (d *db) GetDevices() ([]*Device, error) {
+func (d *DB) GetDevices() ([]*Device, error) {
 	sql := `SELECT id, broker, device_token FROM devices`
 
 	tx, err := BeginTX(d.DB)
@@ -352,7 +318,7 @@ func (d *db) GetDevices() ([]*Device, error) {
 // GetDevice returns a single device identified by device_token, including all streams
 // for that device. This is used to set up subscriptions for existing records on
 // application start.
-func (d *db) GetDevice(deviceToken string) (_ *Device, err error) {
+func (d *DB) GetDevice(deviceToken string) (_ *Device, err error) {
 	sql := `SELECT id, broker, device_token, longitude, latitude, exposure
 		FROM devices
 		WHERE device_token = :device_token`
@@ -415,6 +381,18 @@ func (d *db) GetDevice(deviceToken string) (_ *Device, err error) {
 
 // MigrateUp is a convenience function to run all up migrations in the context
 // of an instantiated DB instance.
-func (d *db) MigrateUp() error {
+func (d *DB) MigrateUp() error {
 	return MigrateUp(d.DB.DB, d.logger)
+}
+
+// Ping attempts to verify the database connection is still alive by executing a
+// simple select query on the database server. We don't use the built in
+// DB.Ping() function here as this may not go to the database if there existing
+// connections in the pool.
+func (d *DB) Ping() error {
+	_, err := d.DB.Exec("SELECT 1")
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -20,7 +20,7 @@ import (
 // stream encoder.
 type encoderImpl struct {
 	logger       kitlog.Logger
-	db           postgres.DB
+	db           *postgres.DB
 	mqtt         mqtt.Client
 	brokerAddr   string
 	processor    pipeline.Processor
@@ -30,7 +30,7 @@ type encoderImpl struct {
 
 // Config is a struct used to pass in configuration when creating the encoder
 type Config struct {
-	DB         postgres.DB
+	DB         *postgres.DB
 	MQTTClient mqtt.Client
 	Processor  pipeline.Processor
 	Verbose    bool

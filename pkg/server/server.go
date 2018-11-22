@@ -16,6 +16,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	datastore "github.com/thingful/twirp-datastore-go"
 	encoder "github.com/thingful/twirp-encoder-go"
+	goji "goji.io"
+	"goji.io/pat"
 
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 	"github.com/DECODEproject/iotencoder/pkg/pipeline"
@@ -58,7 +60,7 @@ type Config struct {
 type Server struct {
 	srv     *http.Server
 	encoder encoder.Encoder
-	db      postgres.DB
+	db      *postgres.DB
 	mqtt    mqtt.Client
 	logger  kitlog.Logger
 }
@@ -66,8 +68,15 @@ type Server struct {
 // PulseHandler is the simplest possible handler function - used to expose an
 // endpoint which a load balancer can ping to verify that a node is running and
 // accepting connections.
-func PulseHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "ok")
+func PulseHandler(db *postgres.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := db.Ping()
+		if err != nil {
+			http.Error(w, "failed to connect to DB", http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(w, "ok")
+	})
 }
 
 // NewServer returns a new simple HTTP server. Is also responsible for
@@ -110,10 +119,11 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 
 	// multiplex twirp handler into a mux with our other handlers
-	mux := http.NewServeMux()
-	mux.Handle(encoder.EncoderPathPrefix, twirpHandler)
-	mux.HandleFunc("/pulse", PulseHandler)
-	mux.Handle("/metrics", promhttp.Handler())
+	mux := goji.NewMux()
+
+	mux.Handle(pat.Post(encoder.EncoderPathPrefix+"*"), twirpHandler)
+	mux.Handle(pat.Get("/pulse"), PulseHandler(db))
+	mux.Handle(pat.Get("/metrics"), promhttp.Handler())
 
 	mux.Use(middleware.RequestIDMiddleware)
 
@@ -144,7 +154,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 // shutting down.
 func (s *Server) Start() error {
 	// start the postgres connection pool
-	err := s.db.(system.Startable).Start()
+	err := s.db.Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start db")
 	}
@@ -192,7 +202,7 @@ func (s *Server) Stop() error {
 		return err
 	}
 
-	err = s.db.(system.Stoppable).Stop()
+	err = s.db.Stop()
 	if err != nil {
 		return err
 	}
