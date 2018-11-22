@@ -2,19 +2,19 @@ package rpc_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"testing"
 
 	kitlog "github.com/go-kit/kit/log"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	encoder "github.com/thingful/twirp-encoder-go"
 
 	"github.com/DECODEproject/iotencoder/pkg/mocks"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 	"github.com/DECODEproject/iotencoder/pkg/rpc"
 	"github.com/DECODEproject/iotencoder/pkg/system"
-	encoder "github.com/thingful/twirp-encoder-go"
 )
 
 type EncoderTestSuite struct {
@@ -74,6 +74,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    false,
+		BrokerAddr: "tcp://mqtt.local:1883",
 	}, logger)
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 0)
@@ -83,34 +84,33 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	defer enc.(system.Stoppable).Stop()
 
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
-		BrokerAddress:      "tcp://mqtt.local:1883",
-		DeviceTopic:        "device/sck/abc123/readings",
-		DevicePrivateKey:   "priv_key",
+		DeviceToken:        "abc123",
 		RecipientPublicKey: "pub_key",
-		UserUid:            "alice",
+		PolicyId:           "policy-id",
 		Location: &encoder.CreateStreamRequest_Location{
 			Longitude: -0.024,
 			Latitude:  54.24,
 		},
-		Disposition: encoder.CreateStreamRequest_INDOOR,
+		Exposure: encoder.CreateStreamRequest_INDOOR,
 	})
-
 	assert.Nil(e.T(), err)
+
 	assert.Len(e.T(), mqttClient.Subscriptions, 1)
 	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
 	assert.NotEqual(e.T(), "", resp.StreamUid)
 
-	device, err := e.db.GetDevice("device/sck/abc123/readings")
+	device, err := e.db.GetDevice("abc123")
 	assert.Nil(e.T(), err)
 	assert.Equal(e.T(), "tcp://mqtt.local:1883", device.Broker)
 	assert.Len(e.T(), device.Streams, 1)
 
 	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{
 		StreamUid: resp.StreamUid,
+		Token:     resp.Token,
 	})
 	assert.Nil(e.T(), err)
 
-	device, err = e.db.GetDevice("device/sck/abc123/readings")
+	device, err = e.db.GetDevice("abc123")
 	assert.NotNil(e.T(), err)
 }
 
@@ -122,26 +122,26 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	// insert two streams with devices
 	_, err := e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
+		PolicyID:  "policy-id",
 		Device: &postgres.Device{
 			Broker:      "tcp://broker1:1883",
-			Topic:       "devices/foo",
-			UserUID:     "bob",
+			DeviceToken: "foo",
 			Longitude:   23,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 	assert.Nil(e.T(), err)
 
 	_, err = e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
+		PolicyID:  "policy-id-2",
 		Device: &postgres.Device{
 			Broker:      "tcp://broker1:1883",
-			Topic:       "devices/bar",
-			UserUID:     "bob",
+			DeviceToken: "bar",
 			Longitude:   23,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 	assert.Nil(e.T(), err)
@@ -151,6 +151,7 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    true,
+		BrokerAddr: "tcp://broker1:1883",
 	}, logger)
 
 	enc.(system.Startable).Start()
@@ -170,6 +171,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    true,
+		BrokerAddr: "tcp://mqtt",
 	}, logger)
 
 	enc.(system.Startable).Start()
@@ -181,119 +183,76 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 		expectedErr string
 	}{
 		{
-			label: "missing broker",
+			label: "missing device token",
 			request: &encoder.CreateStreamRequest{
-				DeviceTopic:        "devices/foo",
-				DevicePrivateKey:   "privkey",
 				RecipientPublicKey: "pubkey",
-				UserUid:            "bob",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
-			expectedErr: "twirp error invalid_argument: broker_address is required",
+			expectedErr: "twirp error invalid_argument: device_token is required",
 		},
 		{
-			label: "missing topic",
+			label: "missing policy id",
 			request: &encoder.CreateStreamRequest{
-				BrokerAddress:      "tcp://mqtt",
-				DevicePrivateKey:   "privkey",
+				DeviceToken:        "foo",
 				RecipientPublicKey: "pubkey",
-				UserUid:            "bob",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
-			expectedErr: "twirp error invalid_argument: device_topic is required",
-		},
-		{
-			label: "missing private key",
-			request: &encoder.CreateStreamRequest{
-				DeviceTopic:        "devices/foo",
-				BrokerAddress:      "tcp://mqtt",
-				RecipientPublicKey: "pubkey",
-				UserUid:            "bob",
-				Location: &encoder.CreateStreamRequest_Location{
-					Longitude: 32,
-					Latitude:  23,
-				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
-			},
-			expectedErr: "twirp error invalid_argument: device_private_key is required",
+			expectedErr: "twirp error invalid_argument: policy_id is required",
 		},
 		{
 			label: "missing public key",
 			request: &encoder.CreateStreamRequest{
-				DeviceTopic:      "devices/foo",
-				BrokerAddress:    "tcp://mqtt",
-				DevicePrivateKey: "privkey",
-				UserUid:          "bob",
+				DeviceToken: "foo",
+				PolicyId:    "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
 					Latitude:  23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: recipient_public_key is required",
 		},
 		{
-			label: "missing user_uid",
-			request: &encoder.CreateStreamRequest{
-				DeviceTopic:        "devices/foo",
-				BrokerAddress:      "tcp://mqtt",
-				DevicePrivateKey:   "privkey",
-				RecipientPublicKey: "pubkey",
-				Location: &encoder.CreateStreamRequest_Location{
-					Longitude: 32,
-					Latitude:  23,
-				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
-			},
-			expectedErr: "twirp error invalid_argument: user_uid is required",
-		},
-		{
 			label: "missing location",
 			request: &encoder.CreateStreamRequest{
-				DeviceTopic:        "devices/foo",
-				BrokerAddress:      "tcp://mqtt",
-				DevicePrivateKey:   "privkey",
+				DeviceToken:        "foo",
+				PolicyId:           "policy-id",
 				RecipientPublicKey: "pubkey",
-				UserUid:            "bob",
-				Disposition:        encoder.CreateStreamRequest_INDOOR,
+				Exposure:           encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: location is required",
 		},
 		{
 			label: "missing longitude",
 			request: &encoder.CreateStreamRequest{
-				DeviceTopic:        "devices/foo",
-				BrokerAddress:      "tcp://mqtt",
-				DevicePrivateKey:   "privkey",
+				DeviceToken:        "foo",
+				PolicyId:           "policy-id",
 				RecipientPublicKey: "pubkey",
-				UserUid:            "bob",
 				Location: &encoder.CreateStreamRequest_Location{
 					Latitude: 23,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: longitude is required",
 		},
 		{
 			label: "missing latitude",
 			request: &encoder.CreateStreamRequest{
-				DeviceTopic:        "devices/foo",
-				BrokerAddress:      "tcp://mqtt",
-				DevicePrivateKey:   "privkey",
+				DeviceToken:        "foo",
+				PolicyId:           "policy-id",
 				RecipientPublicKey: "pubkey",
-				UserUid:            "bob",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 45,
 				},
-				Disposition: encoder.CreateStreamRequest_INDOOR,
+				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: latitude is required",
 		},
@@ -318,6 +277,7 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    true,
+		BrokerAddr: "tcp://mqtt:1883",
 	}, logger)
 
 	enc.(system.Startable).Start()
@@ -330,8 +290,18 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 	}{
 		{
 			label:       "missing stream_uid",
-			request:     &encoder.DeleteStreamRequest{},
+			request:     &encoder.DeleteStreamRequest{Token: "foobar"},
 			expectedErr: "twirp error invalid_argument: stream_uid is required",
+		},
+		{
+			label:       "missing token",
+			request:     &encoder.DeleteStreamRequest{StreamUid: "foobar"},
+			expectedErr: "twirp error invalid_argument: token is required",
+		},
+		{
+			label:       "missing stream",
+			request:     &encoder.DeleteStreamRequest{StreamUid: "Gzmdv8vp", Token: "barfoo"},
+			expectedErr: "twirp error internal: failed to delete stream: sql: no rows in result set",
 		},
 	}
 
@@ -351,13 +321,13 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 
 	_, err := e.db.CreateStream(&postgres.Stream{
 		PublicKey: "abc123",
+		PolicyID:  "policy-id",
 		Device: &postgres.Device{
 			Broker:      "tcp://broker:1883",
-			Topic:       "devices/foo",
-			UserUID:     "bob",
+			DeviceToken: "foo",
 			Longitude:   23,
 			Latitude:    45,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 	assert.Nil(e.T(), err)
@@ -367,6 +337,7 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    true,
+		BrokerAddr: "tcp://broker:1883",
 	}, logger)
 
 	err = enc.(system.Startable).Start()
