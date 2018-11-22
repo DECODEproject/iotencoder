@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	zenroom "github.com/DECODEproject/zenroom-go"
@@ -134,15 +133,6 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 			stream.PublicKey,
 		)
 
-		rescueStderr := os.Stderr
-		f, err := os.Open(os.DevNull)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		os.Stderr = f
-
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
@@ -153,8 +143,6 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		)
 
 		duration := time.Since(start)
-
-		os.Stderr = rescueStderr
 
 		if err != nil {
 			zenroomErrorCounter.Inc()
