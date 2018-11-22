@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"os"
 	"time"
 
 	zenroom "github.com/DECODEproject/zenroom-go"
@@ -11,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
 
+	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
@@ -67,13 +69,6 @@ func init() {
 	prometheus.MustRegister(zenroomHistogram)
 }
 
-// Keys is a struct we use to pass KEYS data into Zenroom
-type Keys struct {
-	DeviceToken     string `json:"device_token"`
-	CommunityID     string `json:"community_id"`
-	CommunityPubKey string `json:"community_pubkey"`
-}
-
 // Processor is an interface we define to handle processing all the streams for
 // a device, where processing means reading all streams for the device, applying
 // whatever operations that stream specifies in terms of filtering / aggregation
@@ -121,10 +116,10 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 	}
 
 	// pull encryption script from go-bindata asset
-	//script, err := lua.Asset("encrypt.lua")
-	//if err != nil {
-	//	return errors.Wrap(err, "failed to read zenroom script")
-	//}
+	script, err := lua.Asset("encrypt.lua")
+	if err != nil {
+		return errors.Wrap(err, "failed to read zenroom script")
+	}
 
 	// iterate over the configured streams for the device
 	for _, stream := range device.Streams {
@@ -132,19 +127,21 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 			p.logger.Log("public_key", stream.PublicKey, "device_token", device.DeviceToken, "msg", "writing data")
 		}
 
-		//keys := &Keys{
-		//	DeviceToken:     device.DeviceToken,
-		//	CommunityID:     stream.PolicyID,
-		//	CommunityPubKey: stream.PublicKey,
-		//}
+		keyString := fmt.Sprintf(
+			`{"device_token":"%s","community_id":"%s","community_pubkey":"%s"}`,
+			device.DeviceToken,
+			stream.PolicyID,
+			stream.PublicKey,
+		)
 
-		//keyBytes, err := json.Marshal(keys)
-		//if err != nil {
-		//	return errors.Wrap(err, "failed to marshal keys material")
-		//}
+		rescueStderr := os.Stderr
+		f, err := os.Open(os.DevNull)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
 
-		keyString := fmt.Sprintf(`{"device_token":"%s","community_id":"%s","community_pubkey":"%s"}`, device.DeviceToken, device.PolicyID, stream.PublicKey)
-		fmt.Println(keyString)
+		os.Stderr = f
 
 		start := time.Now()
 
@@ -156,6 +153,8 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		)
 
 		duration := time.Since(start)
+
+		os.Stderr = rescueStderr
 
 		if err != nil {
 			zenroomErrorCounter.Inc()
