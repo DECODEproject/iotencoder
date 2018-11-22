@@ -1,4 +1,4 @@
-# ADR001: Define an output format for data written to the datastore
+# ADR002: Define an output format for data written to the datastore
 
 ## Context
 
