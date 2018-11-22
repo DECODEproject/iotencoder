@@ -64,7 +64,7 @@ func init() {
 type Keys struct {
 	DeviceToken     string `json:"device_token"`
 	CommunityID     string `json:"community_id"`
-	CommunityPubKey string `json:"commumnity_pubkey"`
+	CommunityPubKey string `json:"community_pubkey"`
 }
 
 // Processor is an interface we define to handle processing all the streams for
@@ -108,18 +108,18 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
-
 	// check payload
 	if payload == nil {
 		return errors.New("empty payload received")
 	}
 
-	// read script from go-bindata asset
+	// pull encryption script from go-bindata asset
 	script, err := lua.Asset("encrypt.lua")
 	if err != nil {
 		return errors.Wrap(err, "failed to read zenroom script")
 	}
 
+	// iterate over the configured streams for the device
 	for _, stream := range device.Streams {
 		if p.verbose {
 			p.logger.Log("public_key", stream.PublicKey, "device_token", device.DeviceToken, "msg", "writing data")
@@ -133,7 +133,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		keyBytes, err := json.Marshal(keys)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "failed to marshal keys material")
 		}
 
 		start := time.Now()
@@ -142,6 +142,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 			script,
 			zenroom.WithKeys(keyBytes),
 			zenroom.WithData(payload),
+			zenroom.WithVerbosity(3),
 		)
 
 		duration := time.Since(start)
@@ -165,7 +166,6 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		if err != nil {
 			datastoreErrorCounter.Inc()
-
 			return err
 		}
 
