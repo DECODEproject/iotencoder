@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	zenroom "github.com/DECODEproject/zenroom-go"
@@ -146,11 +147,14 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 
 		start := time.Now()
 
+		fmt.Println(string(keyBytes))
+		fmt.Println(string(payload))
+
 		encodedPayload, err := zenroom.Exec(
 			script,
 			zenroom.WithKeys(keyBytes),
 			zenroom.WithData(payload),
-			zenroom.WithVerbosity(3),
+			zenroom.WithVerbosity(1),
 		)
 
 		duration := time.Since(start)
