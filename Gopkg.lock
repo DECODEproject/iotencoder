@@ -396,6 +396,19 @@
   version = "v5.5.0"
 
 [[projects]]
+  digest = "1:356ed667fc203854cc86c9d94a632e7d0c3a30ee0b6ebec484bf6a1b55eeed68"
+  name = "goji.io"
+  packages = [
+    ".",
+    "internal",
+    "pat",
+    "pattern",
+  ]
+  pruneopts = "UT"
+  revision = "9a575ab427c3664b5d8db472a689b3303a0d73c9"
+  version = "v2.0.1"
+
+[[projects]]
   branch = "master"
   digest = "1:50095e42352dba1c6ab2cec7e03b24fb4b513123f41d4ab4dbd2627c25fe18b8"
   name = "golang.org/x/net"
@@ -466,6 +479,8 @@
     "github.com/thingful/twirp-datastore-go",
     "github.com/thingful/twirp-encoder-go",
     "github.com/twitchtv/twirp",
+    "goji.io",
+    "goji.io/pat",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
