@@ -96,3 +96,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/lestrrat-go/backoff"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/DECODEproject/iotcommon"
