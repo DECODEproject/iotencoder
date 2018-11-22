@@ -9,6 +9,4 @@ if set -o | grep -q "pipefail"; then
   set -o pipefail
 fi
 
-source ./build/shared.sh
-
 "$@"

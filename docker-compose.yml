@@ -16,7 +16,7 @@ services:
       - ARG_PWD/.cache/go-build:/.cache/go-build
     working_dir: /go/src/ARG_PKG
     ports:
-      - "8080:8080"
+      - "8081:8081"
     command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server", "--datastore", "datastore:8080" ]
     depends_on:
       - postgres
@@ -35,7 +35,6 @@ services:
       - "5432"
     volumes:
       - postgres_vol:/var/lib/postgresql/data
-    restart: always
     environment:
       - POSTGRES_PASSWORD=password
       - POSTGRES_USER=iotenc

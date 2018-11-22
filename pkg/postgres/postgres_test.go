@@ -8,13 +8,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/thingful/iotencoder/pkg/postgres"
-	"github.com/thingful/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 type PostgresSuite struct {
 	suite.Suite
-	db postgres.DB
+	db *postgres.DB
 }
 
 func (s *PostgresSuite) SetupTest() {
@@ -51,102 +50,118 @@ func (s *PostgresSuite) SetupTest() {
 		logger,
 	)
 
-	s.db.(system.Startable).Start()
+	s.db.Start()
 }
 
 func (s *PostgresSuite) TearDownTest() {
-	s.db.(system.Stoppable).Stop()
+	s.db.Stop()
 }
 
 func (s *PostgresSuite) TestRoundTrip() {
-	streamID1, err := s.db.CreateStream(&postgres.Stream{
+	stream1, err := s.db.CreateStream(&postgres.Stream{
+		PolicyID:  "policy-id",
 		PublicKey: "public",
 		Device: &postgres.Device{
 			Broker:      "tcp://example.com",
-			Topic:       "device/123",
-			PrivateKey:  "private",
-			UserUID:     "bob",
+			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 
 	assert.Nil(s.T(), err)
-	assert.NotEqual(s.T(), "", streamID1)
+	assert.NotEqual(s.T(), "", stream1.StreamID)
+	assert.NotEqual(s.T(), "", stream1.Token)
 
-	streamID2, err := s.db.CreateStream(&postgres.Stream{
+	stream2, err := s.db.CreateStream(&postgres.Stream{
+		PolicyID:  "policy-id",
 		PublicKey: "public",
 		Device: &postgres.Device{
 			Broker:      "tcp://mqtt.com",
-			Topic:       "device/124",
-			PrivateKey:  "private",
-			UserUID:     "bob",
+			DeviceToken: "124",
 			Longitude:   45.2,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 
 	assert.Nil(s.T(), err)
-	assert.NotEqual(s.T(), "", streamID2)
+	assert.NotEqual(s.T(), "", stream2.StreamID)
+	assert.NotEqual(s.T(), "", stream2.Token)
 
 	devices, err := s.db.GetDevices()
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), devices, 2)
 
 	assert.Equal(s.T(), "tcp://example.com", devices[0].Broker)
-	assert.Equal(s.T(), "device/123", devices[0].Topic)
-	assert.Equal(s.T(), "private", devices[0].PrivateKey)
+	assert.Equal(s.T(), "123", devices[0].DeviceToken)
 
 	assert.Equal(s.T(), "tcp://mqtt.com", devices[1].Broker)
-	assert.Equal(s.T(), "device/124", devices[1].Topic)
-	assert.Equal(s.T(), "private", devices[1].PrivateKey)
+	assert.Equal(s.T(), "124", devices[1].DeviceToken)
 
-	device, err := s.db.GetDevice("device/123")
+	device, err := s.db.GetDevice("123")
 	assert.Nil(s.T(), err)
+	assert.NotNil(s.T(), device)
 
 	assert.Equal(s.T(), "tcp://example.com", device.Broker)
-	assert.Equal(s.T(), "device/123", device.Topic)
-	assert.Equal(s.T(), "private", device.PrivateKey)
-	assert.Equal(s.T(), "bob", device.UserUID)
+	assert.Equal(s.T(), "123", device.DeviceToken)
 	assert.Equal(s.T(), 45.2, device.Longitude)
 	assert.Equal(s.T(), 23.2, device.Latitude)
-	assert.Equal(s.T(), "indoor", device.Disposition)
+	assert.Equal(s.T(), "indoor", device.Exposure)
 	assert.Len(s.T(), device.Streams, 1)
 	assert.Equal(s.T(), "public", device.Streams[0].PublicKey)
+	assert.Equal(s.T(), "policy-id", device.Streams[0].PolicyID)
 
-	device, err = s.db.DeleteStream(streamID1)
+	device, err = s.db.DeleteStream(stream1)
 	assert.Nil(s.T(), err)
 	assert.Equal(s.T(), "tcp://example.com", device.Broker)
-	assert.Equal(s.T(), "device/123", device.Topic)
+	assert.Equal(s.T(), "123", device.DeviceToken)
 
 	devices, err = s.db.GetDevices()
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), devices, 1)
 }
 
-func (s *PostgresSuite) TestInvalidDelete() {
+func (s *PostgresSuite) TestInvalidDeleteStream() {
+	stream, err := s.db.CreateStream(&postgres.Stream{
+		PolicyID:  "policy-id",
+		PublicKey: "public",
+		Device: &postgres.Device{
+			Broker:      "tcp://example.com",
+			DeviceToken: "123",
+			Longitude:   45.2,
+			Latitude:    23.2,
+			Exposure:    "indoor",
+		},
+	})
+	assert.Nil(s.T(), err)
+
 	testcases := []struct {
 		label       string
-		streamID    string
+		stream      *postgres.Stream
 		expectedErr string
 	}{
 		{
-			"missing stream",
-			"Gzmdv8vp",
+			"incorrect stream id",
+			&postgres.Stream{StreamID: "Gzmdv8vp", Token: stream.Token},
 			"failed to delete stream: sql: no rows in result set",
 		},
 		{
-			"invalid id",
-			"foo",
+			"incorrect token",
+			&postgres.Stream{StreamID: stream.StreamID, Token: "foobar"},
+			"failed to delete stream: sql: no rows in result set",
+		},
+		{
+			"invalid hashid",
+			&postgres.Stream{StreamID: "foo", Token: stream.Token},
 			"failed to decode hashed id: mismatch between encode and decode: foo start a63Oaakq re-encoded. result: [900]",
 		},
 	}
 
 	for _, tc := range testcases {
 		s.T().Run(tc.label, func(t *testing.T) {
-			_, err := s.db.DeleteStream(tc.streamID)
+			_, err := s.db.DeleteStream(tc.stream)
 			assert.NotNil(t, err)
 			assert.Equal(t, tc.expectedErr, err.Error())
 		})
@@ -154,43 +169,41 @@ func (s *PostgresSuite) TestInvalidDelete() {
 }
 
 func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
-	streamID1, err := s.db.CreateStream(&postgres.Stream{
+	stream1, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public1",
+		PolicyID:  "policy-id",
 		Device: &postgres.Device{
 			Broker:      "tcp://example.com",
-			Topic:       "device/foo",
-			PrivateKey:  "private",
-			UserUID:     "bob",
+			DeviceToken: "foo",
 			Longitude:   45.2,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 
 	assert.Nil(s.T(), err)
-	assert.NotEqual(s.T(), "", streamID1)
+	assert.NotEqual(s.T(), "", stream1.StreamID)
 
-	streamID2, err := s.db.CreateStream(&postgres.Stream{
+	stream2, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public2",
+		PolicyID:  "policy-id",
 		Device: &postgres.Device{
 			Broker:      "tcp://mqtt.com",
-			Topic:       "device/foo",
-			PrivateKey:  "private",
-			UserUID:     "bob",
+			DeviceToken: "foo",
 			Longitude:   45.2,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 
 	assert.Nil(s.T(), err)
-	assert.NotEqual(s.T(), "", streamID2)
+	assert.NotEqual(s.T(), "", stream2.StreamID)
 
 	devices, err := s.db.GetDevices()
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), devices, 1)
 
-	_, err = s.db.DeleteStream(streamID1)
+	_, err = s.db.DeleteStream(stream1)
 	assert.Nil(s.T(), err)
 
 	devices, err = s.db.GetDevices()
@@ -201,14 +214,13 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	_, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
+		PolicyID:  "policy-id",
 		Device: &postgres.Device{
 			Broker:      "tcp://unique.com",
-			Topic:       "device/123",
-			PrivateKey:  "private",
-			UserUID:     "bob",
+			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 
@@ -216,14 +228,13 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 
 	_, err = s.db.CreateStream(&postgres.Stream{
 		PublicKey: "public",
+		PolicyID:  "policy-id",
 		Device: &postgres.Device{
 			Broker:      "tcp://unique.com",
-			Topic:       "device/123",
-			PrivateKey:  "private",
-			UserUID:     "bob",
+			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
-			Disposition: "indoor",
+			Exposure:    "indoor",
 		},
 	})
 

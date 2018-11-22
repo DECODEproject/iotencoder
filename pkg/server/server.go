@@ -8,19 +8,39 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/DECODEproject/iotcommon/middleware"
 	kitlog "github.com/go-kit/kit/log"
 	twrpprom "github.com/joneskoo/twirp-serverhook-prometheus"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	datastore "github.com/thingful/twirp-datastore-go"
 	encoder "github.com/thingful/twirp-encoder-go"
+	goji "goji.io"
+	"goji.io/pat"
 
-	"github.com/thingful/iotencoder/pkg/mqtt"
-	"github.com/thingful/iotencoder/pkg/pipeline"
-	"github.com/thingful/iotencoder/pkg/postgres"
-	"github.com/thingful/iotencoder/pkg/rpc"
-	"github.com/thingful/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/mqtt"
+	"github.com/DECODEproject/iotencoder/pkg/pipeline"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/rpc"
+	"github.com/DECODEproject/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/version"
 )
+
+var (
+	buildInfo = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "build_info",
+			Help:      "Information about the current build of the service",
+		}, []string{"name", "version", "build_date"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(buildInfo)
+}
 
 // Config is a top level config object. Populated by viper in the command setup,
 // we then pass down config to the right places.
@@ -32,6 +52,7 @@ type Config struct {
 	HashidMinLength    int
 	DatastoreAddr      string
 	Verbose            bool
+	BrokerAddr         string
 }
 
 // Server is our top level type, contains all other components, is responsible
@@ -39,7 +60,7 @@ type Config struct {
 type Server struct {
 	srv     *http.Server
 	encoder encoder.Encoder
-	db      postgres.DB
+	db      *postgres.DB
 	mqtt    mqtt.Client
 	logger  kitlog.Logger
 }
@@ -47,8 +68,15 @@ type Server struct {
 // PulseHandler is the simplest possible handler function - used to expose an
 // endpoint which a load balancer can ping to verify that a node is running and
 // accepting connections.
-func PulseHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "ok")
+func PulseHandler(db *postgres.DB) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		err := db.Ping()
+		if err != nil {
+			http.Error(w, "failed to connect to DB", http.StatusInternalServerError)
+			return
+		}
+		fmt.Fprintf(w, "ok")
+	})
 }
 
 // NewServer returns a new simple HTTP server. Is also responsible for
@@ -71,16 +99,19 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	processor := pipeline.NewProcessor(ds, config.Verbose, logger)
 
-	mqttClient := mqtt.NewClient(logger)
+	mqttClient := mqtt.NewClient(logger, config.Verbose)
 
 	enc := rpc.NewEncoder(&rpc.Config{
 		DB:         db,
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    config.Verbose,
+		BrokerAddr: config.BrokerAddr,
 	}, logger)
 
 	hooks := twrpprom.NewServerHooks(nil)
+
+	buildInfo.WithLabelValues(version.BinaryName, version.Version, version.BuildDate)
 
 	logger = kitlog.With(logger, "module", "server")
 	logger.Log("msg", "creating server", "datastore", config.DatastoreAddr, "hashid", config.HashidMinLength)
@@ -88,10 +119,16 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 
 	// multiplex twirp handler into a mux with our other handlers
-	mux := http.NewServeMux()
-	mux.Handle(encoder.EncoderPathPrefix, twirpHandler)
-	mux.HandleFunc("/pulse", PulseHandler)
-	mux.Handle("/metrics", promhttp.Handler())
+	mux := goji.NewMux()
+
+	mux.Handle(pat.Post(encoder.EncoderPathPrefix+"*"), twirpHandler)
+	mux.Handle(pat.Get("/pulse"), PulseHandler(db))
+	mux.Handle(pat.Get("/metrics"), promhttp.Handler())
+
+	mux.Use(middleware.RequestIDMiddleware)
+
+	metricsMiddleware := middleware.MetricsMiddleware("decode", "encoder")
+	mux.Use(metricsMiddleware)
 
 	// create our http.Server instance
 	srv := &http.Server{
@@ -117,7 +154,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 // shutting down.
 func (s *Server) Start() error {
 	// start the postgres connection pool
-	err := s.db.(system.Startable).Start()
+	err := s.db.Start()
 	if err != nil {
 		return errors.Wrap(err, "failed to start db")
 	}
@@ -165,7 +202,7 @@ func (s *Server) Stop() error {
 		return err
 	}
 
-	err = s.db.(system.Stoppable).Stop()
+	err = s.db.Stop()
 	if err != nil {
 		return err
 	}

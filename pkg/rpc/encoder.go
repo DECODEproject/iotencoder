@@ -2,6 +2,8 @@ package rpc
 
 import (
 	"context"
+	"fmt"
+	"regexp"
 	"strings"
 
 	kitlog "github.com/go-kit/kit/log"
@@ -9,26 +11,30 @@ import (
 	encoder "github.com/thingful/twirp-encoder-go"
 	"github.com/twitchtv/twirp"
 
-	"github.com/thingful/iotencoder/pkg/mqtt"
-	"github.com/thingful/iotencoder/pkg/pipeline"
-	"github.com/thingful/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/mqtt"
+	"github.com/DECODEproject/iotencoder/pkg/pipeline"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 // encoderImpl is our implementation of the generated twirp interface for the
 // stream encoder.
 type encoderImpl struct {
-	logger    kitlog.Logger
-	db        postgres.DB
-	mqtt      mqtt.Client
-	processor pipeline.Processor
-	verbose   bool
+	logger       kitlog.Logger
+	db           *postgres.DB
+	mqtt         mqtt.Client
+	brokerAddr   string
+	processor    pipeline.Processor
+	verbose      bool
+	topicPattern *regexp.Regexp
 }
 
+// Config is a struct used to pass in configuration when creating the encoder
 type Config struct {
-	DB         postgres.DB
+	DB         *postgres.DB
 	MQTTClient mqtt.Client
 	Processor  pipeline.Processor
 	Verbose    bool
+	BrokerAddr string
 }
 
 // NewEncoder returns a newly instantiated Encoder instance. It takes as
@@ -40,11 +46,13 @@ func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 	logger.Log("msg", "creating encoder")
 
 	return &encoderImpl{
-		logger:    logger,
-		db:        config.DB,
-		mqtt:      config.MQTTClient,
-		processor: config.Processor,
-		verbose:   config.Verbose,
+		logger:       logger,
+		db:           config.DB,
+		mqtt:         config.MQTTClient,
+		processor:    config.Processor,
+		verbose:      config.Verbose,
+		brokerAddr:   config.BrokerAddr,
+		topicPattern: regexp.MustCompile("device/sck/(\\w+)/readings"),
 	}
 }
 
@@ -61,11 +69,17 @@ func (e *encoderImpl) Start() error {
 	}
 
 	for _, d := range devices {
-		e.logger.Log("broker", d.Broker, "topic", d.Topic, "msg", "creating subscription")
+		e.logger.Log("broker", d.Broker,
+			"device_token", d.DeviceToken,
+			"msg", "creating subscription",
+		)
 
-		err = e.mqtt.Subscribe(d.Broker, d.Topic, func(topic string, payload []byte) {
-			e.handleCallback(topic, payload)
-		})
+		err = e.mqtt.Subscribe(
+			e.brokerAddr,
+			d.DeviceToken,
+			func(topic string, payload []byte) {
+				e.handleCallback(topic, payload)
+			})
 
 		if err != nil {
 			e.logger.Log("err", err, "msg", "failed to subscribe to topic")
@@ -92,14 +106,14 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 		return nil, err
 	}
 
-	stream := createStream(req)
+	stream := createStream(req, e.brokerAddr)
 
-	streamID, err := e.db.CreateStream(stream)
+	stream, err = e.db.CreateStream(stream)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
 	}
 
-	err = e.mqtt.Subscribe(req.BrokerAddress, req.DeviceTopic, func(topic string, payload []byte) {
+	err = e.mqtt.Subscribe(e.brokerAddr, req.DeviceToken, func(topic string, payload []byte) {
 		e.handleCallback(topic, payload)
 	})
 
@@ -108,7 +122,8 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 	}
 
 	return &encoder.CreateStreamResponse{
-		StreamUid: streamID,
+		StreamUid: stream.StreamID,
+		Token:     stream.Token,
 	}, nil
 }
 
@@ -121,14 +136,19 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 		return nil, err
 	}
 
-	device, err := e.db.DeleteStream(req.StreamUid)
+	stream := &postgres.Stream{
+		StreamID: req.StreamUid,
+		Token:    req.Token,
+	}
+
+	device, err := e.db.DeleteStream(stream)
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
 	}
 
 	if device != nil {
-		// we should unsubscribe from this topic
-		err = e.mqtt.Unsubscribe(device.Broker, device.Topic)
+		// we should unsubscribe for this device
+		err = e.mqtt.Unsubscribe(e.brokerAddr, device.DeviceToken)
 		if err != nil {
 			return nil, twirp.InternalErrorWith(err)
 		}
@@ -142,7 +162,12 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 // processing to the pipeline module which is responsible for manipulating the
 // data and then writing to the datastore.
 func (e *encoderImpl) handleCallback(topic string, payload []byte) {
-	device, err := e.db.GetDevice(topic)
+	token, err := e.extractToken(topic)
+	if err != nil {
+		e.logger.Log("err", err, "msg", "failed to extract device token")
+	}
+
+	device, err := e.db.GetDevice(token)
 	if err != nil {
 		e.logger.Log("err", err, "msg", "failed to get device")
 	}
@@ -161,24 +186,16 @@ func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 // incoming CreateStreamRequest, and returns a twirp error should any required
 // fields are missing, or nil if the request is valid.
 func validateCreateRequest(req *encoder.CreateStreamRequest) error {
-	if req.BrokerAddress == "" {
-		return twirp.RequiredArgumentError("broker_address")
+	if req.DeviceToken == "" {
+		return twirp.RequiredArgumentError("device_token")
 	}
 
-	if req.DeviceTopic == "" {
-		return twirp.RequiredArgumentError("device_topic")
-	}
-
-	if req.DevicePrivateKey == "" {
-		return twirp.RequiredArgumentError("device_private_key")
+	if req.PolicyId == "" {
+		return twirp.RequiredArgumentError("policy_id")
 	}
 
 	if req.RecipientPublicKey == "" {
 		return twirp.RequiredArgumentError("recipient_public_key")
-	}
-
-	if req.UserUid == "" {
-		return twirp.RequiredArgumentError("user_uid")
 	}
 
 	if req.Location == nil {
@@ -199,17 +216,16 @@ func validateCreateRequest(req *encoder.CreateStreamRequest) error {
 // createStream is a simple helper method that converts the incoming
 // CreateStreamRequest object into a *postgres.Stream instance ready to be
 // persisted to the DB.
-func createStream(req *encoder.CreateStreamRequest) *postgres.Stream {
+func createStream(req *encoder.CreateStreamRequest, brokerAddr string) *postgres.Stream {
 	return &postgres.Stream{
+		PolicyID:  req.PolicyId,
 		PublicKey: req.RecipientPublicKey,
 		Device: &postgres.Device{
-			Broker:      req.BrokerAddress,
-			Topic:       req.DeviceTopic,
-			PrivateKey:  req.DevicePrivateKey,
-			UserUID:     req.UserUid,
+			Broker:      brokerAddr,
+			DeviceToken: req.DeviceToken,
 			Longitude:   req.Location.Longitude,
 			Latitude:    req.Location.Latitude,
-			Disposition: strings.ToLower(req.Disposition.String()),
+			Exposure:    strings.ToLower(req.Exposure.String()),
 		},
 	}
 }
@@ -221,5 +237,19 @@ func validateDeleteRequest(req *encoder.DeleteStreamRequest) error {
 		return twirp.RequiredArgumentError("stream_uid")
 	}
 
+	if req.Token == "" {
+		return twirp.RequiredArgumentError("token")
+	}
+
 	return nil
+}
+
+func (e *encoderImpl) extractToken(topic string) (string, error) {
+	matches := e.topicPattern.FindStringSubmatch(topic)
+
+	if matches == nil {
+		return "", fmt.Errorf("Unable to extract device token from: %s", topic)
+	}
+
+	return matches[1], nil
 }

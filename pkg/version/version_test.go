@@ -3,7 +3,7 @@ package version_test
 import (
 	"testing"
 
-	"github.com/thingful/iotencoder/pkg/version"
+	"github.com/DECODEproject/iotencoder/pkg/version"
 )
 
 func TestVersionString(t *testing.T) {

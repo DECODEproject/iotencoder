@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/thingful/zenroom-go"
-
+	zenroom "github.com/DECODEproject/zenroom-go"
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/thingful/iotencoder/pkg/postgres"
-
-	"github.com/thingful/iotencoder/pkg/lua"
-
 	datastore "github.com/thingful/twirp-datastore-go"
+
+	"github.com/DECODEproject/iotencoder/pkg/lua"
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 var (
@@ -22,8 +20,10 @@ var (
 	// errors that occur when writing to the datastore
 	datastoreErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "decode_datastore_errors",
-			Help: "Count of errors writing to datastore",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "datastore_errors",
+			Help:      "Count of errors writing to datastore",
 		},
 	)
 
@@ -31,8 +31,10 @@ var (
 	// that occur when invoking zenroom.
 	zenroomErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "decode_zenroom_errors",
-			Help: "Count of errors invoking zenroom",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "zenroom_errors",
+			Help:      "Count of errors invoking zenroom",
 		},
 	)
 
@@ -40,8 +42,10 @@ var (
 	// writes to the datastore. We use the default bucket distributions.
 	datastoreWriteHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "decode_datastore_writes",
-			Help: "Datastore writes duration distribution",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "datastore_writes",
+			Help:      "Datastore writes duration distribution",
 		},
 	)
 
@@ -49,8 +53,10 @@ var (
 	// calls to zenroom to exec some script.
 	zenroomHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "decode_zenroom_exec",
-			Help: "Execution time of zenroom scripts",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "zenroom_exec",
+			Help:      "Execution time of zenroom scripts",
 		},
 	)
 )
@@ -103,29 +109,37 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
 func (p *processor) Process(device *postgres.Device, payload []byte) error {
-
 	// check payload
 	if payload == nil {
 		return errors.New("empty payload received")
 	}
 
-	// read script from go-bindata asset
+	// pull encryption script from go-bindata asset
 	script, err := lua.Asset("encrypt.lua")
 	if err != nil {
 		return errors.Wrap(err, "failed to read zenroom script")
 	}
 
+	// iterate over the configured streams for the device
 	for _, stream := range device.Streams {
 		if p.verbose {
-			p.logger.Log("public_key", stream.PublicKey, "user_uid", device.UserUID, "msg", "writing data")
+			p.logger.Log("public_key", stream.PublicKey, "device_token", device.DeviceToken, "msg", "writing data")
 		}
+
+		keyString := fmt.Sprintf(
+			`{"device_token":"%s","community_id":"%s","community_pubkey":"%s"}`,
+			device.DeviceToken,
+			stream.PolicyID,
+			stream.PublicKey,
+		)
 
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
 			script,
-			[]byte(fmt.Sprintf(`{"public": "%s", "private": "%s" }`, stream.PublicKey, device.PrivateKey)),
-			payload,
+			zenroom.WithKeys([]byte(keyString)),
+			zenroom.WithData(payload),
+			zenroom.WithVerbosity(1),
 		)
 
 		duration := time.Since(start)
@@ -140,16 +154,15 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
-			PublicKey: stream.PublicKey,
-			UserUid:   device.UserUID,
-			Data:      encodedPayload,
+			PublicKey:   stream.PublicKey,
+			DeviceToken: device.DeviceToken,
+			Data:        []byte(encodedPayload),
 		})
 
 		duration = time.Since(start)
 
 		if err != nil {
 			datastoreErrorCounter.Inc()
-
 			return err
 		}
 

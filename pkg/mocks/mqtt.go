@@ -3,7 +3,7 @@ package mocks
 import (
 	"sync"
 
-	"github.com/thingful/iotencoder/pkg/mqtt"
+	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 )
 
 // MQTTClient is a mock type that implements our mqtt interface. Internally it
@@ -28,7 +28,7 @@ func NewMQTTClient(err error) *MQTTClient {
 // Subscribe is the public interface method. In the mock we add the given broker
 // and topic to an internal data structure where it can be retrieved for test
 // verification.
-func (m *MQTTClient) Subscribe(broker, topic string, cb mqtt.Callback) error {
+func (m *MQTTClient) Subscribe(broker, deviceToken string, cb mqtt.Callback) error {
 	if m.err != nil {
 		return m.err
 	}
@@ -40,12 +40,12 @@ func (m *MQTTClient) Subscribe(broker, topic string, cb mqtt.Callback) error {
 		m.Subscriptions[broker] = make(map[string]bool)
 	}
 
-	m.Subscriptions[broker][topic] = true
+	m.Subscriptions[broker][deviceToken] = true
 
 	return nil
 }
 
-func (m *MQTTClient) Unsubscribe(broker, topic string) error {
+func (m *MQTTClient) Unsubscribe(broker, deviceToken string) error {
 	if m.err != nil {
 		return m.err
 	}
@@ -54,8 +54,8 @@ func (m *MQTTClient) Unsubscribe(broker, topic string) error {
 	defer m.Unlock()
 
 	if _, ok := m.Subscriptions[broker]; ok {
-		if _, ok := m.Subscriptions[broker][topic]; ok {
-			delete(m.Subscriptions[broker], topic)
+		if _, ok := m.Subscriptions[broker][deviceToken]; ok {
+			delete(m.Subscriptions[broker], deviceToken)
 			if len(m.Subscriptions[broker]) == 0 {
 				delete(m.Subscriptions, broker)
 			}
