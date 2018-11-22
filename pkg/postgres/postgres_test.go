@@ -9,12 +9,11 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
-	"github.com/DECODEproject/iotencoder/pkg/system"
 )
 
 type PostgresSuite struct {
 	suite.Suite
-	db postgres.DB
+	db *postgres.DB
 }
 
 func (s *PostgresSuite) SetupTest() {
@@ -51,11 +50,11 @@ func (s *PostgresSuite) SetupTest() {
 		logger,
 	)
 
-	s.db.(system.Startable).Start()
+	s.db.Start()
 }
 
 func (s *PostgresSuite) TearDownTest() {
-	s.db.(system.Stoppable).Stop()
+	s.db.Stop()
 }
 
 func (s *PostgresSuite) TestRoundTrip() {

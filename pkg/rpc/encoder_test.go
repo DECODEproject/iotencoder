@@ -20,7 +20,7 @@ import (
 type EncoderTestSuite struct {
 	suite.Suite
 
-	db postgres.DB
+	db *postgres.DB
 }
 
 func (e *EncoderTestSuite) SetupTest() {
@@ -57,11 +57,11 @@ func (e *EncoderTestSuite) SetupTest() {
 		logger,
 	)
 
-	e.db.(system.Startable).Start()
+	e.db.Start()
 }
 
 func (e *EncoderTestSuite) TearDownTest() {
-	e.db.(system.Stoppable).Stop()
+	e.db.Stop()
 }
 
 func (e *EncoderTestSuite) TestStreamLifecycle() {
