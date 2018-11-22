@@ -15,15 +15,17 @@ import (
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8080", "Address to which the HTTP server binds")
+	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8081", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
 	serverCmd.Flags().IntP("hashidlength", "l", 8, "Minimum length of generated hashids")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
+	serverCmd.Flags().StringP("broker-addr", "b", "tcp://mqtt.smartcitizen.me:1883", "Address at which the MQTT broker is listening")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
 	viper.BindPFlag("hashidlength", serverCmd.Flags().Lookup("hashidlength"))
 	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
+	viper.BindPFlag("broker-addr", serverCmd.Flags().Lookup("broker-addr"))
 }
 
 var serverCmd = &cobra.Command{
@@ -63,6 +65,11 @@ clients unable to use the Protocol Buffer API.`,
 			return errors.New("Missing required environment variable: $IOTENCODER_HASHID_SALT")
 		}
 
+		brokerAddr := viper.GetString("broker-addr")
+		if brokerAddr == "" {
+			return errors.New("Must provide MQTT broker address")
+		}
+
 		logger := logger.NewLogger()
 
 		config := &server.Config{
@@ -73,6 +80,7 @@ clients unable to use the Protocol Buffer API.`,
 			HashidSalt:         hashidSalt,
 			HashidMinLength:    viper.GetInt("hashidlength"),
 			Verbose:            viper.GetBool("verbose"),
+			BrokerAddr:         brokerAddr,
 		}
 
 		executer := backoff.ExecuteFunc(func(_ context.Context) error {

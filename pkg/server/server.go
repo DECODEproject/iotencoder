@@ -32,6 +32,7 @@ type Config struct {
 	HashidMinLength    int
 	DatastoreAddr      string
 	Verbose            bool
+	BrokerAddr         string
 }
 
 // Server is our top level type, contains all other components, is responsible
@@ -78,6 +79,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		MQTTClient: mqttClient,
 		Processor:  processor,
 		Verbose:    config.Verbose,
+		BrokerAddr: config.BrokerAddr,
 	}, logger)
 
 	hooks := twrpprom.NewServerHooks(nil)
