@@ -20,8 +20,10 @@ var (
 	// errors that occur when writing to the datastore
 	datastoreErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "decode_datastore_errors",
-			Help: "Count of errors writing to datastore",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "datastore_errors",
+			Help:      "Count of errors writing to datastore",
 		},
 	)
 
@@ -29,8 +31,10 @@ var (
 	// that occur when invoking zenroom.
 	zenroomErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
-			Name: "decode_zenroom_errors",
-			Help: "Count of errors invoking zenroom",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "zenroom_errors",
+			Help:      "Count of errors invoking zenroom",
 		},
 	)
 
@@ -38,8 +42,10 @@ var (
 	// writes to the datastore. We use the default bucket distributions.
 	datastoreWriteHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "decode_datastore_writes",
-			Help: "Datastore writes duration distribution",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "datastore_writes",
+			Help:      "Datastore writes duration distribution",
 		},
 	)
 
@@ -47,8 +53,10 @@ var (
 	// calls to zenroom to exec some script.
 	zenroomHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
-			Name: "decode_zenroom_exec",
-			Help: "Execution time of zenroom scripts",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "zenroom_exec",
+			Help:      "Execution time of zenroom scripts",
 		},
 	)
 )

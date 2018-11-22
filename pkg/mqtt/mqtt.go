@@ -15,14 +15,16 @@ import (
 var (
 	// mqttClientID holds a reference to the application ID we send to a broker
 	// when connecting
-	mqttClientID = fmt.Sprintf("%sDECODE", version.BinaryName)
+	mqttClientID = fmt.Sprintf("%s-DECODE", version.BinaryName)
 
 	// messageCounter is a prometheus counter vec recording the number of received
 	// messages, labelled by topic
 	messageCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "mqtt_messages_received",
-			Help: "Count of MQTT messages received",
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "mqtt_messages_received",
+			Help:      "Count of MQTT messages received",
 		},
 		[]string{"broker"},
 	)

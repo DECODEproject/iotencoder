@@ -8,9 +8,11 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/DECODEproject/iotcommon/middleware"
 	kitlog "github.com/go-kit/kit/log"
 	twrpprom "github.com/joneskoo/twirp-serverhook-prometheus"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	datastore "github.com/thingful/twirp-datastore-go"
 	encoder "github.com/thingful/twirp-encoder-go"
@@ -20,7 +22,23 @@ import (
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 	"github.com/DECODEproject/iotencoder/pkg/rpc"
 	"github.com/DECODEproject/iotencoder/pkg/system"
+	"github.com/DECODEproject/iotencoder/pkg/version"
 )
+
+var (
+	buildInfo = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "build_info",
+			Help:      "Information about the current build of the service",
+		}, []string{"name", "version", "build_date"},
+	)
+)
+
+func init() {
+	prometheus.MustRegister(buildInfo)
+}
 
 // Config is a top level config object. Populated by viper in the command setup,
 // we then pass down config to the right places.
@@ -84,6 +102,8 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	hooks := twrpprom.NewServerHooks(nil)
 
+	buildInfo.WithLabelValues(version.BinaryName, version.Version, version.BuildDate)
+
 	logger = kitlog.With(logger, "module", "server")
 	logger.Log("msg", "creating server", "datastore", config.DatastoreAddr, "hashid", config.HashidMinLength)
 
@@ -94,6 +114,11 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	mux.Handle(encoder.EncoderPathPrefix, twirpHandler)
 	mux.HandleFunc("/pulse", PulseHandler)
 	mux.Handle("/metrics", promhttp.Handler())
+
+	mux.Use(middleware.RequestIDMiddleware)
+
+	metricsMiddleware := middleware.MetricsMiddleware("decode", "encoder")
+	mux.Use(metricsMiddleware)
 
 	// create our http.Server instance
 	srv := &http.Server{
