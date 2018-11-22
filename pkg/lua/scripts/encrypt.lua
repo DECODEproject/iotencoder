@@ -15,7 +15,8 @@ keys = read_json(KEYS, keys_schema)
 device_key = ECDH.keygen(curve)
 
 -- read the payload we will encrypt
-payload = read_json(DATA)
+payload = {}
+payload['data'] = DATA
 
 -- The device's public key, community_id and the curve type are tranmitted in
 -- clear inside the header, which is authenticated AEAD
