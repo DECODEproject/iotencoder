@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
 
-	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
@@ -123,10 +121,10 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 	}
 
 	// pull encryption script from go-bindata asset
-	script, err := lua.Asset("encrypt.lua")
-	if err != nil {
-		return errors.Wrap(err, "failed to read zenroom script")
-	}
+	//script, err := lua.Asset("encrypt.lua")
+	//if err != nil {
+	//	return errors.Wrap(err, "failed to read zenroom script")
+	//}
 
 	// iterate over the configured streams for the device
 	for _, stream := range device.Streams {
@@ -134,25 +132,25 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 			p.logger.Log("public_key", stream.PublicKey, "device_token", device.DeviceToken, "msg", "writing data")
 		}
 
-		keys := &Keys{
-			DeviceToken:     device.DeviceToken,
-			CommunityID:     stream.PolicyID,
-			CommunityPubKey: stream.PublicKey,
-		}
+		//keys := &Keys{
+		//	DeviceToken:     device.DeviceToken,
+		//	CommunityID:     stream.PolicyID,
+		//	CommunityPubKey: stream.PublicKey,
+		//}
 
-		keyBytes, err := json.Marshal(keys)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal keys material")
-		}
+		//keyBytes, err := json.Marshal(keys)
+		//if err != nil {
+		//	return errors.Wrap(err, "failed to marshal keys material")
+		//}
+
+		keyString := fmt.Sprintf(`{"device_token":"%s","community_id":"%s","community_pubkey":"%s"}`, device.DeviceToken, device.PolicyID, stream.PublicKey)
+		fmt.Println(keyString)
 
 		start := time.Now()
 
-		fmt.Println(string(keyBytes))
-		fmt.Println(string(payload))
-
 		encodedPayload, err := zenroom.Exec(
 			script,
-			zenroom.WithKeys(keyBytes),
+			zenroom.WithKeys([]byte(keyString)),
 			zenroom.WithData(payload),
 			zenroom.WithVerbosity(1),
 		)
@@ -171,7 +169,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
 			PublicKey:   stream.PublicKey,
 			DeviceToken: device.DeviceToken,
-			Data:        encodedPayload,
+			Data:        []byte(encodedPayload),
 		})
 
 		duration = time.Since(start)
