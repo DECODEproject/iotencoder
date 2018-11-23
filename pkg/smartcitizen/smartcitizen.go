@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/DECODEproject/iotencoder/pkg/postgres"
 	"github.com/pkg/errors"
+	encoder "github.com/thingful/twirp-encoder-go"
 	"gopkg.in/guregu/null.v3"
+
+	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
 // Sensor is a type used when we marshal the enriched data to write to the
@@ -39,10 +41,10 @@ type Smartcitizen struct {
 	sensorMetadata map[int]*SensorMetadata
 }
 
-// ParseData is our main public function, that takes in the bytes of the
-// payload, parses it into an internal representation, which we then enrich
-// using the metadata, before returning an object containing the additional
-// richer data.
+// ParseData is our main public function, that takes in the device
+// representation from our database and the bytes of the payload. It then parses
+// this payload into an internal representation, which we then enrich using the
+// metadata, before returning an object containing the additional richer data.
 func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Device, error) {
 	var p Payload
 	err := json.Unmarshal(payload, &p)
@@ -84,6 +86,7 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 			Name:        metadata.Name,
 			Description: metadata.Description,
 			Value:       null.FloatFrom(rawSensor.Value),
+			Type:        encoder.CreateStreamRequest_Operation_SHARE.String(),
 		}
 
 		d.Sensors = append(d.Sensors, sensor)
