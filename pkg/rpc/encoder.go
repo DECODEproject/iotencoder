@@ -12,9 +12,14 @@ import (
 	"github.com/twitchtv/twirp"
 
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
-	"github.com/DECODEproject/iotencoder/pkg/pipeline"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
+
+// Processor is the interface we want to call to process incoming events. We
+// define it in this package where we need it.
+type Processor interface {
+	Process(device *postgres.Device, payload []byte) error
+}
 
 // encoderImpl is our implementation of the generated twirp interface for the
 // stream encoder.
@@ -23,7 +28,7 @@ type encoderImpl struct {
 	db           *postgres.DB
 	mqtt         mqtt.Client
 	brokerAddr   string
-	processor    pipeline.Processor
+	processor    Processor
 	verbose      bool
 	topicPattern *regexp.Regexp
 }
@@ -32,7 +37,7 @@ type encoderImpl struct {
 type Config struct {
 	DB         *postgres.DB
 	MQTTClient mqtt.Client
-	Processor  pipeline.Processor
+	Processor  Processor
 	Verbose    bool
 	BrokerAddr string
 }
