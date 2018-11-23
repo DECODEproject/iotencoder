@@ -158,7 +158,7 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
-			PublicKey:   stream.PublicKey,
+			PolicyId:    stream.PolicyID,
 			DeviceToken: device.DeviceToken,
 			Data:        []byte(encodedPayload),
 		})
