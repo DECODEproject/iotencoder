@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
 
 var (
@@ -76,6 +78,7 @@ type Processor struct {
 	datastore datastore.Datastore
 	logger    kitlog.Logger
 	verbose   bool
+	sensors   *smartcitizen.Smartcitizen
 }
 
 // NewProcessor is a constructor function that takes as input an instantiated
@@ -91,6 +94,7 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) *P
 		datastore: ds,
 		logger:    logger,
 		verbose:   verbose,
+		sensors:   &smartcitizen.Smartcitizen{},
 	}
 }
 
@@ -102,6 +106,11 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 	// check payload
 	if payload == nil {
 		return errors.New("empty payload received")
+	}
+
+	parsedDevice, err := p.sensors.ParseData(device, payload)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse SmartCitizen data")
 	}
 
 	// pull encryption script from go-bindata asset
@@ -123,12 +132,17 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 			stream.PublicKey,
 		)
 
+		payloadBytes, err := json.Marshal(parsedDevice)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal parsed device")
+		}
+
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
 			script,
 			zenroom.WithKeys([]byte(keyString)),
-			zenroom.WithData(payload),
+			zenroom.WithData(payloadBytes),
 			zenroom.WithVerbosity(1),
 		)
 
