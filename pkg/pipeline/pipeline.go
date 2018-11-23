@@ -155,6 +155,8 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 
 		zenroomHistogram.Observe(duration.Seconds())
 
+		fmt.Println(string(encodedPayload))
+
 		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
