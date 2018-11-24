@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/DECODEproject/iotencoder.svg?style=svg)](https://circleci.com/gh/DECODEproject/iotencoder)
+
 # iotencoder
 
 Implementaton of proposed stream encoder interface for the DECODE
