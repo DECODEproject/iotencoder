@@ -21,7 +21,7 @@ type SensorMetadata struct {
 // ReadMetadata is a function that returns a map of SensorMetadata instances read
 // from the static copy of SmartCitizen's sensor list we maintain locally. This
 // map can then be used by the pipeline in order to create richer data.
-func ReadMetadata() (map[int]*SensorMetadata, error) {
+func ReadMetadata() (map[int]SensorMetadata, error) {
 	sensorBytes, err := Asset("sensors.json")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to read sensors.json")
@@ -34,10 +34,10 @@ func ReadMetadata() (map[int]*SensorMetadata, error) {
 		return nil, errors.Wrap(err, "failed to unmarshal data")
 	}
 
-	sensors := map[int]*SensorMetadata{}
+	sensors := map[int]SensorMetadata{}
 
 	for _, sensor := range sensorList {
-		sensors[sensor.ID] = &sensor
+		sensors[sensor.ID] = sensor
 	}
 
 	return sensors, nil

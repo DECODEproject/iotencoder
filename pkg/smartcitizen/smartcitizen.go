@@ -38,7 +38,7 @@ type Device struct {
 // Smartcitizen is our type that holds the map of sensor metadata, and is able
 // to use this state to enrich an incoming payload.
 type Smartcitizen struct {
-	sensorMetadata map[int]*SensorMetadata
+	sensorMetadata map[int]SensorMetadata
 }
 
 // ParseData is our main public function, that takes in the device
@@ -46,6 +46,14 @@ type Smartcitizen struct {
 // this payload into an internal representation, which we then enrich using the
 // metadata, before returning an object containing the additional richer data.
 func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Device, error) {
+	if s.sensorMetadata == nil {
+		sensorMetadata, err := ReadMetadata()
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to read sensor metadata")
+		}
+		s.sensorMetadata = sensorMetadata
+	}
+
 	var p Payload
 	err := json.Unmarshal(payload, &p)
 	if err != nil {
@@ -67,14 +75,6 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 		Sensors:    []*Sensor{},
 	}
 
-	if s.sensorMetadata == nil {
-		sensorMetadata, err := ReadMetadata()
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read sensor metadata")
-		}
-		s.sensorMetadata = sensorMetadata
-	}
-
 	for _, rawSensor := range data.Sensors {
 		metadata, ok := s.sensorMetadata[rawSensor.ID]
 		if !ok {
@@ -87,6 +87,7 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 			Description: metadata.Description,
 			Value:       null.FloatFrom(rawSensor.Value),
 			Type:        encoder.CreateStreamRequest_Operation_SHARE.String(),
+			Unit:        metadata.Unit,
 		}
 
 		d.Sensors = append(d.Sensors, sensor)
