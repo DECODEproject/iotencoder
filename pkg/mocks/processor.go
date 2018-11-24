@@ -1,16 +1,15 @@
 package mocks
 
 import (
-	"github.com/DECODEproject/iotencoder/pkg/pipeline"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
-type processor struct{}
+type Processor struct{}
 
-func NewProcessor() pipeline.Processor {
-	return &processor{}
+func NewProcessor() *Processor {
+	return &Processor{}
 }
 
-func (p *processor) Process(device *postgres.Device, payload []byte) error {
+func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 	return nil
 }

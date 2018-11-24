@@ -368,20 +368,20 @@
   version = "v1.2.2"
 
 [[projects]]
-  digest = "1:3639472c4f73ed6addd87aa0f4e36c6a7a5ec2261ccf79704dd329de0cb24183"
+  digest = "1:bae9513814929663f27c4a51e9c3fff0adf77a0cd57f4789561463c18110e657"
   name = "github.com/thingful/twirp-datastore-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e204f98762e7d63f492a676c5b1bd6f5b9ea5ca0"
-  version = "v0.0.5"
+  revision = "6444968aa8449515d71bc70655e5d85b3d04f8ac"
+  version = "v0.1.0"
 
 [[projects]]
-  digest = "1:b5516b57848d39f6668ad17899c9eb1a9c0b7142e9a93cb537a3e7b1739ecb21"
+  digest = "1:33bf8a554e61a31ad7a1ad993c7d780d037ef9c0ce43599bf3ac8adf78230d20"
   name = "github.com/thingful/twirp-encoder-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f50f41abfc57a355b6a1f3094054218ffe5e4e2a"
-  version = "v0.0.5"
+  revision = "4c2c66e65c887d734fe8dc6cd33faf933e62b9a9"
+  version = "v0.0.6"
 
 [[projects]]
   digest = "1:bc5f818bb50c42b55721ab0ea9af6c28cad7d9e31db43eaa78d2ca487c9897ac"
@@ -444,6 +444,14 @@
   version = "v0.3.0"
 
 [[projects]]
+  digest = "1:a4b04b5314d49a67ad022fa7693453ee2b823ab99314f52fa3930ed31085dfef"
+  name = "gopkg.in/guregu/null.v3"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "80515d440932108546bcade467bb7d6968e812e2"
+  version = "v3.4.0"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -481,6 +489,7 @@
     "github.com/twitchtv/twirp",
     "goji.io",
     "goji.io/pat",
+    "gopkg.in/guregu/null.v3",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

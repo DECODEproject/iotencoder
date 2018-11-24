@@ -87,7 +87,7 @@ func _20180525115614_create_device_tableDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180525115614_create_device_table.down.sql", size: 112, mode: os.FileMode(420), modTime: time.Unix(1542903157, 0)}
+	info := bindataFileInfo{name: "20180525115614_create_device_table.down.sql", size: 112, mode: os.FileMode(420), modTime: time.Unix(1542929607, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x3b, 0xff, 0x6c, 0x58, 0xd0, 0xed, 0x18, 0xff, 0x61, 0x91, 0x4d, 0x9, 0xd6, 0x88, 0xbb, 0xcd, 0xac, 0x24, 0x38, 0x5, 0xb4, 0xbc, 0x9c, 0x47, 0xd, 0x9f, 0x45, 0xb, 0x15, 0x44, 0xa1, 0x8e}}
 	return a, nil
 }
@@ -107,7 +107,7 @@ func _20180525115614_create_device_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180525115614_create_device_table.up.sql", size: 493, mode: os.FileMode(420), modTime: time.Unix(1542904242, 0)}
+	info := bindataFileInfo{name: "20180525115614_create_device_table.up.sql", size: 493, mode: os.FileMode(420), modTime: time.Unix(1542929607, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xa5, 0x2b, 0x77, 0x99, 0x65, 0x10, 0xae, 0xfa, 0x52, 0x1f, 0x37, 0x2b, 0x4c, 0xc, 0x80, 0x1, 0x8c, 0x65, 0x8b, 0x6b, 0xf0, 0xd0, 0x1e, 0x9b, 0x65, 0xdf, 0xca, 0xbd, 0xd2, 0x9b, 0x1, 0xa}}
 	return a, nil
 }
@@ -147,7 +147,7 @@ func _20180526232618_add_streams_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20180526232618_add_streams_table.up.sql", size: 354, mode: os.FileMode(420), modTime: time.Unix(1542903292, 0)}
+	info := bindataFileInfo{name: "20180526232618_add_streams_table.up.sql", size: 354, mode: os.FileMode(420), modTime: time.Unix(1542929607, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xc8, 0x23, 0xef, 0x1d, 0x3, 0x67, 0xfa, 0x95, 0xba, 0xd7, 0xd6, 0xe0, 0x66, 0xb1, 0xcc, 0x11, 0x3d, 0xe, 0x73, 0x6c, 0x48, 0xde, 0xb1, 0x1f, 0xb1, 0x5, 0x58, 0x59, 0xae, 0x2e, 0xf0, 0xec}}
 	return a, nil
 }

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
 
 var (
@@ -68,39 +70,31 @@ func init() {
 	prometheus.MustRegister(zenroomHistogram)
 }
 
-// Processor is an interface we define to handle processing all the streams for
-// a device, where processing means reading all streams for the device, applying
-// whatever operations that stream specifies in terms of filtering / aggregation
-// / bucketing, encrypting the result and then writing the encrypted body to the
-// datastore.
-type Processor interface {
-	// Process takes an input a device which will have one or more attached
-	// streams, as well as the received payload from the device. Internally it is
-	// responsible for processing the data for each stream and then writing the
-	// encrypted result to the remote datastore.
-	Process(device *postgres.Device, payload []byte) error
-}
-
-// processor is our internal type that implements the above interface
-type processor struct {
+// Processor is a type that encapsulates processing incoming events received
+// from smartcitizen, and is responsible for enriching the data, applying any
+// transformations to the data and then encrypting it using zenroom before
+// writing it to the datastore.
+type Processor struct {
 	datastore datastore.Datastore
 	logger    kitlog.Logger
 	verbose   bool
+	sensors   *smartcitizen.Smartcitizen
 }
 
 // NewProcessor is a constructor function that takes as input an instantiated
 // datastore client, and a logger. It returns the instantiated processor which
 // is ready for use. Note we pass in the datastore instance so that we can
 // supply a mock for testing.
-func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Processor {
+func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) *Processor {
 	logger = kitlog.With(logger, "module", "pipeline")
 
 	logger.Log("msg", "creating processor")
 
-	return &processor{
+	return &Processor{
 		datastore: ds,
 		logger:    logger,
 		verbose:   verbose,
+		sensors:   &smartcitizen.Smartcitizen{},
 	}
 }
 
@@ -108,10 +102,15 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) Pr
 // received data to all destination streams after applying whatever processing
 // the stream specifies. Currently we do the simplest thing of just writing the
 // data directly to the datastore.
-func (p *processor) Process(device *postgres.Device, payload []byte) error {
+func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 	// check payload
 	if payload == nil {
 		return errors.New("empty payload received")
+	}
+
+	parsedDevice, err := p.sensors.ParseData(device, payload)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse SmartCitizen data")
 	}
 
 	// pull encryption script from go-bindata asset
@@ -133,12 +132,17 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 			stream.PublicKey,
 		)
 
+		payloadBytes, err := json.Marshal(parsedDevice)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal parsed device")
+		}
+
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
 			script,
 			zenroom.WithKeys([]byte(keyString)),
-			zenroom.WithData(payload),
+			zenroom.WithData(payloadBytes),
 			zenroom.WithVerbosity(1),
 		)
 
@@ -154,7 +158,7 @@ func (p *processor) Process(device *postgres.Device, payload []byte) error {
 		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
-			PublicKey:   stream.PublicKey,
+			PolicyId:    stream.PolicyID,
 			DeviceToken: device.DeviceToken,
 			Data:        []byte(encodedPayload),
 		})
