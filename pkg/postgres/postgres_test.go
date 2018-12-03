@@ -127,8 +127,8 @@ func (s *PostgresSuite) TestRoundTripWithOperations() {
 	stream, err := s.db.CreateStream(&postgres.Stream{
 		PolicyID:  "policy-id",
 		PublicKey: "public",
-		Operations: []postgres.Operation{
-			postgres.Operation{
+		Operations: []*postgres.Operation{
+			&postgres.Operation{
 				SensorID: 12,
 				Action:   "SHARE",
 			},

@@ -59,7 +59,7 @@ type Operation struct {
 // Operations is a type alias for a slice of Operation instance. We add as a
 // separate type as we implement sql.Valuer and sql.Scanner interfaces to read
 // and write back from the DB.
-type Operations []Operation
+type Operations []*Operation
 
 // Value is our implementation of the sql.Valuer interface which converts the
 // instance into a value that can be written to the database.
