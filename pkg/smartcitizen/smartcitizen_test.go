@@ -31,7 +31,7 @@ func TestParseData(t *testing.T) {
 				Name:        "HPP828E031",
 				Description: "Temperature",
 				Unit:        null.StringFrom("ºC"),
-				Type:        "SHARE",
+				Action:      postgres.Share,
 				Value:       null.FloatFrom(12.3),
 			},
 			&smartcitizen.Sensor{
@@ -39,7 +39,7 @@ func TestParseData(t *testing.T) {
 				Name:        "BH1730FVC",
 				Description: "Digital Ambient Light Sensor",
 				Unit:        null.StringFrom("Lux"),
-				Type:        "SHARE",
+				Action:      postgres.Share,
 				Value:       null.FloatFrom(23.2),
 			},
 		},

@@ -51,6 +51,18 @@ var (
 		},
 	)
 
+	// processHistogram is a prometheus histogram recording duration of processing
+	// a device for a stream.
+	processHistogram = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "pipeline_process",
+			Help:      "Execution time of pipeline process",
+		},
+		[]string{"operation"},
+	)
+
 	// zenroomHistogram is a prometheus histogram recording execution times of
 	// calls to zenroom to exec some script.
 	zenroomHistogram = prometheus.NewHistogram(
@@ -132,7 +144,7 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 			stream.PublicKey,
 		)
 
-		payloadBytes, err := json.Marshal(parsedDevice)
+		payloadBytes, err := p.processDevice(parsedDevice, stream)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal parsed device")
 		}
@@ -174,4 +186,95 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 	}
 
 	return nil
+}
+
+func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.Stream) ([]byte, error) {
+	// if no operations just return the whole object
+	if len(stream.Operations) == 0 {
+		return json.Marshal(device)
+	}
+
+	// create empty slice for processed sensors
+	processedSensors := []*smartcitizen.Sensor{}
+
+	for _, operation := range stream.Operations {
+		// get the sensor from the parsed slice
+		sensor := device.FindSensor(int(operation.SensorID))
+
+		if sensor != nil {
+			switch operation.Action {
+			case postgres.Share:
+				start := time.Now()
+
+				processedSensor := &smartcitizen.Sensor{
+					ID:          sensor.ID,
+					Name:        sensor.Name,
+					Description: sensor.Description,
+					Unit:        sensor.Unit,
+					Action:      operation.Action,
+					Value:       sensor.Value,
+				}
+
+				duration := time.Since(start)
+
+				processHistogram.WithLabelValues("share").Observe(duration.Seconds())
+
+				processedSensors = append(processedSensors, processedSensor)
+			case postgres.Bin:
+				start := time.Now()
+
+				processedSensor := &smartcitizen.Sensor{
+					ID:          sensor.ID,
+					Name:        sensor.Name,
+					Description: sensor.Description,
+					Unit:        sensor.Unit,
+					Action:      operation.Action,
+					Bins:        operation.Bins,
+					Values:      BinValue(sensor.Value.Float64, operation.Bins),
+				}
+
+				duration := time.Since(start)
+
+				processHistogram.WithLabelValues("bin").Observe(duration.Seconds())
+
+				processedSensors = append(processedSensors, processedSensor)
+			default:
+				continue
+			}
+		}
+	}
+
+	device.Sensors = processedSensors
+
+	return json.Marshal(device)
+}
+
+// BinValue is a function that tuns a value and a slice containing bin
+// boundaries into a slice containing the binned value.
+func BinValue(value float64, bins []float64) []int {
+	binnedValues := make([]int, len(bins)+1)
+
+	classified := false
+
+	for i := range bins {
+		if i == 0 {
+			if value < bins[i] {
+				binnedValues[i] = 1
+				classified = true
+				break
+			}
+		} else {
+			if value < bins[i] && value >= bins[i-1] {
+				binnedValues[i] = 1
+				classified = true
+				break
+			}
+		}
+	}
+
+	if !classified {
+		binnedValues[len(bins)] = 1
+	}
+
+	return binnedValues
 }

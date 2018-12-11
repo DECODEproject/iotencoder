@@ -114,6 +114,86 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	assert.NotNil(e.T(), err)
 }
 
+func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
+	logger := kitlog.NewNopLogger()
+	mqttClient := mocks.NewMQTTClient(nil)
+	processor := mocks.NewProcessor()
+
+	enc := rpc.NewEncoder(&rpc.Config{
+		DB:         e.db,
+		MQTTClient: mqttClient,
+		Processor:  processor,
+		Verbose:    false,
+		BrokerAddr: "tcp://mqtt.local:1883",
+	}, logger)
+
+	assert.Len(e.T(), mqttClient.Subscriptions, 0)
+
+	err := enc.(system.Startable).Start()
+	assert.Nil(e.T(), err)
+	defer enc.(system.Stoppable).Stop()
+
+	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
+		DeviceToken:        "abc123",
+		RecipientPublicKey: "pub_key",
+		PolicyId:           "policy-id",
+		Location: &encoder.CreateStreamRequest_Location{
+			Longitude: -0.024,
+			Latitude:  54.24,
+		},
+		Exposure: encoder.CreateStreamRequest_INDOOR,
+		Operations: []*encoder.CreateStreamRequest_Operation{
+			&encoder.CreateStreamRequest_Operation{
+				SensorId: 13,
+				Action:   encoder.CreateStreamRequest_Operation_SHARE,
+			},
+			&encoder.CreateStreamRequest_Operation{
+				SensorId: 14,
+				Action:   encoder.CreateStreamRequest_Operation_BIN,
+				Bins:     []float64{5.0, 10.0},
+			},
+			&encoder.CreateStreamRequest_Operation{
+				SensorId: 16,
+				Action:   encoder.CreateStreamRequest_Operation_MOVING_AVG,
+				Interval: 900,
+			},
+		},
+	})
+	assert.Nil(e.T(), err)
+
+	assert.Len(e.T(), mqttClient.Subscriptions, 1)
+	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
+	assert.NotEqual(e.T(), "", resp.StreamUid)
+
+	device, err := e.db.GetDevice("abc123")
+	assert.Nil(e.T(), err)
+	assert.Equal(e.T(), "tcp://mqtt.local:1883", device.Broker)
+	assert.Len(e.T(), device.Streams, 1)
+
+	stream := device.Streams[0]
+	assert.Len(e.T(), stream.Operations, 3)
+
+	assert.Equal(e.T(), 13, int(stream.Operations[0].SensorID))
+	assert.Equal(e.T(), postgres.Action("SHARE"), stream.Operations[0].Action)
+
+	assert.Equal(e.T(), 14, int(stream.Operations[1].SensorID))
+	assert.Equal(e.T(), postgres.Action("BIN"), stream.Operations[1].Action)
+	assert.Equal(e.T(), []float64{5.0, 10.0}, stream.Operations[1].Bins)
+
+	assert.Equal(e.T(), 16, int(stream.Operations[2].SensorID))
+	assert.Equal(e.T(), postgres.Action("MOVING_AVG"), stream.Operations[2].Action)
+	assert.Equal(e.T(), 900, int(stream.Operations[2].Interval))
+
+	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{
+		StreamUid: resp.StreamUid,
+		Token:     resp.Token,
+	})
+	assert.Nil(e.T(), err)
+
+	device, err = e.db.GetDevice("abc123")
+	assert.NotNil(e.T(), err)
+}
+
 func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	logger := kitlog.NewNopLogger()
 	mqttClient := mocks.NewMQTTClient(nil)
@@ -255,6 +335,65 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
 			expectedErr: "twirp error invalid_argument: latitude is required",
+		},
+		{
+			label: "operation with no sensor id",
+			request: &encoder.CreateStreamRequest{
+				DeviceToken:        "abc123",
+				RecipientPublicKey: "pub_key",
+				PolicyId:           "policy-id",
+				Location: &encoder.CreateStreamRequest_Location{
+					Longitude: -0.024,
+					Latitude:  54.24,
+				},
+				Exposure: encoder.CreateStreamRequest_INDOOR,
+				Operations: []*encoder.CreateStreamRequest_Operation{
+					&encoder.CreateStreamRequest_Operation{
+						Action: encoder.CreateStreamRequest_Operation_SHARE,
+					},
+				},
+			},
+			expectedErr: "twirp error invalid_argument: operations require a non-zero sensor id",
+		},
+		{
+			label: "bin with no bins",
+			request: &encoder.CreateStreamRequest{
+				DeviceToken:        "abc123",
+				RecipientPublicKey: "pub_key",
+				PolicyId:           "policy-id",
+				Location: &encoder.CreateStreamRequest_Location{
+					Longitude: -0.024,
+					Latitude:  54.24,
+				},
+				Exposure: encoder.CreateStreamRequest_INDOOR,
+				Operations: []*encoder.CreateStreamRequest_Operation{
+					&encoder.CreateStreamRequest_Operation{
+						SensorId: 13,
+						Action:   encoder.CreateStreamRequest_Operation_BIN,
+					},
+				},
+			},
+			expectedErr: "twirp error invalid_argument: operations binning requires a non-empty list of bins",
+		},
+		{
+			label: "moving average no interval",
+			request: &encoder.CreateStreamRequest{
+				DeviceToken:        "abc123",
+				RecipientPublicKey: "pub_key",
+				PolicyId:           "policy-id",
+				Location: &encoder.CreateStreamRequest_Location{
+					Longitude: -0.024,
+					Latitude:  54.24,
+				},
+				Exposure: encoder.CreateStreamRequest_INDOOR,
+				Operations: []*encoder.CreateStreamRequest_Operation{
+					&encoder.CreateStreamRequest_Operation{
+						SensorId: 13,
+						Action:   encoder.CreateStreamRequest_Operation_MOVING_AVG,
+					},
+				},
+			},
+			expectedErr: "twirp error invalid_argument: operations moving average requires a non-zero interval",
 		},
 	}
 

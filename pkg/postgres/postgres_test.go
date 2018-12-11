@@ -123,6 +123,37 @@ func (s *PostgresSuite) TestRoundTrip() {
 	assert.Len(s.T(), devices, 1)
 }
 
+func (s *PostgresSuite) TestRoundTripWithOperations() {
+	stream, err := s.db.CreateStream(&postgres.Stream{
+		PolicyID:  "policy-id",
+		PublicKey: "public",
+		Operations: []*postgres.Operation{
+			&postgres.Operation{
+				SensorID: 12,
+				Action:   "SHARE",
+			},
+		},
+		Device: &postgres.Device{
+			Broker:      "tcp://example.com",
+			DeviceToken: "123",
+			Longitude:   45.2,
+			Latitude:    23.2,
+			Exposure:    "indoor",
+		},
+	})
+
+	assert.Nil(s.T(), err)
+	assert.NotEqual(s.T(), "", stream.StreamID)
+	assert.Len(s.T(), stream.Operations, 1)
+
+	device, err := s.db.GetDevice("123")
+	assert.Nil(s.T(), err)
+	assert.NotNil(s.T(), device)
+
+	readStream := device.Streams[0]
+	assert.Len(s.T(), readStream.Operations, 1)
+}
+
 func (s *PostgresSuite) TestInvalidDeleteStream() {
 	stream, err := s.db.CreateStream(&postgres.Stream{
 		PolicyID:  "policy-id",

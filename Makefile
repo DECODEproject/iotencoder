@@ -180,10 +180,12 @@ bin-clean: ## remove generated build artefacts
 	@rm -rf .go bin .cache .coverage
 
 .PHONY: psql
-psql: ## open psql shell
+psql:  .build-dirs .compose ## open psql shell
 	@docker-compose -f .docker-compose-$(ARCH).yml \
-    run \
-    --rm \
+		start \
+		postgres
+	@docker-compose -f .docker-compose-$(ARCH).yml \
+    exec \
     -e "PGHOST=postgres" \
     -e "PGUSER=iotenc" \
     -e "PGPASSWORD=password" \

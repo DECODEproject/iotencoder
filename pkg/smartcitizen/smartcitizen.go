@@ -14,14 +14,14 @@ import (
 // Sensor is a type used when we marshal the enriched data to write to the
 // datastore
 type Sensor struct {
-	ID          int         `json:"id"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Unit        null.String `json:"unit"`
-	Type        string      `json:"type"`
-	Value       null.Float  `json:"value"`
-	Bins        []float64   `json:"bins,omitempty"`
-	Values      []float64   `json:"values,omitempty"`
+	ID          int             `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Unit        null.String     `json:"unit"`
+	Action      postgres.Action `json:"type"`
+	Value       null.Float      `json:"value"`
+	Bins        []float64       `json:"bins,omitempty"`
+	Values      []int           `json:"values,omitempty"`
 }
 
 // Device is a type used when we marshal the enriched data to write to the
@@ -33,6 +33,17 @@ type Device struct {
 	Exposure   string    `json:"exposure"`
 	RecordedAt time.Time `json:"recordedAt"`
 	Sensors    []*Sensor `json:"sensors"`
+}
+
+// FindSensor is a helper function that either returns a sensor pointer from our
+// slice, or returns nil if the sensor identified by the given id is not found.
+func (d *Device) FindSensor(id int) *Sensor {
+	for _, sensor := range d.Sensors {
+		if sensor.ID == id {
+			return sensor
+		}
+	}
+	return nil
 }
 
 // Smartcitizen is our type that holds the map of sensor metadata, and is able
@@ -86,7 +97,7 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 			Name:        metadata.Name,
 			Description: metadata.Description,
 			Value:       null.FloatFrom(rawSensor.Value),
-			Type:        encoder.CreateStreamRequest_Operation_SHARE.String(),
+			Action:      postgres.Action(encoder.CreateStreamRequest_Operation_SHARE.String()),
 			Unit:        metadata.Unit,
 		}
 

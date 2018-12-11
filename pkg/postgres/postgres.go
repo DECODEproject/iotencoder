@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"database/sql/driver"
+	"encoding/json"
+
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
@@ -10,7 +13,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Action is a type alias for string - we use for constants
+type Action string
+
 const (
+	// Share defines an action of sharing a sensor without processing
+	Share Action = "SHARE"
+
+	// Bin defines an action of sharing binned values for a sensor
+	Bin Action = "BIN"
+
+	// MovingAverage defines an action of sharing a moving average for a sensor
+	MovingAverage Action = "MOVING_AVG"
+
 	// TokenLength is a constant which controls the length in bytes of the security
 	// tokens we generate for streams.
 	TokenLength = 24
@@ -34,13 +49,54 @@ type Device struct {
 // stream. It contains a public key field used when reading data, and for
 // creating a new stream has an associated Device instance.
 type Stream struct {
-	PolicyID  string `db:"policy_id"`
-	PublicKey string `db:"public_key"`
+	PolicyID   string     `db:"policy_id"`
+	PublicKey  string     `db:"public_key"`
+	Operations Operations `db:"operations"`
 
 	StreamID string
 	Token    string
 
 	Device *Device
+}
+
+// Operation is a type used to capture the data around the operations to be
+// applied to a Stream.
+type Operation struct {
+	SensorID uint32    `json:"sensorId"`
+	Action   Action    `json:"action"`
+	Bins     []float64 `json:"bins"`
+	Interval uint32    `json:"interval"`
+}
+
+// Operations is a type alias for a slice of Operation instance. We add as a
+// separate type as we implement sql.Valuer and sql.Scanner interfaces to read
+// and write back from the DB.
+type Operations []*Operation
+
+// Value is our implementation of the sql.Valuer interface which converts the
+// instance into a value that can be written to the database.
+func (o Operations) Value() (driver.Value, error) {
+	return json.Marshal(o)
+}
+
+// Scan is our implementation of the sql.Scanner interface which takes the value
+// read from the database, and converts it back into an instance of the type.
+func (o *Operations) Scan(src interface{}) error {
+	if o == nil {
+		return nil
+	}
+
+	source, ok := src.([]byte)
+	if !ok {
+		return errors.New("Value read from database cannot be typecast to a byte slice")
+	}
+
+	err := json.Unmarshal(source, &o)
+	if err != nil {
+		return errors.Wrap(err, "failed to unmarshal bytes into Operations")
+	}
+
+	return nil
 }
 
 // Open is a helper function that takes as input a connection string for a DB,
@@ -160,8 +216,8 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 
 	// streams insert sql
 	sql = `INSERT INTO streams
-	(device_id, policy_id, public_key, token)
-	VALUES (:device_id, :policy_id, :public_key, pgp_sym_encrypt(:token, :encryption_password))
+	(device_id, policy_id, public_key, token, operations)
+	VALUES (:device_id, :policy_id, :public_key, pgp_sym_encrypt(:token, :encryption_password), :operations)
 	RETURNING id`
 
 	token, err := GenerateToken(TokenLength)
@@ -175,6 +231,7 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 		"public_key":          stream.PublicKey,
 		"token":               token,
 		"encryption_password": d.encryptionPassword,
+		"operations":          stream.Operations,
 	}
 
 	var streamID int
@@ -345,7 +402,7 @@ func (d *DB) GetDevice(deviceToken string) (_ *Device, err error) {
 	}
 
 	// now load streams
-	sql = `SELECT policy_id, public_key FROM streams WHERE device_id = :device_id`
+	sql = `SELECT policy_id, public_key, operations FROM streams WHERE device_id = :device_id`
 
 	mapArgs = map[string]interface{}{
 		"device_id": device.ID,

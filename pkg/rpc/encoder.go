@@ -111,7 +111,10 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 		return nil, err
 	}
 
-	stream := createStream(req, e.brokerAddr)
+	stream, err := createStream(req, e.brokerAddr)
+	if err != nil {
+		return nil, err
+	}
 
 	stream, err = e.db.CreateStream(stream)
 	if err != nil {
@@ -221,10 +224,22 @@ func validateCreateRequest(req *encoder.CreateStreamRequest) error {
 // createStream is a simple helper method that converts the incoming
 // CreateStreamRequest object into a *postgres.Stream instance ready to be
 // persisted to the DB.
-func createStream(req *encoder.CreateStreamRequest, brokerAddr string) *postgres.Stream {
+func createStream(req *encoder.CreateStreamRequest, brokerAddr string) (*postgres.Stream, error) {
+	operations := []*postgres.Operation{}
+
+	for _, o := range req.Operations {
+		operation, err := createOperation(o)
+		if err != nil {
+			return nil, err
+		}
+
+		operations = append(operations, operation)
+	}
+
 	return &postgres.Stream{
-		PolicyID:  req.PolicyId,
-		PublicKey: req.RecipientPublicKey,
+		PolicyID:   req.PolicyId,
+		PublicKey:  req.RecipientPublicKey,
+		Operations: operations,
 		Device: &postgres.Device{
 			Broker:      brokerAddr,
 			DeviceToken: req.DeviceToken,
@@ -232,6 +247,40 @@ func createStream(req *encoder.CreateStreamRequest, brokerAddr string) *postgres
 			Latitude:    req.Location.Latitude,
 			Exposure:    strings.ToLower(req.Exposure.String()),
 		},
+	}, nil
+}
+
+func createOperation(op *encoder.CreateStreamRequest_Operation) (*postgres.Operation, error) {
+	if op.SensorId == 0 {
+		return nil, twirp.InvalidArgumentError("operations", "require a non-zero sensor id")
+	}
+
+	switch op.Action {
+	case encoder.CreateStreamRequest_Operation_SHARE:
+		return &postgres.Operation{
+			SensorID: op.SensorId,
+			Action:   postgres.Action(op.Action.String()),
+		}, nil
+	case encoder.CreateStreamRequest_Operation_BIN:
+		if len(op.Bins) == 0 {
+			return nil, twirp.InvalidArgumentError("operations", "binning requires a non-empty list of bins")
+		}
+		return &postgres.Operation{
+			SensorID: op.SensorId,
+			Action:   postgres.Action(op.Action.String()),
+			Bins:     op.Bins,
+		}, nil
+	case encoder.CreateStreamRequest_Operation_MOVING_AVG:
+		if op.Interval == 0 {
+			return nil, twirp.InvalidArgumentError("operations", "moving average requires a non-zero interval")
+		}
+		return &postgres.Operation{
+			SensorID: op.SensorId,
+			Action:   postgres.Action(op.Action.String()),
+			Interval: op.Interval,
+		}, nil
+	default:
+		return nil, twirp.InvalidArgumentError("operations", "foo")
 	}
 }
 
