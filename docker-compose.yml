@@ -20,6 +20,7 @@ services:
     command: [ "/go/src/ARG_PKG/build/run.sh", "/go/bin/ARG_BIN", "server", "--datastore", "datastore:8080" ]
     depends_on:
       - postgres
+      - redis
     environment:
       - PGHOST=postgres
       - PGPASSWORD=password
@@ -27,6 +28,7 @@ services:
       - IOTENCODER_DATABASE_URL=postgres://iotenc:password@postgres:5432/iotenc_development?sslmode=disable
       - IOTENCODER_ENCRYPTION_PASSWORD=e3d741d6f84afc301d8e32c66e51f264
       - IOTENCODER_HASHID_SALT=014c02a69e9a095b851875888474d7fa
+      - IOTENCODER_REDIS_URL=redis://redis:6379/1
 
   postgres:
     build:
@@ -40,6 +42,9 @@ services:
       - POSTGRES_USER=iotenc
       - POSTGRES_DB=postgres
       - DATABASES=iotenc_development,iotenc_test
+
+  redis:
+    image: redis:5-alpine
 
 volumes:
   postgres_vol:
