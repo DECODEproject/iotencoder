@@ -22,6 +22,7 @@ import (
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 	"github.com/DECODEproject/iotencoder/pkg/pipeline"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/redis"
 	"github.com/DECODEproject/iotencoder/pkg/rpc"
 	"github.com/DECODEproject/iotencoder/pkg/system"
 	"github.com/DECODEproject/iotencoder/pkg/version"
@@ -53,6 +54,7 @@ type Config struct {
 	DatastoreAddr      string
 	Verbose            bool
 	BrokerAddr         string
+	RedisURL           string
 }
 
 // Server is our top level type, contains all other components, is responsible
@@ -63,6 +65,7 @@ type Server struct {
 	db      *postgres.DB
 	mqtt    mqtt.Client
 	logger  kitlog.Logger
+	rd      *redis.Redis
 }
 
 // PulseHandler is the simplest possible handler function - used to expose an
@@ -97,7 +100,9 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		},
 	)
 
-	processor := pipeline.NewProcessor(ds, config.Verbose, logger)
+	rd := redis.NewRedis(config.RedisURL, config.Verbose, logger)
+
+	processor := pipeline.NewProcessor(ds, rd, config.Verbose, logger)
 
 	mqttClient := mqtt.NewClient(logger, config.Verbose)
 
@@ -143,6 +148,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		db:      db,
 		mqtt:    mqttClient,
 		logger:  kitlog.With(logger, "module", "server"),
+		rd:      rd,
 	}
 }
 
@@ -163,6 +169,11 @@ func (s *Server) Start() error {
 	err = s.db.MigrateUp()
 	if err != nil {
 		return errors.Wrap(err, "failed to migrate the database")
+	}
+
+	err = s.rd.Start()
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to redis")
 	}
 
 	// start the encoder RPC component - this creates all mqtt subscriptions
@@ -187,6 +198,7 @@ func (s *Server) Start() error {
 	return s.Stop()
 }
 
+// Stop the server and all child components
 func (s *Server) Stop() error {
 	s.logger.Log("msg", "stopping")
 	ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
@@ -198,6 +210,11 @@ func (s *Server) Stop() error {
 	}
 
 	err = s.mqtt.(system.Stoppable).Stop()
+	if err != nil {
+		return err
+	}
+
+	err = s.rd.Stop()
 	if err != nil {
 		return err
 	}

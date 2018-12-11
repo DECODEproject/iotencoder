@@ -110,6 +110,8 @@ func CalculateAverage(vals []string) (float64, error) {
 		return 0, nil
 	}
 
+	fmt.Println(vals)
+
 	var acc float64
 
 	for _, val := range vals {

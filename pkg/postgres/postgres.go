@@ -106,7 +106,7 @@ func Open(connStr string) (*sqlx.DB, error) {
 	return sqlx.Open("postgres", connStr)
 }
 
-// db is our type that wraps an sqlx.DB instance and provides an API for the
+// DB is our type that wraps an sqlx.DB instance and provides an API for the
 // data access functions we require.
 type DB struct {
 	connStr            string
@@ -130,7 +130,7 @@ type Config struct {
 func NewDB(config *Config, logger kitlog.Logger) *DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
-	logger.Log("msg", "creating DB instance", "hashidlength", config.HashidMinLength)
+	logger.Log("msg", "creating postgres client", "hashidlength", config.HashidMinLength)
 
 	hd := hashids.NewData()
 	hd.Salt = config.HashidSalt
@@ -147,7 +147,7 @@ func NewDB(config *Config, logger kitlog.Logger) *DB {
 // Start creates our DB connection pool running returning an error if any
 // failure occurs.
 func (d *DB) Start() error {
-	d.logger.Log("msg", "starting postgres")
+	d.logger.Log("msg", "starting postgres client")
 
 	db, err := Open(d.connStr)
 	if err != nil {
@@ -167,7 +167,7 @@ func (d *DB) Start() error {
 
 // Stop closes the DB connection pool.
 func (d *DB) Stop() error {
-	d.logger.Log("msg", "stopping postgres")
+	d.logger.Log("msg", "stopping postgres client")
 
 	return d.DB.Close()
 }

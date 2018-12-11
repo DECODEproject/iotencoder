@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"gopkg.in/guregu/null.v3"
+
 	zenroom "github.com/DECODEproject/zenroom-go"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -14,6 +16,7 @@ import (
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/redis"
 	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
 
@@ -91,13 +94,18 @@ type Processor struct {
 	logger    kitlog.Logger
 	verbose   bool
 	sensors   *smartcitizen.Smartcitizen
+	rd        *redis.Redis
+}
+
+type MovingAverager interface {
+	MovingAverage(value float64, deviceToken string, sensorId int, interval uint32) (float64, error)
 }
 
 // NewProcessor is a constructor function that takes as input an instantiated
 // datastore client, and a logger. It returns the instantiated processor which
 // is ready for use. Note we pass in the datastore instance so that we can
 // supply a mock for testing.
-func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) *Processor {
+func NewProcessor(ds datastore.Datastore, rd *redis.Redis, verbose bool, logger kitlog.Logger) *Processor {
 	logger = kitlog.With(logger, "module", "pipeline")
 
 	logger.Log("msg", "creating processor")
@@ -107,6 +115,7 @@ func NewProcessor(ds datastore.Datastore, verbose bool, logger kitlog.Logger) *P
 		logger:    logger,
 		verbose:   verbose,
 		sensors:   &smartcitizen.Smartcitizen{},
+		rd:        rd,
 	}
 }
 
@@ -236,6 +245,34 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 				duration := time.Since(start)
 
 				processHistogram.WithLabelValues("bin").Observe(duration.Seconds())
+
+				processedSensors = append(processedSensors, processedSensor)
+			case postgres.MovingAverage:
+				start := time.Now()
+
+				avgVal, err := p.rd.MovingAverage(
+					sensor.Value.Float64,
+					device.Token,
+					sensor.ID,
+					operation.Interval,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				processedSensor := &smartcitizen.Sensor{
+					ID:          sensor.ID,
+					Name:        sensor.Name,
+					Description: sensor.Description,
+					Unit:        sensor.Unit,
+					Action:      operation.Action,
+					Interval:    null.IntFrom(int64(operation.Interval)),
+					Value:       null.FloatFrom(avgVal),
+				}
+
+				duration := time.Since(start)
+
+				processHistogram.WithLabelValues(string(postgres.MovingAverage)).Observe(duration.Seconds())
 
 				processedSensors = append(processedSensors, processedSensor)
 			default:
