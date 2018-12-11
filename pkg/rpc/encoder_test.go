@@ -174,14 +174,14 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 	assert.Len(e.T(), stream.Operations, 3)
 
 	assert.Equal(e.T(), 13, int(stream.Operations[0].SensorID))
-	assert.Equal(e.T(), "SHARE", stream.Operations[0].Action)
+	assert.Equal(e.T(), postgres.Action("SHARE"), stream.Operations[0].Action)
 
 	assert.Equal(e.T(), 14, int(stream.Operations[1].SensorID))
-	assert.Equal(e.T(), "BIN", stream.Operations[1].Action)
+	assert.Equal(e.T(), postgres.Action("BIN"), stream.Operations[1].Action)
 	assert.Equal(e.T(), []float64{5.0, 10.0}, stream.Operations[1].Bins)
 
 	assert.Equal(e.T(), 16, int(stream.Operations[2].SensorID))
-	assert.Equal(e.T(), "MOVING_AVG", stream.Operations[2].Action)
+	assert.Equal(e.T(), postgres.Action("MOVING_AVG"), stream.Operations[2].Action)
 	assert.Equal(e.T(), 900, int(stream.Operations[2].Interval))
 
 	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{

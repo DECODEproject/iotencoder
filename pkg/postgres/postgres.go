@@ -13,7 +13,19 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// Action is a type alias for string - we use for constants
+type Action string
+
 const (
+	// Share defines an action of sharing a sensor without processing
+	Share Action = "SHARE"
+
+	// Bin defines an action of sharing binned values for a sensor
+	Bin Action = "BIN"
+
+	// MovingAverage defines an action of sharing a moving average for a sensor
+	MovingAverage Action = "MOVING_AVG"
+
 	// TokenLength is a constant which controls the length in bytes of the security
 	// tokens we generate for streams.
 	TokenLength = 24
@@ -51,7 +63,7 @@ type Stream struct {
 // applied to a Stream.
 type Operation struct {
 	SensorID uint32    `json:"sensorId"`
-	Action   string    `json:"action"`
+	Action   Action    `json:"action"`
 	Bins     []float64 `json:"bins"`
 	Interval uint32    `json:"interval"`
 }

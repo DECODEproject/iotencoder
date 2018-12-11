@@ -45,19 +45,19 @@ func TestProcess(t *testing.T) {
 				Operations: postgres.Operations{
 					&postgres.Operation{
 						SensorID: 13,
-						Action:   pipeline.Share,
+						Action:   postgres.Share,
 					},
 					&postgres.Operation{
 						SensorID: 14,
-						Action:   pipeline.Share,
+						Action:   postgres.Share,
 					},
 					&postgres.Operation{
 						SensorID: 12,
-						Action:   pipeline.Share,
+						Action:   postgres.Share,
 					},
 					&postgres.Operation{
 						SensorID: 29,
-						Action:   pipeline.Bin,
+						Action:   postgres.Bin,
 						Bins:     []float64{30, 80, 120},
 					},
 				},

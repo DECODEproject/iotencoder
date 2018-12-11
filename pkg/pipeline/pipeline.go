@@ -82,18 +82,6 @@ func init() {
 	prometheus.MustRegister(zenroomHistogram)
 }
 
-const (
-	// Share is a constant that defines an action of directly sharing a sensor
-	Share = "SHARE"
-
-	// Bin is a constant that defines an action of binning the data for a sensor
-	Bin = "BIN"
-
-	// MovingAverage is a constant that defines an action of creating a moving
-	// average for a sensor
-	MovingAverage = "MOVING_AVG"
-)
-
 // Processor is a type that encapsulates processing incoming events received
 // from smartcitizen, and is responsible for enriching the data, applying any
 // transformations to the data and then encrypting it using zenroom before
@@ -215,7 +203,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 		if sensor != nil {
 			switch operation.Action {
-			case Share:
+			case postgres.Share:
 				start := time.Now()
 
 				processedSensor := &smartcitizen.Sensor{
@@ -223,7 +211,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 					Name:        sensor.Name,
 					Description: sensor.Description,
 					Unit:        sensor.Unit,
-					Type:        sensor.Type,
+					Action:      operation.Action,
 					Value:       sensor.Value,
 				}
 
@@ -232,7 +220,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 				processHistogram.WithLabelValues("share").Observe(duration.Seconds())
 
 				processedSensors = append(processedSensors, processedSensor)
-			case Bin:
+			case postgres.Bin:
 				start := time.Now()
 
 				processedSensor := &smartcitizen.Sensor{
@@ -240,7 +228,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 					Name:        sensor.Name,
 					Description: sensor.Description,
 					Unit:        sensor.Unit,
-					Type:        sensor.Type,
+					Action:      operation.Action,
 					Bins:        operation.Bins,
 					Values:      BinValue(sensor.Value.Float64, operation.Bins),
 				}

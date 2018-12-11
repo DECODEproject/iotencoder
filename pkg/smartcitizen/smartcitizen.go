@@ -14,14 +14,14 @@ import (
 // Sensor is a type used when we marshal the enriched data to write to the
 // datastore
 type Sensor struct {
-	ID          int         `json:"id"`
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Unit        null.String `json:"unit"`
-	Type        string      `json:"type"`
-	Value       null.Float  `json:"value"`
-	Bins        []float64   `json:"bins,omitempty"`
-	Values      []int       `json:"values,omitempty"`
+	ID          int             `json:"id"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Unit        null.String     `json:"unit"`
+	Action      postgres.Action `json:"type"`
+	Value       null.Float      `json:"value"`
+	Bins        []float64       `json:"bins,omitempty"`
+	Values      []int           `json:"values,omitempty"`
 }
 
 // Device is a type used when we marshal the enriched data to write to the
@@ -97,7 +97,7 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 			Name:        metadata.Name,
 			Description: metadata.Description,
 			Value:       null.FloatFrom(rawSensor.Value),
-			Type:        encoder.CreateStreamRequest_Operation_SHARE.String(),
+			Action:      postgres.Action(encoder.CreateStreamRequest_Operation_SHARE.String()),
 			Unit:        metadata.Unit,
 		}
 

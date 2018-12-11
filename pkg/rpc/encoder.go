@@ -259,7 +259,7 @@ func createOperation(op *encoder.CreateStreamRequest_Operation) (*postgres.Opera
 	case encoder.CreateStreamRequest_Operation_SHARE:
 		return &postgres.Operation{
 			SensorID: op.SensorId,
-			Action:   op.Action.String(),
+			Action:   postgres.Action(op.Action.String()),
 		}, nil
 	case encoder.CreateStreamRequest_Operation_BIN:
 		if len(op.Bins) == 0 {
@@ -267,7 +267,7 @@ func createOperation(op *encoder.CreateStreamRequest_Operation) (*postgres.Opera
 		}
 		return &postgres.Operation{
 			SensorID: op.SensorId,
-			Action:   op.Action.String(),
+			Action:   postgres.Action(op.Action.String()),
 			Bins:     op.Bins,
 		}, nil
 	case encoder.CreateStreamRequest_Operation_MOVING_AVG:
@@ -276,7 +276,7 @@ func createOperation(op *encoder.CreateStreamRequest_Operation) (*postgres.Opera
 		}
 		return &postgres.Operation{
 			SensorID: op.SensorId,
-			Action:   op.Action.String(),
+			Action:   postgres.Action(op.Action.String()),
 			Interval: op.Interval,
 		}, nil
 	default:
