@@ -17,9 +17,11 @@ func init() {
 	rootCmd.AddCommand(serverCmd)
 	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8081", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
+	serverCmd.Flags().String("database-url", "", "URL at which Postgres is listening (e.g. postgres://username:password@host:5432/dbname?sslmode=enable)")
 	serverCmd.Flags().IntP("hashidlength", "l", 8, "Minimum length of generated hashids")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
 	serverCmd.Flags().StringP("broker-addr", "b", "tcp://mqtt.smartcitizen.me:1883", "Address at which the MQTT broker is listening")
+	serverCmd.Flags().StringP("redis-url", "r", "", "URL at which redis is listening (e.g. redis://password@host:6379/1)")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
@@ -50,12 +52,12 @@ clients unable to use the Protocol Buffer API.`,
 			return errors.New("Must provide datastore address")
 		}
 
-		connStr := viper.GetString("database_url")
+		connStr := viper.GetString("database-url")
 		if connStr == "" {
 			return errors.New("Missing required environment variable: $IOTENCODER_DATABASE_URL")
 		}
 
-		encryptionPassword := viper.GetString("encryption_password")
+		encryptionPassword := viper.GetString("encryption-password")
 		if encryptionPassword == "" {
 			return errors.New("Missing required environment variable: $IOTENCODER_ENCRYPTION_PASSWORD")
 		}
@@ -70,6 +72,11 @@ clients unable to use the Protocol Buffer API.`,
 			return errors.New("Must provide MQTT broker address")
 		}
 
+		redisURL := viper.GetString("redis-url")
+		if redisURL == "" {
+			return errors.New("Must provide Redis URL, either via flag or environment variable")
+		}
+
 		logger := logger.NewLogger()
 
 		config := &server.Config{
@@ -81,6 +88,7 @@ clients unable to use the Protocol Buffer API.`,
 			HashidMinLength:    viper.GetInt("hashidlength"),
 			Verbose:            viper.GetBool("verbose"),
 			BrokerAddr:         brokerAddr,
+			RedisURL:           redisURL,
 		}
 
 		executer := backoff.ExecuteFunc(func(_ context.Context) error {

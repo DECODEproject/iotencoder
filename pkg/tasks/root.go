@@ -3,6 +3,7 @@ package tasks
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,6 +14,8 @@ import (
 func init() {
 	viper.SetEnvPrefix("iotencoder")
 	viper.AutomaticEnv()
+	replacer := strings.NewReplacer("-", "_")
+	viper.SetEnvKeyReplacer(replacer)
 }
 
 var rootCmd = &cobra.Command{
