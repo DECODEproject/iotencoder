@@ -6,3 +6,4 @@
 /.dockerfile-*
 /.docker-compose-*
 /.coverage
+STATUS
