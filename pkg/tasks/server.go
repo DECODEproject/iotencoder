@@ -5,12 +5,14 @@ import (
 	"errors"
 	"time"
 
+	raven "github.com/getsentry/raven-go"
 	"github.com/lestrrat-go/backoff"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/DECODEproject/iotencoder/pkg/logger"
 	"github.com/DECODEproject/iotencoder/pkg/server"
+	"github.com/DECODEproject/iotencoder/pkg/version"
 )
 
 func init() {
@@ -38,6 +40,9 @@ func init() {
 	viper.BindPFlag("redis-url", serverCmd.Flags().Lookup("redis-url"))
 	viper.BindPFlag("cert-file", serverCmd.Flags().Lookup("cert-file"))
 	viper.BindPFlag("key-file", serverCmd.Flags().Lookup("key-file"))
+
+	raven.SetRelease(version.Version)
+	raven.SetTagsContext(map[string]string{"component": "encoder"})
 }
 
 var serverCmd = &cobra.Command{
