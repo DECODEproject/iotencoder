@@ -85,6 +85,10 @@ func (r *Redis) Stop() error {
 func (r *Redis) MovingAverage(value float64, deviceToken string, sensorID int, interval uint32) (float64, error) {
 	key := BuildKey(deviceToken, sensorID, interval)
 
+	if r.verbose {
+		r.logger.Log("key", key, "msg", "calculating moving average")
+	}
+
 	now := r.clock.Now()
 	intervalDuration := time.Second * time.Duration(-int(interval))
 	previousTime := now.Add(intervalDuration)

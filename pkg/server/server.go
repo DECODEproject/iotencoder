@@ -55,17 +55,21 @@ type Config struct {
 	Verbose            bool
 	BrokerAddr         string
 	RedisURL           string
+	CertFile           string
+	KeyFile            string
 }
 
 // Server is our top level type, contains all other components, is responsible
 // for starting and stopping them in the correct order.
 type Server struct {
-	srv     *http.Server
-	encoder encoder.Encoder
-	db      *postgres.DB
-	mqtt    mqtt.Client
-	logger  kitlog.Logger
-	rd      *redis.Redis
+	srv      *http.Server
+	encoder  encoder.Encoder
+	db       *postgres.DB
+	mqtt     mqtt.Client
+	logger   kitlog.Logger
+	rd       *redis.Redis
+	certFile string
+	keyFile  string
 }
 
 // PulseHandler is the simplest possible handler function - used to expose an
@@ -148,12 +152,14 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	// return the instantiated server
 	return &Server{
-		srv:     srv,
-		encoder: enc,
-		db:      db,
-		mqtt:    mqttClient,
-		logger:  kitlog.With(logger, "module", "server"),
-		rd:      rd,
+		srv:      srv,
+		encoder:  enc,
+		db:       db,
+		mqtt:     mqttClient,
+		logger:   kitlog.With(logger, "module", "server"),
+		rd:       rd,
+		certFile: config.CertFile,
+		keyFile:  config.KeyFile,
 	}
 }
 
@@ -192,10 +198,18 @@ func (s *Server) Start() error {
 	signal.Notify(stopChan, os.Interrupt)
 
 	go func() {
-		s.logger.Log("listenAddr", s.srv.Addr, "msg", "starting server")
-		if err := s.srv.ListenAndServe(); err != nil {
-			s.logger.Log("err", err)
-			os.Exit(1)
+		s.logger.Log("listenAddr", s.srv.Addr, "msg", "starting server", "pathPrefix", encoder.EncoderPathPrefix, "tlsEnabled", isTLSEnabled(s.certFile, s.keyFile))
+
+		if isTLSEnabled(s.certFile, s.keyFile) {
+			if err := s.srv.ListenAndServeTLS(s.certFile, s.keyFile); err != nil {
+				s.logger.Log("err", err)
+				os.Exit(1)
+			}
+		} else {
+			if err := s.srv.ListenAndServe(); err != nil {
+				s.logger.Log("err", err)
+				os.Exit(1)
+			}
 		}
 	}()
 
@@ -230,4 +244,10 @@ func (s *Server) Stop() error {
 	}
 
 	return s.srv.Shutdown(ctx)
+}
+
+// isTLSEnabled returns true if we have passed in paths for both cert and key
+// files
+func isTLSEnabled(certFile, keyFile string) bool {
+	return certFile != "" && keyFile != ""
 }
