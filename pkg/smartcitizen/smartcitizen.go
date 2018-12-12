@@ -19,6 +19,7 @@ type Sensor struct {
 	Description string          `json:"description"`
 	Unit        null.String     `json:"unit"`
 	Action      postgres.Action `json:"type"`
+	Interval    null.Int        `json:"interval"`
 	Value       null.Float      `json:"value"`
 	Bins        []float64       `json:"bins,omitempty"`
 	Values      []int           `json:"values,omitempty"`

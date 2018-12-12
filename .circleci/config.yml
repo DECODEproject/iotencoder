@@ -11,6 +11,7 @@ jobs:
         environment:
           POSTGRES_USER: iotencoder
           POSTGRES_DB: iotencoder_test
+      - image: redis
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -47,6 +48,7 @@ jobs:
           name: Run tests
           environment:
             IOTENCODER_DATABASE_URL: "postgres://iotencoder@localhost:5432/iotencoder_test?sslmode=disable"
+            IOTENCODER_REDIS_URL: "redis://localhost:6379/1"
           command: |
             go test -v -installsuffix "static" -coverprofile=$TEST_RESULTS/coverage.out -timeout 30s -p 1 ./pkg/...
             go tool cover -html=$TEST_RESULTS/coverage.out -o $TEST_RESULTS/coverage.html

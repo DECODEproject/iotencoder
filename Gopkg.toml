@@ -108,3 +108,8 @@
 [[constraint]]
   name = "gopkg.in/guregu/null.v3"
   version = "3.4.0"
+
+[[constraint]]
+  name = "github.com/go-redis/redis"
+  version = "6.14.2"
+

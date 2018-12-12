@@ -101,6 +101,7 @@ test: .build-dirs .compose ## Run tests in the containerized environment
 		--rm \
 		-u $$(id -u):$$(id -g) \
 		-e "IOTENCODER_DATABASE_URL=postgres://iotenc:password@postgres/iotenc_test?sslmode=disable" \
+		-e "IOTENCODER_REDIS_URL=redis://redis:6379/2" \
 		app \
 		/bin/sh -c " \
 			RUN=$(RUN) \

@@ -214,8 +214,16 @@ func validateCreateRequest(req *encoder.CreateStreamRequest) error {
 		return twirp.RequiredArgumentError("longitude")
 	}
 
+	if req.Location.Longitude < -180 || req.Location.Longitude > 180 {
+		return twirp.InvalidArgumentError("longitude", "must be between -180 and 180")
+	}
+
 	if req.Location.Latitude == 0 {
 		return twirp.RequiredArgumentError("latitude")
+	}
+
+	if req.Location.Latitude < -90 || req.Location.Latitude > 90 {
+		return twirp.InvalidArgumentError("latitude", "must be between -90 and 90")
 	}
 
 	return nil

@@ -169,7 +169,7 @@ func _20181202133704_add_operationsDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20181202133704_add_operations.down.sql", size: 45, mode: os.FileMode(420), modTime: time.Unix(1543758013, 0)}
+	info := bindataFileInfo{name: "20181202133704_add_operations.down.sql", size: 45, mode: os.FileMode(420), modTime: time.Unix(1544562664, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xef, 0x17, 0xa5, 0xa6, 0x56, 0xf, 0xce, 0xd8, 0xfd, 0xdc, 0xfd, 0x79, 0xf4, 0x17, 0x51, 0x29, 0xb1, 0xcf, 0xb9, 0x55, 0xb1, 0x2e, 0x58, 0x16, 0x69, 0xe3, 0xa8, 0x21, 0xf5, 0xa0, 0xe6, 0x41}}
 	return a, nil
 }
@@ -189,7 +189,7 @@ func _20181202133704_add_operationsUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20181202133704_add_operations.up.sql", size: 50, mode: os.FileMode(420), modTime: time.Unix(1543757968, 0)}
+	info := bindataFileInfo{name: "20181202133704_add_operations.up.sql", size: 50, mode: os.FileMode(420), modTime: time.Unix(1544562664, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xe3, 0x81, 0x8c, 0xf7, 0x44, 0xa5, 0x90, 0xca, 0x30, 0x21, 0xb8, 0x6a, 0x65, 0xb6, 0x9, 0x89, 0x3f, 0x34, 0x99, 0x2b, 0xc5, 0x3a, 0xd3, 0x82, 0x2c, 0xae, 0xce, 0xb3, 0xf5, 0x28, 0x88, 0x16}}
 	return a, nil
 }
