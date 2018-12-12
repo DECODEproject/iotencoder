@@ -16,7 +16,6 @@ import (
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
-	"github.com/DECODEproject/iotencoder/pkg/redis"
 	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
 
@@ -83,6 +82,13 @@ func init() {
 	prometheus.MustRegister(datastoreWriteHistogram)
 	prometheus.MustRegister(zenroomErrorCounter)
 	prometheus.MustRegister(zenroomHistogram)
+	prometheus.MustRegister(processHistogram)
+}
+
+// MovingAverager is an interface for a type that can return a moving average
+// for the given device/sensor/interval
+type MovingAverager interface {
+	MovingAverage(value float64, deviceToken string, sensorId int, interval uint32) (float64, error)
 }
 
 // Processor is a type that encapsulates processing incoming events received
@@ -94,18 +100,14 @@ type Processor struct {
 	logger    kitlog.Logger
 	verbose   bool
 	sensors   *smartcitizen.Smartcitizen
-	rd        *redis.Redis
-}
-
-type MovingAverager interface {
-	MovingAverage(value float64, deviceToken string, sensorId int, interval uint32) (float64, error)
+	movingAvg MovingAverager
 }
 
 // NewProcessor is a constructor function that takes as input an instantiated
 // datastore client, and a logger. It returns the instantiated processor which
 // is ready for use. Note we pass in the datastore instance so that we can
 // supply a mock for testing.
-func NewProcessor(ds datastore.Datastore, rd *redis.Redis, verbose bool, logger kitlog.Logger) *Processor {
+func NewProcessor(ds datastore.Datastore, movingAvg MovingAverager, verbose bool, logger kitlog.Logger) *Processor {
 	logger = kitlog.With(logger, "module", "pipeline")
 
 	logger.Log("msg", "creating processor")
@@ -115,7 +117,7 @@ func NewProcessor(ds datastore.Datastore, rd *redis.Redis, verbose bool, logger 
 		logger:    logger,
 		verbose:   verbose,
 		sensors:   &smartcitizen.Smartcitizen{},
-		rd:        rd,
+		movingAvg: movingAvg,
 	}
 }
 
@@ -155,7 +157,7 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 
 		payloadBytes, err := p.processDevice(parsedDevice, stream)
 		if err != nil {
-			return errors.Wrap(err, "failed to marshal parsed device")
+			return err
 		}
 
 		start := time.Now()
@@ -200,7 +202,10 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.Stream) ([]byte, error) {
 	// if no operations just return the whole object
 	if len(stream.Operations) == 0 {
-		return json.Marshal(device)
+		_, err := json.Marshal(device)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to marshal complete device")
+		}
 	}
 
 	// create empty slice for processed sensors
@@ -226,7 +231,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 				duration := time.Since(start)
 
-				processHistogram.WithLabelValues("share").Observe(duration.Seconds())
+				processHistogram.WithLabelValues(string(postgres.Share)).Observe(duration.Seconds() * 1e3)
 
 				processedSensors = append(processedSensors, processedSensor)
 			case postgres.Bin:
@@ -244,20 +249,20 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 				duration := time.Since(start)
 
-				processHistogram.WithLabelValues("bin").Observe(duration.Seconds())
+				processHistogram.WithLabelValues(string(postgres.Bin)).Observe(duration.Seconds() * 1e3)
 
 				processedSensors = append(processedSensors, processedSensor)
 			case postgres.MovingAverage:
 				start := time.Now()
 
-				avgVal, err := p.rd.MovingAverage(
+				avgVal, err := p.movingAvg.MovingAverage(
 					sensor.Value.Float64,
 					device.Token,
 					sensor.ID,
 					operation.Interval,
 				)
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrap(err, "failed to calculate moving average")
 				}
 
 				processedSensor := &smartcitizen.Sensor{
@@ -272,7 +277,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 				duration := time.Since(start)
 
-				processHistogram.WithLabelValues(string(postgres.MovingAverage)).Observe(duration.Seconds())
+				processHistogram.WithLabelValues(string(postgres.MovingAverage)).Observe(duration.Seconds() * 1e3)
 
 				processedSensors = append(processedSensors, processedSensor)
 			default:
@@ -283,7 +288,12 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 	device.Sensors = processedSensors
 
-	return json.Marshal(device)
+	b, err := json.Marshal(device)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to marshal processed device")
+	}
+
+	return b, nil
 }
 
 // BinValue is a function that tuns a value and a slice containing bin
