@@ -19,6 +19,7 @@ import (
 	goji "goji.io"
 	"goji.io/pat"
 
+	"github.com/DECODEproject/iotencoder/pkg/metrics"
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 	"github.com/DECODEproject/iotencoder/pkg/pipeline"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
@@ -40,7 +41,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(buildInfo)
+	metrics.MustRegister(buildInfo)
 }
 
 // Config is a top level config object. Populated by viper in the command setup,
