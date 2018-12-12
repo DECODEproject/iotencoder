@@ -18,16 +18,26 @@ func init() {
 	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8081", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
 	serverCmd.Flags().String("database-url", "", "URL at which Postgres is listening (e.g. postgres://username:password@host:5432/dbname?sslmode=enable)")
-	serverCmd.Flags().IntP("hashidlength", "l", 8, "Minimum length of generated hashids")
+	serverCmd.Flags().String("encryption-password", "", "Password used to encrypt secret tokens we write to Postgres")
+	serverCmd.Flags().IntP("hashid-length", "l", 8, "Minimum length of generated ids for streams")
+	serverCmd.Flags().String("hashid-salt", "", "Salt value used when hashing generated ids for streams")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
 	serverCmd.Flags().StringP("broker-addr", "b", "tcp://mqtt.smartcitizen.me:1883", "Address at which the MQTT broker is listening")
 	serverCmd.Flags().StringP("redis-url", "r", "", "URL at which redis is listening (e.g. redis://password@host:6379/1)")
+	serverCmd.Flags().StringP("cert-file", "c", "", "Path to a TLS certificate file to enable TLS on the server")
+	serverCmd.Flags().StringP("key-file", "k", "", "Path to a TLS private key file to enable TLS on the server")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
-	viper.BindPFlag("hashidlength", serverCmd.Flags().Lookup("hashidlength"))
+	viper.BindPFlag("database-url", serverCmd.Flags().Lookup("database-url"))
+	viper.BindPFlag("encryption-password", serverCmd.Flags().Lookup("encryption-password"))
+	viper.BindPFlag("hashid-length", serverCmd.Flags().Lookup("hashid-length"))
+	viper.BindPFlag("hashid-salt", serverCmd.Flags().Lookup("hashid-salt"))
 	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("broker-addr", serverCmd.Flags().Lookup("broker-addr"))
+	viper.BindPFlag("redis-url", serverCmd.Flags().Lookup("redis-url"))
+	viper.BindPFlag("cert-file", serverCmd.Flags().Lookup("cert-file"))
+	viper.BindPFlag("key-file", serverCmd.Flags().Lookup("key-file"))
 }
 
 var serverCmd = &cobra.Command{
@@ -40,7 +50,11 @@ from upstream IoT devices.
 
 The server uses Twirp to expose both a JSON API along with a more performant
 Protocol Buffer API. The JSON API is not intended for use other than for
-clients unable to use the Protocol Buffer API.`,
+clients unable to use the Protocol Buffer API.
+
+Configuration values can be provided either by flags, or generally by
+environment variables. If a flag is named: --example-flag, then it will also be
+able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		addr := viper.GetString("addr")
 		if addr == "" {
@@ -54,27 +68,27 @@ clients unable to use the Protocol Buffer API.`,
 
 		connStr := viper.GetString("database-url")
 		if connStr == "" {
-			return errors.New("Missing required environment variable: $IOTENCODER_DATABASE_URL")
+			return errors.New("Must provide postgres database url")
 		}
 
 		encryptionPassword := viper.GetString("encryption-password")
 		if encryptionPassword == "" {
-			return errors.New("Missing required environment variable: $IOTENCODER_ENCRYPTION_PASSWORD")
+			return errors.New("Must provide postgres encryption password")
 		}
 
-		hashidSalt := viper.GetString("hashid_salt")
+		hashidSalt := viper.GetString("hashid-salt")
 		if hashidSalt == "" {
 			return errors.New("Missing required environment variable: $IOTENCODER_HASHID_SALT")
 		}
 
 		brokerAddr := viper.GetString("broker-addr")
 		if brokerAddr == "" {
-			return errors.New("Must provide MQTT broker address")
+			return errors.New("Must provide MQTT broker address to which updates are published")
 		}
 
 		redisURL := viper.GetString("redis-url")
 		if redisURL == "" {
-			return errors.New("Must provide Redis URL, either via flag or environment variable")
+			return errors.New("Must provide redis url")
 		}
 
 		logger := logger.NewLogger()
@@ -89,6 +103,8 @@ clients unable to use the Protocol Buffer API.`,
 			Verbose:            viper.GetBool("verbose"),
 			BrokerAddr:         brokerAddr,
 			RedisURL:           redisURL,
+			CertFile:           viper.GetString("cert-file"),
+			KeyFile:            viper.GetString("key-file"),
 		}
 
 		executer := backoff.ExecuteFunc(func(_ context.Context) error {
