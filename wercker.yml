@@ -5,6 +5,7 @@ services:
     env:
       POSTGRES_PASSWORD: password
       POSTGRES_USER: iotencoder
+  - id: redis
 
 build:
   steps:
@@ -14,6 +15,7 @@ build:
         name: go version
         code: |
           go version
+          env
 
     - script:
         name: setup env
