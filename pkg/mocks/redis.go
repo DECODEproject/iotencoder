@@ -1,6 +1,8 @@
 package mocks
 
-import "github.com/stretchr/testify/mock"
+import (
+	"github.com/stretchr/testify/mock"
+)
 
 // Redis is our mock redis client
 type Redis struct {
