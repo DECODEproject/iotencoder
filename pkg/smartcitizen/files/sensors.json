@@ -408,5 +408,1182 @@
       "name": "PM 2.5",
       "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
     }
+  },
+  {
+    "id": 30,
+    "uuid": "818c6c56-99b4-4b78-8fe2-1564ad806f1e",
+    "parent_id": 26,
+    "name": "NO2-B43F+ISB-MAIN",
+    "description": "Alphasense Nitrogen Dioxide main electrode",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2016-11-29T09:33:11Z",
+    "updated_at": "2016-11-29T09:33:11Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 36,
+    "uuid": "71daa88d-5862-4ee6-a72f-28fd07cd931e",
+    "parent_id": 28,
+    "name": "PPD42NS-10-CON",
+    "description": "Concentration Particulate Matter 10 micron",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2016-11-29T09:43:09Z",
+    "updated_at": "2016-11-29T09:43:09Z",
+    "measurement": {
+      "id": 13,
+      "uuid": "30e5b614-ab7e-46bc-b6f7-fa9a30926ce9",
+      "name": "PM 10",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 50,
+    "uuid": "97b64433-170d-4c8c-a246-fdc7931ed281",
+    "parent_id": 0,
+    "name": "Chirp Capacitive Soil Moisture",
+    "description": "Chirp Capacitive Soil Moisture",
+    "unit": "VWC",
+    "tags": [],
+    "created_at": "2018-01-29T12:52:52Z",
+    "updated_at": "2018-01-29T12:52:52Z",
+    "measurement": {
+      "id": 23,
+      "uuid": "3b2f696d-522d-4b5e-b0ba-08677e238275",
+      "name": "soil moisture",
+      "description": "Relative measure of the concentration of water that is dissolved in soil."
+    }
+  },
+  {
+    "id": 23,
+    "uuid": "2b6a4e93-efe9-4ac0-9ed7-9ef6921728e5",
+    "parent_id": null,
+    "name": "Noise Sensor TA120",
+    "description": "Noise Sensor CESVA TA120",
+    "unit": "dBA",
+    "tags": [],
+    "created_at": "2016-06-17T17:17:24Z",
+    "updated_at": "2016-06-17T17:17:24Z",
+    "measurement": {
+      "id": 4,
+      "uuid": "2841719f-658e-40df-a14a-74a86adc1410",
+      "name": "noise",
+      "description": "dB's measure sound pressure difference between the average local pressure and the pressure in the sound wave.  A quiet library is below 40dB, your house is around 50dB and a diesel truck in your street 90dB."
+    }
+  },
+  {
+    "id": 37,
+    "uuid": "9e2b824e-19bf-4487-bfdb-0a540c7a9225",
+    "parent_id": null,
+    "name": "Camera - Ionizing Radiation",
+    "description": "CMOS camera embedded in Smart phones and laptops measuring ionizing radiation using the GammaSense web app",
+    "unit": "CPM",
+    "tags": [],
+    "created_at": "2017-05-17T10:34:20Z",
+    "updated_at": "2017-05-17T10:34:20Z",
+    "measurement": {
+      "id": 16,
+      "uuid": "2803acd8-c185-48d4-bae9-859c5e293f53",
+      "name": "ionising radiation",
+      "description": "Ionising radiation (ionizing radiation) is radiation that carries enough energy to free electrons from atoms or molecules, thereby ionizing them. Gamma rays, X-rays, and the higher ultraviolet part of the electromagnetic spectrum are ionizing."
+    }
+  },
+  {
+    "id": 38,
+    "uuid": "611828bc-0f08-4385-9030-6be8f69ca254",
+    "parent_id": 37,
+    "name": "Camera - Ionizing Radiation - AVG",
+    "description": "Ionizing Radiation Average",
+    "unit": "CPM",
+    "tags": [],
+    "created_at": "2017-05-17T10:34:20Z",
+    "updated_at": "2017-05-17T10:34:20Z",
+    "measurement": {
+      "id": 16,
+      "uuid": "2803acd8-c185-48d4-bae9-859c5e293f53",
+      "name": "ionising radiation",
+      "description": "Ionising radiation (ionizing radiation) is radiation that carries enough energy to free electrons from atoms or molecules, thereby ionizing them. Gamma rays, X-rays, and the higher ultraviolet part of the electromagnetic spectrum are ionizing."
+    }
+  },
+  {
+    "id": 41,
+    "uuid": "25672def-2f22-489e-83df-6dda91545c29",
+    "parent_id": 37,
+    "name": "Camera - Ionizing Radiation - BASE",
+    "description": "Ionizing Radiation Baseline",
+    "unit": "CPM",
+    "tags": [],
+    "created_at": "2017-05-17T10:34:20Z",
+    "updated_at": "2017-05-17T10:34:20Z",
+    "measurement": {
+      "id": 16,
+      "uuid": "2803acd8-c185-48d4-bae9-859c5e293f53",
+      "name": "ionising radiation",
+      "description": "Ionising radiation (ionizing radiation) is radiation that carries enough energy to free electrons from atoms or molecules, thereby ionizing them. Gamma rays, X-rays, and the higher ultraviolet part of the electromagnetic spectrum are ionizing."
+    }
+  },
+  {
+    "id": 39,
+    "uuid": "706c0a33-9ebb-46f7-9f1d-5bc781579147",
+    "parent_id": 37,
+    "name": "Camera - Ionizing Radiation - MIN",
+    "description": "Ionizing Radiation Minimum",
+    "unit": "CPM",
+    "tags": [],
+    "created_at": "2017-05-17T10:34:20Z",
+    "updated_at": "2017-05-17T10:34:20Z",
+    "measurement": {
+      "id": 16,
+      "uuid": "2803acd8-c185-48d4-bae9-859c5e293f53",
+      "name": "ionising radiation",
+      "description": "Ionising radiation (ionizing radiation) is radiation that carries enough energy to free electrons from atoms or molecules, thereby ionizing them. Gamma rays, X-rays, and the higher ultraviolet part of the electromagnetic spectrum are ionizing."
+    }
+  },
+  {
+    "id": 40,
+    "uuid": "92817483-fff8-46c3-8438-c980bca8ec04",
+    "parent_id": 37,
+    "name": "Camera - Ionizing Radiation - MAX",
+    "description": "Ionizing Radiation Maximum",
+    "unit": "CPM",
+    "tags": [],
+    "created_at": "2017-05-17T10:34:20Z",
+    "updated_at": "2017-05-17T10:34:20Z",
+    "measurement": {
+      "id": 16,
+      "uuid": "2803acd8-c185-48d4-bae9-859c5e293f53",
+      "name": "ionising radiation",
+      "description": "Ionising radiation (ionizing radiation) is radiation that carries enough energy to free electrons from atoms or molecules, thereby ionizing them. Gamma rays, X-rays, and the higher ultraviolet part of the electromagnetic spectrum are ionizing."
+    }
+  },
+  {
+    "id": 31,
+    "uuid": "215cf755-d683-45ab-8ce7-8d49741ed61e",
+    "parent_id": 26,
+    "name": "NO2-B43F+ISB-AUX",
+    "description": "Alphasense Nitrogen Dioxide auxiliary electrode",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2016-11-29T09:34:11Z",
+    "updated_at": "2016-11-29T09:34:11Z",
+    "measurement": {
+      "id": 15,
+      "uuid": "1edf01a1-4bfe-4a01-b1ba-8c6427bb260f",
+      "name": "electrode ref",
+      "description": "Electrode Ref value for Electrochemical and Metal Oxide gas sensors"
+    }
+  },
+  {
+    "id": 44,
+    "uuid": "fb1f5d42-4a42-4c4a-acd2-4ab481fb7294",
+    "parent_id": null,
+    "name": "AS EZO Conductivity",
+    "description": "Atlas Scientific EZO™ Conductivity Probe",
+    "unit": null,
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": null
+  },
+  {
+    "id": 47,
+    "uuid": "c8cd4750-c88d-4cf5-864c-ef1595f1a77f",
+    "parent_id": null,
+    "name": "AS  EZO DO",
+    "description": "Atlas Scientific EZO™ Dissolved Oxygen Probe",
+    "unit": null,
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": null
+  },
+  {
+    "id": 42,
+    "uuid": "eef42295-097e-42dd-adc4-0bd1604a0345",
+    "parent_id": null,
+    "name": "DS18B20",
+    "description": "Submergible Water Temperature sensor",
+    "unit": "°C",
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": {
+      "id": 17,
+      "uuid": "34d6b087-cc6f-4340-8a41-e6925ac17cbc",
+      "name": "water temperature",
+      "description": "Water temperature is a measure of how hot or cold the water is."
+    }
+  },
+  {
+    "id": 46,
+    "uuid": "de377bc5-7ece-470a-a6e9-8e7e65a63e89",
+    "parent_id": 44,
+    "name": "AS EZO  Specific Gravity ",
+    "description": "Atlas Scientific EZO™ Specific Gravity ",
+    "unit": "SG",
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": {
+      "id": 20,
+      "uuid": "150c6477-0e05-4559-9c1e-48bdda0a1285",
+      "name": "specific gravity",
+      "description": "The density of a substance to the density of a reference substance."
+    }
+  },
+  {
+    "id": 49,
+    "uuid": "2dbc5b22-eaed-4b0a-8937-b2705feb9056",
+    "parent_id": 47,
+    "name": "AS  EZO Oxygen Saturation",
+    "description": "Atlas Scientific EZO™ Oxygen Saturation",
+    "unit": "%",
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": {
+      "id": 22,
+      "uuid": "eeadd017-3876-4b9e-8509-c75761e37752",
+      "name": "oxygen saturation",
+      "description": "Relative measure of the concentration of oxygen that is dissolved in Water "
+    }
+  },
+  {
+    "id": 43,
+    "uuid": "eef42295-097e-42dd-adc4-0bd1604a0345",
+    "parent_id": null,
+    "name": "AS EZO PH",
+    "description": "Atlas Scientific EZO™ pH",
+    "unit": "PH",
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": {
+      "id": 18,
+      "uuid": "d41b5a7d-5201-4122-9bc5-ff5a7052b366",
+      "name": "pH",
+      "description": "pH is a numeric scale used to specify the acidity or basicity of an aqueous solution."
+    }
+  },
+  {
+    "id": 48,
+    "uuid": "dd7baf73-705f-4ac0-a119-c75fedd3ddcf",
+    "parent_id": 47,
+    "name": "AS  EZO Dissolved Oxygen",
+    "description": "Atlas Scientific EZO™ Dissolved Oxygen",
+    "unit": "mg/L",
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": {
+      "id": 21,
+      "uuid": "86e4fe06-64fd-49af-9534-5d5cf8763ec6",
+      "name": "dissolved oxygen",
+      "description": "Absolute measure of the concentration of oxygen that is dissolved in Water "
+    }
+  },
+  {
+    "id": 45,
+    "uuid": "16c861fc-4979-49c3-a48f-f305176ad1c5",
+    "parent_id": 44,
+    "name": "AS EZO Electrical Conductivity",
+    "description": "Atlas Scientific EZO™ Electrical Conductivity",
+    "unit": "µS/cm",
+    "tags": [],
+    "created_at": "2017-08-04T12:05:30Z",
+    "updated_at": "2017-08-04T12:05:30Z",
+    "measurement": {
+      "id": 19,
+      "uuid": "107b16fa-abdb-4cba-b23e-848cc2092f63",
+      "name": "electrical conductivity",
+      "description": "How strongly a given material opposes the flow of electric current."
+    }
+  },
+  {
+    "id": 51,
+    "uuid": "1d55852a-1d17-4796-acc1-c2720a29a470",
+    "parent_id": 0,
+    "name": "AS EZO RTD",
+    "description": "Atlas Scientific EZO™ Temperature",
+    "unit": "ºC",
+    "tags": [],
+    "created_at": "2018-01-29T12:55:39Z",
+    "updated_at": "2018-01-29T12:55:39Z",
+    "measurement": {
+      "id": 24,
+      "uuid": "953fe44b-ef89-4206-9b8c-41d42e063db2",
+      "name": "soil temperature",
+      "description": "Soil temperature is a measure of how hot or cold soil is."
+    }
+  },
+  {
+    "id": 10,
+    "uuid": "c9ff2784-53a7-4a84-b0fc-90ecc7e313f9",
+    "parent_id": null,
+    "name": "Battery SCK 1.1",
+    "description": "Custom Circuit",
+    "unit": "%",
+    "tags": [],
+    "created_at": "2015-02-02T18:18:00Z",
+    "updated_at": "2015-07-05T19:53:51Z",
+    "measurement": {
+      "id": 7,
+      "uuid": "c5964926-c2d2-4714-98b5-18f84c6f95c1",
+      "name": "battery",
+      "description": "The SCK remaining battery level in percentage."
+    }
+  },
+  {
+    "id": 17,
+    "uuid": "5b0e390e-781d-4243-8e97-579eead09792",
+    "parent_id": null,
+    "name": "Battery",
+    "description": "Custom Circuit",
+    "unit": "%",
+    "tags": [],
+    "created_at": "2015-02-02T18:26:28Z",
+    "updated_at": "2015-07-05T19:55:34Z",
+    "measurement": {
+      "id": 7,
+      "uuid": "c5964926-c2d2-4714-98b5-18f84c6f95c1",
+      "name": "battery",
+      "description": "The SCK remaining battery level in percentage."
+    }
+  },
+  {
+    "id": 8,
+    "uuid": "1eb0249d-29d8-41be-8e24-d3b1e5773c0f",
+    "parent_id": null,
+    "name": "MICS-2710",
+    "description": "MOS NO2 gas sensor",
+    "unit": "kOhm",
+    "tags": [],
+    "created_at": "2015-02-02T18:17:23Z",
+    "updated_at": "2015-09-16T16:50:41Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 9,
+    "uuid": "7baaecb7-2586-4063-9c15-bfa999e329aa",
+    "parent_id": null,
+    "name": "MICS-5525",
+    "description": "MOS CO gas sensor",
+    "unit": "kOhm",
+    "tags": [],
+    "created_at": "2015-02-02T18:17:44Z",
+    "updated_at": "2015-09-16T16:51:42Z",
+    "measurement": {
+      "id": 5,
+      "uuid": "fd22c946-d6d8-40c3-97ea-0021ce6d21a1",
+      "name": "co",
+      "description": "Carbon monoxide is a colorless, odorless, and tasteless gas. It is a pollutant in some urban areas coming from the exhaust of internal combustion engines  (cars, trucks, ships...)  and incomplete combustion of various other fuels. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance), we approximate R0 at 75kOhm."
+    }
+  },
+  {
+    "id": 15,
+    "uuid": "0c5b7e74-ef87-431d-89af-dd51de84b10e",
+    "parent_id": 20,
+    "name": "MiCS-4514-NO2",
+    "description": "NO2",
+    "unit": "kOhm",
+    "tags": [],
+    "created_at": "2015-02-02T18:25:51Z",
+    "updated_at": "2015-07-05T19:57:59Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 16,
+    "uuid": "49a26be4-3ce1-4f2e-a09b-4296fefcfe17",
+    "parent_id": 20,
+    "name": "MiCS-4514-CO",
+    "description": "CO",
+    "unit": "kOhm",
+    "tags": [],
+    "created_at": "2015-02-02T18:26:11Z",
+    "updated_at": "2015-07-05T19:58:18Z",
+    "measurement": {
+      "id": 5,
+      "uuid": "fd22c946-d6d8-40c3-97ea-0021ce6d21a1",
+      "name": "co",
+      "description": "Carbon monoxide is a colorless, odorless, and tasteless gas. It is a pollutant in some urban areas coming from the exhaust of internal combustion engines  (cars, trucks, ships...)  and incomplete combustion of various other fuels. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance), we approximate R0 at 75kOhm."
+    }
+  },
+  {
+    "id": 53,
+    "uuid": "f508548e-3fd1-44aa-839b-9bd147168481",
+    "parent_id": 52,
+    "name": "ICS43432 - Noise",
+    "description": "I2S Digital Mems Microphone with custom Audio Processing Algorithm",
+    "unit": "dBA",
+    "tags": [],
+    "created_at": "2018-05-03T10:42:47Z",
+    "updated_at": "2018-05-03T10:42:54Z",
+    "measurement": {
+      "id": 4,
+      "uuid": "2841719f-658e-40df-a14a-74a86adc1410",
+      "name": "noise",
+      "description": "dB's measure sound pressure difference between the average local pressure and the pressure in the sound wave.  A quiet library is below 40dB, your house is around 50dB and a diesel truck in your street 90dB."
+    }
+  },
+  {
+    "id": 52,
+    "uuid": "17f93e8c-c949-4688-a34a-e2562021ce03",
+    "parent_id": 0,
+    "name": "ICS43432",
+    "description": "I2S Digital Mems Microphone with custom Audio Processing Algorithm",
+    "unit": "NULL",
+    "tags": [],
+    "created_at": "2018-05-03T10:34:06Z",
+    "updated_at": "2018-05-03T10:34:06Z",
+    "measurement": {
+      "id": 4,
+      "uuid": "2841719f-658e-40df-a14a-74a86adc1410",
+      "name": "noise",
+      "description": "dB's measure sound pressure difference between the average local pressure and the pressure in the sound wave.  A quiet library is below 40dB, your house is around 50dB and a diesel truck in your street 90dB."
+    }
+  },
+  {
+    "id": 54,
+    "uuid": "589a8a36-0741-4c9d-ad81-50483d15ce39",
+    "parent_id": 0,
+    "name": "SHT31",
+    "description": "Digital relative humidity and air temperature sensor",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T10:46:15Z",
+    "updated_at": "2018-05-03T10:46:15Z",
+    "measurement": null
+  },
+  {
+    "id": 55,
+    "uuid": "384e46a2-80dd-481e-a9fc-cfbd512f9f43",
+    "parent_id": 54,
+    "name": "SHT31 - Temperature",
+    "description": "Temperature",
+    "unit": "ºC",
+    "tags": [],
+    "created_at": "2018-05-03T10:47:15Z",
+    "updated_at": "2018-05-03T10:47:15Z",
+    "measurement": {
+      "id": 1,
+      "uuid": "b3f44b63-0a17-4d84-bbf1-4c17764b7eae",
+      "name": "air temperature",
+      "description": "Air temperature is a measure of how hot or cold the air is. It is the most commonly measured weather parameter. Air temperature is dependent on the amount and strength of the sunlight hitting the earth, and atmospheric conditions, such as cloud cover and humidity, which trap heat."
+    }
+  },
+  {
+    "id": 56,
+    "uuid": "b6543356-0066-4bea-8ad2-687e282f9c20",
+    "parent_id": 54,
+    "name": "SHT31 - Humidity",
+    "description": "Humidity",
+    "unit": "%",
+    "tags": [],
+    "created_at": "2018-05-03T10:47:17Z",
+    "updated_at": "2018-05-03T10:47:17Z",
+    "measurement": {
+      "id": 2,
+      "uuid": "9cbbd396-5bd3-44be-adc0-7ffba778072d",
+      "name": "humidity",
+      "description": "Relative humidity is a measure of the amount of moisture in the air relative to the total amount of moisture the air can hold. For instance, if the relative humidity was 50%, then the air is only half saturated with moisture."
+    }
+  },
+  {
+    "id": 57,
+    "uuid": "c59dd6d5-f547-41ed-8047-fad50c5ef901",
+    "parent_id": 0,
+    "name": "MPL3115A2",
+    "description": "Digital Barometric Pressure Sensor",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T10:48:17Z",
+    "updated_at": "2018-05-03T10:48:17Z",
+    "measurement": null
+  },
+  {
+    "id": 58,
+    "uuid": "cadd2459-6559-4d92-aed1-ba04c557fed8",
+    "parent_id": 57,
+    "name": "MPL3115A2 - Barometric Pressure",
+    "description": "Digital Barometric Pressure Sensor",
+    "unit": "K Pa",
+    "tags": [],
+    "created_at": "2018-05-03T10:49:17Z",
+    "updated_at": "2018-05-03T10:49:17Z",
+    "measurement": {
+      "id": 25,
+      "uuid": "2a944e9d-073d-49ed-8dc7-e376495f283d",
+      "name": "barometric pressure",
+      "description": "Barometric pressure is the pressure within the atmosphere of Earth. In most circumstances atmospheric pressure is closely approximated by the hydrostatic pressure caused by the weight of air above the measurement point."
+    }
+  },
+  {
+    "id": 60,
+    "uuid": "89f09c46-8d99-4d0f-aa5a-fdf23d395522",
+    "parent_id": 59,
+    "name": "NO2-B43F",
+    "description": "Alphasense Nitrogen Dioxide + Ozone",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T13:58:57Z",
+    "updated_at": "2018-05-03T13:58:57Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 98,
+    "uuid": "0bb1630d-07bd-4b51-9793-5e37727db5f3",
+    "parent_id": null,
+    "name": "VL6180",
+    "description": "SparkFun ToF Range Finder Sensor ",
+    "unit": "g/l",
+    "tags": [],
+    "created_at": "2018-11-09T15:16:20Z",
+    "updated_at": "2018-11-09T15:16:20Z",
+    "measurement": {
+      "id": 39,
+      "uuid": "cc0a8a13-206c-4007-b635-a1f495aea405",
+      "name": "cm",
+      "description": "Distance"
+    }
+  },
+  {
+    "id": 63,
+    "uuid": "d7fe83e7-328f-4c20-8dd2-de693b2b4564",
+    "parent_id": 59,
+    "name": "CO-B4F",
+    "description": "Alphasense Carbon Monoxide + Ozone",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 5,
+      "uuid": "fd22c946-d6d8-40c3-97ea-0021ce6d21a1",
+      "name": "co",
+      "description": "Carbon monoxide is a colorless, odorless, and tasteless gas. It is a pollutant in some urban areas coming from the exhaust of internal combustion engines  (cars, trucks, ships...)  and incomplete combustion of various other fuels. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance), we approximate R0 at 75kOhm."
+    }
+  },
+  {
+    "id": 66,
+    "uuid": "75b2a114-e030-4064-8f4d-9a1ae546e7e8",
+    "parent_id": 59,
+    "name": "OXB431",
+    "description": "Alphasense Ozone",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 26,
+      "uuid": "9759c2fd-15d8-424b-adcc-d6efcf940f6e",
+      "name": "o3",
+      "description": "Ozone is found naturally in small concentrations in the stratosphere, a layer of Earth's upper atmosphere. However it can also be found in the lowest layer of the atmosphere. Tropospheric ozone (often termed \"bad\" ozone) is man-made, a result of air pollution from internal combustion engines and power plants."
+    }
+  },
+  {
+    "id": 59,
+    "uuid": "aaa8ea0c-7c0d-41ca-88ad-2d2dba59c00e",
+    "parent_id": null,
+    "name": "SCK Gases Pro Board",
+    "description": "SCK Gases Pro Board: Alphasense Series B 3 Channel Driver ",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T13:58:57Z",
+    "updated_at": "2018-05-03T13:58:57Z",
+    "measurement": null
+  },
+  {
+    "id": 69,
+    "uuid": "7f636cb0-72d3-4855-b06c-be0eb6c56650",
+    "parent_id": null,
+    "name": "SCK PM Board",
+    "description": "SCK PM Driver: Dual Platfower PMSX003 driver",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 12,
+      "uuid": "10c06fa2-6d68-465e-9f06-b6c4ccf24100",
+      "name": "PM",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 70,
+    "uuid": "f1bf0f1a-6a89-4e84-9baa-f285629327e9",
+    "parent_id": 69,
+    "name": "PMS5003_A",
+    "description": "Plantower PMS5003 PM 10/2.5/1 sensor",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 12,
+      "uuid": "10c06fa2-6d68-465e-9f06-b6c4ccf24100",
+      "name": "PM",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 74,
+    "uuid": "221e0f3a-9013-4d74-b160-d4ead7a7c71b",
+    "parent_id": 69,
+    "name": "PMS5003_B",
+    "description": "Plantower PMS5003 PM 10/2.5/1 sensor",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 12,
+      "uuid": "10c06fa2-6d68-465e-9f06-b6c4ccf24100",
+      "name": "PM",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 78,
+    "uuid": "8e26887e-d036-4b25-8541-28527c7ae89c",
+    "parent_id": 0,
+    "name": "Ext SHT31",
+    "description": "External digital relative humidity and air temperature sensor",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-03T16:56:15Z",
+    "updated_at": "2018-05-03T10:46:15Z",
+    "measurement": null
+  },
+  {
+    "id": 86,
+    "uuid": "69c33485-af0e-426a-8554-9a1333228874",
+    "parent_id": 69,
+    "name": "PMS5003_AVG",
+    "description": "PM Board with dual PMS5003 PM 10/2.5/1 sensors",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-05-22T13:20:34Z",
+    "updated_at": "2018-05-22T13:20:34Z",
+    "measurement": {
+      "id": 12,
+      "uuid": "10c06fa2-6d68-465e-9f06-b6c4ccf24100",
+      "name": "PM",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 73,
+    "uuid": "3292b9c9-05f3-43dc-9065-68eda773a35a",
+    "parent_id": 70,
+    "name": "PMS5003_A-PM1",
+    "description": "Particle Matter (A) PM 1",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 27,
+      "uuid": "9759c2fd-15d8-424b-adcc-d6efcf940f6e",
+      "name": "PM 1",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 75,
+    "uuid": "3975738a-24aa-4061-8eec-6b3fbe7bac4f",
+    "parent_id": 74,
+    "name": "PMS5003_B-PM2.5",
+    "description": "Particle Matter (B) PM 2.5",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 14,
+      "uuid": "c8ecda46-c430-4cbc-9ad4-5ea8a07c5820",
+      "name": "PM 2.5",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 76,
+    "uuid": "1112a468-fb2f-43b0-8747-56444abf6eff",
+    "parent_id": 74,
+    "name": "PMS5003_B-PM10",
+    "description": "Particle Matter (B) PM 10",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 13,
+      "uuid": "30e5b614-ab7e-46bc-b6f7-fa9a30926ce9",
+      "name": "PM 10",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 72,
+    "uuid": "a20595bb-e6d1-4dc0-80d0-ae81fc27121c",
+    "parent_id": 70,
+    "name": "PMS5003_A-PM10",
+    "description": "Particle Matter (A)  PM 10",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 13,
+      "uuid": "30e5b614-ab7e-46bc-b6f7-fa9a30926ce9",
+      "name": "PM 10",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 77,
+    "uuid": "7e76d1ef-bcf0-41a2-8a90-ca48e5a16e77",
+    "parent_id": 74,
+    "name": "PMS5003_B-PM1",
+    "description": "Particle Matter (B) PM 1",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 27,
+      "uuid": "9759c2fd-15d8-424b-adcc-d6efcf940f6e",
+      "name": "PM 1",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 71,
+    "uuid": "1a597b71-e08e-4265-a335-fdbfb20e8a89",
+    "parent_id": 70,
+    "name": "PMS5003_A-PM2.5",
+    "description": "Particle Matter (A) 2.5",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-03T14:22:12Z",
+    "updated_at": "2018-05-03T14:22:12Z",
+    "measurement": {
+      "id": 14,
+      "uuid": "c8ecda46-c430-4cbc-9ad4-5ea8a07c5820",
+      "name": "PM 2.5",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 64,
+    "uuid": "2f01f2d0-8727-4e2d-b626-17b472ccd0f5",
+    "parent_id": 63,
+    "name": "CO-B4F-MAIN",
+    "description": "Alphasense Carbon Monoxide Main",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 5,
+      "uuid": "fd22c946-d6d8-40c3-97ea-0021ce6d21a1",
+      "name": "co",
+      "description": "Carbon monoxide is a colorless, odorless, and tasteless gas. It is a pollutant in some urban areas coming from the exhaust of internal combustion engines  (cars, trucks, ships...)  and incomplete combustion of various other fuels. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance), we approximate R0 at 75kOhm."
+    }
+  },
+  {
+    "id": 61,
+    "uuid": "ca843f4f-49c7-4b5b-9379-e7fc8debaa26",
+    "parent_id": 60,
+    "name": "NO2-B43F-MAIN",
+    "description": "Alphasense Nitrogen Dioxide + Ozone Main Electrode",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 67,
+    "uuid": "58fdaf36-5781-4ed3-adc1-ece54c755033",
+    "parent_id": 66,
+    "name": "OXB431-MAIN",
+    "description": "Alphasense Ozone Main",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 26,
+      "uuid": "9759c2fd-15d8-424b-adcc-d6efcf940f6e",
+      "name": "o3",
+      "description": "Ozone is found naturally in small concentrations in the stratosphere, a layer of Earth's upper atmosphere. However it can also be found in the lowest layer of the atmosphere. Tropospheric ozone (often termed \"bad\" ozone) is man-made, a result of air pollution from internal combustion engines and power plants."
+    }
+  },
+  {
+    "id": 84,
+    "uuid": "86338c93-28e6-4a9d-b032-7638d97f511c",
+    "parent_id": 63,
+    "name": "CO-B4F-CON",
+    "description": "Alphasense Carbon Monoxide",
+    "unit": "ppm",
+    "tags": [],
+    "created_at": "2018-05-22T12:58:05Z",
+    "updated_at": "2018-05-22T12:58:05Z",
+    "measurement": {
+      "id": 5,
+      "uuid": "fd22c946-d6d8-40c3-97ea-0021ce6d21a1",
+      "name": "co",
+      "description": "Carbon monoxide is a colorless, odorless, and tasteless gas. It is a pollutant in some urban areas coming from the exhaust of internal combustion engines  (cars, trucks, ships...)  and incomplete combustion of various other fuels. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance), we approximate R0 at 75kOhm."
+    }
+  },
+  {
+    "id": 85,
+    "uuid": "da9ad22d-bc42-442f-85b9-ba6aabd06265",
+    "parent_id": 66,
+    "name": "OXB431-CON",
+    "description": "Alphasense Ozone",
+    "unit": "ppm",
+    "tags": [],
+    "created_at": "2018-05-22T12:58:05Z",
+    "updated_at": "2018-05-22T12:58:05Z",
+    "measurement": {
+      "id": 26,
+      "uuid": "9759c2fd-15d8-424b-adcc-d6efcf940f6e",
+      "name": "o3",
+      "description": "Ozone is found naturally in small concentrations in the stratosphere, a layer of Earth's upper atmosphere. However it can also be found in the lowest layer of the atmosphere. Tropospheric ozone (often termed \"bad\" ozone) is man-made, a result of air pollution from internal combustion engines and power plants."
+    }
+  },
+  {
+    "id": 87,
+    "uuid": "9ee89ac2-0482-46dd-905f-0b7a1bb12c55",
+    "parent_id": 86,
+    "name": "PMS5003_AVG-PM2.5",
+    "description": "Particle Matter PM 2.5",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-22T13:20:34Z",
+    "updated_at": "2018-05-22T13:20:34Z",
+    "measurement": {
+      "id": 14,
+      "uuid": "c8ecda46-c430-4cbc-9ad4-5ea8a07c5820",
+      "name": "PM 2.5",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 89,
+    "uuid": "a4b9efba-241f-446e-9cf2-918f25efd0c5",
+    "parent_id": 86,
+    "name": "PMS5003_AVG-PM1",
+    "description": "Particle Matter PM 1",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-22T13:20:34Z",
+    "updated_at": "2018-05-22T13:20:34Z",
+    "measurement": {
+      "id": 27,
+      "uuid": "9759c2fd-15d8-424b-adcc-d6efcf940f6e",
+      "name": "PM 1",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 88,
+    "uuid": "c2072a22-4d81-4d7c-a38c-af9458b8f309",
+    "parent_id": 86,
+    "name": "PMS5003_AVG-PM10",
+    "description": "Particle Matter PM 10",
+    "unit": "ug/m3",
+    "tags": [],
+    "created_at": "2018-05-22T13:20:34Z",
+    "updated_at": "2018-05-22T13:20:34Z",
+    "measurement": {
+      "id": 13,
+      "uuid": "30e5b614-ab7e-46bc-b6f7-fa9a30926ce9",
+      "name": "PM 10",
+      "description": "PM stands for particulate matter: the term for a mixture of solid particles and liquid droplets found in the air. Some particles, such as dust, dirt, soot, or smoke, are large or dark enough to be seen with the naked eye."
+    }
+  },
+  {
+    "id": 82,
+    "uuid": "4c67187b-61dd-4eb0-878b-6491c13b6173",
+    "parent_id": 20,
+    "name": "MiCS-4514-CO-CON",
+    "description": "MICS Carbon Monoxide",
+    "unit": "ppm",
+    "tags": [],
+    "created_at": "2018-05-22T12:58:05Z",
+    "updated_at": "2018-05-22T12:58:05Z",
+    "measurement": {
+      "id": 5,
+      "uuid": "fd22c946-d6d8-40c3-97ea-0021ce6d21a1",
+      "name": "co",
+      "description": "Carbon monoxide is a colorless, odorless, and tasteless gas. It is a pollutant in some urban areas coming from the exhaust of internal combustion engines  (cars, trucks, ships...)  and incomplete combustion of various other fuels. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance), we approximate R0 at 75kOhm."
+    }
+  },
+  {
+    "id": 93,
+    "uuid": "f9cb9776-be2e-4ef9-bce3-48b8f44a9993",
+    "parent_id": 90,
+    "name": "Ultrasonic Ranger - Decreasing time",
+    "description": "Ping Ultrasonic (40KHz) non-contact distance ranger (Ping with Grove connector)",
+    "unit": "minutes",
+    "tags": [],
+    "created_at": "2018-07-20T11:10:48Z",
+    "updated_at": "2018-07-20T11:10:48Z",
+    "measurement": {
+      "id": 30,
+      "uuid": "377a2d57-6cf2-4041-9c3f-4a05cbdf95ad",
+      "name": "Decreasing time",
+      "description": "Relative time in minutes a water tank has been emptying"
+    }
+  },
+  {
+    "id": 83,
+    "uuid": "2b15cc19-b5c2-4f81-943e-e1a2a4513f71",
+    "parent_id": 60,
+    "name": "NO2-B43F-CON",
+    "description": "Alphasense Nitrogen Dioxide",
+    "unit": "ppb",
+    "tags": [],
+    "created_at": "2018-05-22T12:58:05Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 81,
+    "uuid": "148a362e-387d-4cc8-95d9-e8bb87686e9b",
+    "parent_id": 20,
+    "name": "MiCS-4514-NO2-CON",
+    "description": "MICS Nitrogen Dioxide",
+    "unit": "ppb",
+    "tags": [],
+    "created_at": "2018-05-22T12:58:05Z",
+    "updated_at": "2018-05-22T12:58:05Z",
+    "measurement": {
+      "id": 6,
+      "uuid": "2ca7194a-f4b4-4b55-916b-debb84f33fbd",
+      "name": "no2",
+      "description": "Nitrogen dioxide is a toxic gas. It is a pollutant in some urban areas due the excess air required for complete combustion of fuels introduces nitrogen into the combustion of internal combustion engines (cars, trucks, ships...) and power stations. ⚠ Note: values are offered in RS (sensor resistance in kOhm) as a relative measurement from the R0 (sensor zero resistance). Due to sensor intra-model variability we recommend using this as a relative measurement within the same kit readings."
+    }
+  },
+  {
+    "id": 92,
+    "uuid": "9ac584d8-f516-486e-95a5-3e5c37b5f6cf",
+    "parent_id": 90,
+    "name": "Ultrasonic Ranger - Rising time",
+    "description": "Ping Ultrasonic (40KHz) non-contact distance ranger (Ping with Grove connector)",
+    "unit": "minutes",
+    "tags": [],
+    "created_at": "2018-07-20T11:10:48Z",
+    "updated_at": "2018-07-20T11:10:48Z",
+    "measurement": {
+      "id": 29,
+      "uuid": "7f351bd9-a84a-43f4-b0cb-bb716baabbf7",
+      "name": "Rising time",
+      "description": "Relative time in minutes a water tank has been filling up"
+    }
+  },
+  {
+    "id": 94,
+    "uuid": "0480d3a9-0d16-4ff1-b5a6-7755d3d837e8",
+    "parent_id": 90,
+    "name": "Ultrasonic Ranger - Stagnating time",
+    "description": "Ping Ultrasonic (40KHz) non-contact distance ranger (Ping with Grove connector)",
+    "unit": "minutes",
+    "tags": [],
+    "created_at": "2018-07-20T11:10:48Z",
+    "updated_at": "2018-07-20T11:10:48Z",
+    "measurement": {
+      "id": 31,
+      "uuid": "065c4dfd-2e52-4322-b9ef-ba275f784790",
+      "name": "Stagnating time",
+      "description": "Relative time in minutes a water tank has been with no flow"
+    }
+  },
+  {
+    "id": 90,
+    "uuid": "8680ede1-9ce7-49df-a002-c6d04530e93d",
+    "parent_id": null,
+    "name": "Ultrasonic Ranger",
+    "description": "Ping Ultrasonic (40KHz) non-contact distance ranger (Ping with Grove connector)",
+    "unit": null,
+    "tags": [],
+    "created_at": "2018-07-20T11:10:48Z",
+    "updated_at": "2018-07-20T11:10:48Z",
+    "measurement": {
+      "id": 1,
+      "uuid": "b3f44b63-0a17-4d84-bbf1-4c17764b7eae",
+      "name": "air temperature",
+      "description": "Air temperature is a measure of how hot or cold the air is. It is the most commonly measured weather parameter. Air temperature is dependent on the amount and strength of the sunlight hitting the earth, and atmospheric conditions, such as cloud cover and humidity, which trap heat."
+    }
+  },
+  {
+    "id": 91,
+    "uuid": "e1e85c94-daa9-4225-89e8-0457aa279b11",
+    "parent_id": 90,
+    "name": "Ultrasonic Ranger - Distance",
+    "description": "Ping Ultrasonic (40KHz) non-contact distance ranger (Ping with Grove connector)",
+    "unit": "cm",
+    "tags": [],
+    "created_at": "2018-07-20T11:10:48Z",
+    "updated_at": "2018-07-20T11:10:48Z",
+    "measurement": {
+      "id": 28,
+      "uuid": "18692b7b-1524-43a7-9ec4-c8f65bcaf79a",
+      "name": "Water level",
+      "description": "Water level on a tank in cm from a relative point"
+    }
+  },
+  {
+    "id": 95,
+    "uuid": "f29f675e-67de-4865-9468-4bbd55ff2060",
+    "parent_id": 0,
+    "name": "TSL2561",
+    "description": "Grove - Digital Light Sensor",
+    "unit": "lux",
+    "tags": [],
+    "created_at": "2018-08-22T14:56:53Z",
+    "updated_at": "2018-08-22T14:56:53Z",
+    "measurement": {
+      "id": 3,
+      "uuid": "50aa0431-86ac-4340-bf51-ad498ee35a3b",
+      "name": "light",
+      "description": "Lux is a measure of how much light is spread over a given area. A full moon clear night is around 1 lux, inside an office building you usually have 400 lux and a bright day can be more than 20000 lux."
+    }
+  },
+  {
+    "id": 79,
+    "uuid": "20ad6697-1a4b-4f44-a035-c2ccd93807c0",
+    "parent_id": 78,
+    "name": "Ext SHT31 - Temperature",
+    "description": "Temperature (External)",
+    "unit": "ºC",
+    "tags": [],
+    "created_at": "2018-05-03T16:57:15Z",
+    "updated_at": "2018-05-03T10:47:15Z",
+    "measurement": {
+      "id": 32,
+      "uuid": "07ac0eb8-bdc3-42de-b337-1412213dd69f",
+      "name": "gases board temp",
+      "description": "Air temperature near the Alphasense Gas sensors"
+    }
+  },
+  {
+    "id": 96,
+    "uuid": "f0c44a5d-6cf2-430e-bfdd-16b34e4909b8",
+    "parent_id": null,
+    "name": "DS18B20",
+    "description": "Temperature sensor",
+    "unit": "°C",
+    "tags": [],
+    "created_at": "2018-08-23T17:18:56Z",
+    "updated_at": "2018-08-23T17:18:56Z",
+    "measurement": {
+      "id": 34,
+      "uuid": "f8f9113c-d333-48c6-9c8e-70bf9a164b4c",
+      "name": "external air temperature",
+      "description": "Air temperature is a measure of how hot or cold the air is. It is the most commonly measured weather parameter. Air temperature is dependent on the amount and strength of the sunlight hitting the earth, and atmospheric conditions, such as cloud cover and humidity, which trap heat."
+    }
+  },
+  {
+    "id": 80,
+    "uuid": "04ae1acd-f71f-4923-aea3-a9c966188c71",
+    "parent_id": 78,
+    "name": "Ext SHT31 - Humidity",
+    "description": "Humidity (External)",
+    "unit": "%",
+    "tags": [],
+    "created_at": "2018-05-03T16:57:17Z",
+    "updated_at": "2018-05-03T16:57:17Z",
+    "measurement": {
+      "id": 33,
+      "uuid": "65a4c49b-0259-4922-8cdd-3c09b2693bb0",
+      "name": "gases board humidity",
+      "description": "Relative humidity near the Alphasense Gas sensors"
+    }
+  },
+  {
+    "id": 65,
+    "uuid": "fdeda136-1b9a-4b9a-b3dc-f7936c27fdb4",
+    "parent_id": 63,
+    "name": "CO-B4F-AUX",
+    "description": "Alphasense Carbon Monoxide Aux",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 37,
+      "uuid": "270b44bf-7d3d-4a05-a69c-32728880bf8b",
+      "name": "co aux electrode",
+      "description": "In Alphasense Series B Electrochemical Sensors, the auxiliary electrode is an electrode of the same characteristics to those of the working electrode, but it is buried inside an electrolite and, hence, it is not in contact with the target gas. Since it is isolated from external conditions that could affect the working electrode, it serves as a reference to the measurements provided by the latter."
+    }
+  },
+  {
+    "id": 68,
+    "uuid": "e62b0598-b62e-401e-b1f8-94c173fb76fd",
+    "parent_id": 66,
+    "name": "OXB431-AUX",
+    "description": "Alphasense Ozone Aux",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 35,
+      "uuid": "d65f5014-0a29-4714-9fd1-56769b4038f8",
+      "name": "o3 aux electrode",
+      "description": "In Alphasense Series B Electrochemical Sensors, the auxiliary electrode is an electrode of the same characteristics to those of the working electrode, but it is buried inside an electrolite and, hence, it is not in contact with the target gas. Since it is isolated from external conditions that could affect the working electrode, it serves as a reference to the measurements provided by the latter."
+    }
+  },
+  {
+    "id": 62,
+    "uuid": "52696096-7153-409a-aa86-8ad4049647ac",
+    "parent_id": 60,
+    "name": "NO2-B43F-AUX",
+    "description": "Alphasense Nitrogen Dioxide + Ozone Aux Electrode",
+    "unit": "mV",
+    "tags": [],
+    "created_at": "2018-05-03T14:16:33Z",
+    "updated_at": "2018-05-03T14:16:33Z",
+    "measurement": {
+      "id": 36,
+      "uuid": "1a681428-8e34-404b-8b8d-ae039e8a3254",
+      "name": "no2 aux electrode",
+      "description": "In Alphasense Series B Electrochemical Sensors, the auxiliary electrode is an electrode of the same characteristics to those of the working electrode, but it is buried inside an electrolite and, hence, it is not in contact with the target gas. Since it is isolated from external conditions that could affect the working electrode, it serves as a reference to the measurements provided by the latter."
+    }
   }
 ]
