@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
-
 	zenroom "github.com/DECODEproject/zenroom-go"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
+	"github.com/DECODEproject/iotencoder/pkg/metrics"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
@@ -78,11 +78,11 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(datastoreErrorCounter)
-	prometheus.MustRegister(datastoreWriteHistogram)
-	prometheus.MustRegister(zenroomErrorCounter)
-	prometheus.MustRegister(zenroomHistogram)
-	prometheus.MustRegister(processHistogram)
+	metrics.MustRegister(datastoreErrorCounter)
+	metrics.MustRegister(datastoreWriteHistogram)
+	metrics.MustRegister(zenroomErrorCounter)
+	metrics.MustRegister(zenroomHistogram)
+	metrics.MustRegister(processHistogram)
 }
 
 // MovingAverager is an interface for a type that can return a moving average

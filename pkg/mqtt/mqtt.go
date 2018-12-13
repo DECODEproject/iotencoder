@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/DECODEproject/iotencoder/pkg/metrics"
 	"github.com/DECODEproject/iotencoder/pkg/version"
 )
 
@@ -31,7 +32,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(messageCounter)
+	metrics.MustRegister(messageCounter)
 }
 
 // Callback is a function we pass in to subscribe to a feed.

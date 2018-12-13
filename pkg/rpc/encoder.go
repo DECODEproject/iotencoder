@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	raven "github.com/getsentry/raven-go"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	encoder "github.com/thingful/twirp-encoder-go"
@@ -108,16 +109,19 @@ func (e *encoderImpl) Stop() error {
 func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
 	err := validateCreateRequest(req)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "createStream"})
 		return nil, err
 	}
 
 	stream, err := createStream(req, e.brokerAddr)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "createStream"})
 		return nil, err
 	}
 
 	stream, err = e.db.CreateStream(stream)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "createStream"})
 		return nil, twirp.InternalErrorWith(err)
 	}
 
@@ -126,6 +130,7 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 	})
 
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "createStream"})
 		return nil, twirp.InternalErrorWith(err)
 	}
 
@@ -141,6 +146,7 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
 	err := validateDeleteRequest(req)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "deleteStream"})
 		return nil, err
 	}
 
@@ -151,6 +157,7 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 
 	device, err := e.db.DeleteStream(stream)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "deleteStream"})
 		return nil, twirp.InternalErrorWith(err)
 	}
 
@@ -158,6 +165,7 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 		// we should unsubscribe for this device
 		err = e.mqtt.Unsubscribe(e.brokerAddr, device.DeviceToken)
 		if err != nil {
+			raven.CaptureError(err, map[string]string{"operation": "deleteStream"})
 			return nil, twirp.InternalErrorWith(err)
 		}
 	}
