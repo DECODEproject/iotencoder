@@ -14,12 +14,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	registry "github.com/thingful/retryable-registry-prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
 	encoder "github.com/thingful/twirp-encoder-go"
 	goji "goji.io"
 	"goji.io/pat"
 
-	"github.com/DECODEproject/iotencoder/pkg/metrics"
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 	"github.com/DECODEproject/iotencoder/pkg/pipeline"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
@@ -41,7 +41,7 @@ var (
 )
 
 func init() {
-	metrics.MustRegister(buildInfo)
+	registry.MustRegister(buildInfo)
 }
 
 // Config is a top level config object. Populated by viper in the command setup,
@@ -124,7 +124,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		BrokerAddr: config.BrokerAddr,
 	}, logger)
 
-	hooks := twrpprom.NewServerHooks(nil)
+	hooks := twrpprom.NewServerHooks(registry.DefaultRegisterer)
 
 	buildInfo.WithLabelValues(version.BinaryName, version.Version, version.BuildDate)
 

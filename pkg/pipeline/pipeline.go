@@ -10,11 +10,11 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	registry "github.com/thingful/retryable-registry-prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/DECODEproject/iotencoder/pkg/lua"
-	"github.com/DECODEproject/iotencoder/pkg/metrics"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
@@ -78,11 +78,11 @@ var (
 )
 
 func init() {
-	metrics.MustRegister(datastoreErrorCounter)
-	metrics.MustRegister(datastoreWriteHistogram)
-	metrics.MustRegister(zenroomErrorCounter)
-	metrics.MustRegister(zenroomHistogram)
-	metrics.MustRegister(processHistogram)
+	registry.MustRegister(datastoreErrorCounter)
+	registry.MustRegister(datastoreWriteHistogram)
+	registry.MustRegister(zenroomErrorCounter)
+	registry.MustRegister(zenroomHistogram)
+	registry.MustRegister(processHistogram)
 }
 
 // MovingAverager is an interface for a type that can return a moving average
