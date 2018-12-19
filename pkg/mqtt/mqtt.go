@@ -8,8 +8,8 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
+	registry "github.com/thingful/retryable-registry-prometheus"
 
-	"github.com/DECODEproject/iotencoder/pkg/metrics"
 	"github.com/DECODEproject/iotencoder/pkg/version"
 )
 
@@ -32,7 +32,7 @@ var (
 )
 
 func init() {
-	metrics.MustRegister(messageCounter)
+	registry.MustRegister(messageCounter)
 }
 
 // Callback is a function we pass in to subscribe to a feed.
