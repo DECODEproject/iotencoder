@@ -8,7 +8,6 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	registry "github.com/thingful/retryable-registry-prometheus"
 
 	"github.com/DECODEproject/iotencoder/pkg/version"
 )
@@ -18,9 +17,9 @@ var (
 	// when connecting
 	mqttClientID = fmt.Sprintf("%s-DECODE", version.BinaryName)
 
-	// messageCounter is a prometheus counter vec recording the number of received
+	// MessageCounter is a prometheus counter vec recording the number of received
 	// messages, labelled by topic
-	messageCounter = prometheus.NewCounterVec(
+	MessageCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: "decode",
 			Subsystem: "encoder",
@@ -30,10 +29,6 @@ var (
 		[]string{"broker"},
 	)
 )
-
-func init() {
-	registry.MustRegister(messageCounter)
-}
 
 // Callback is a function we pass in to subscribe to a feed.
 type Callback func(topic string, payload []byte)
@@ -104,7 +99,7 @@ func (c *client) Subscribe(broker, deviceToken string, cb Callback) error {
 	}
 
 	var handler mqtt.MessageHandler = func(client mqtt.Client, message mqtt.Message) {
-		messageCounter.With(prometheus.Labels{"broker": broker}).Inc()
+		MessageCounter.With(prometheus.Labels{"broker": broker}).Inc()
 
 		cb(message.Topic(), message.Payload())
 	}
