@@ -2,7 +2,13 @@ package pipeline_test
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"testing"
+
+	"github.com/DECODEproject/iotencoder/pkg/lua"
+	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
+	"github.com/DECODEproject/zenroom-go"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
@@ -15,8 +21,35 @@ import (
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
 
-// TODO: Remind yourself what this Process function is supposed to do and
-// therefore why these tests are failing
+func decryptData(t *testing.T, call mock.Call, secKey string) (*smartcitizen.Device, error) {
+	t.Helper()
+
+	req := call.Arguments[1].(*datastore.WriteRequest)
+
+	decryptKeys := []byte(fmt.Sprintf(`{"community_seckey":"%s"}`, secKey))
+
+	decryptScript, err := lua.Asset("decrypt.lua")
+	assert.Nil(t, err)
+
+	output, err := zenroom.Exec(
+		decryptScript,
+		zenroom.WithKeys(decryptKeys),
+		zenroom.WithData(req.Data),
+		zenroom.WithVerbosity(1),
+	)
+	assert.Nil(t, err)
+	assert.NotNil(t, output)
+
+	var unmarshalled map[string]interface{}
+	err = json.Unmarshal(output, &unmarshalled)
+	assert.Nil(t, err)
+
+	var decryptedDevice smartcitizen.Device
+	err = json.Unmarshal([]byte(unmarshalled["data"].(string)), &decryptedDevice)
+	assert.Nil(t, err)
+
+	return &decryptedDevice, nil
+}
 
 func TestProcess(t *testing.T) {
 	logger := kitlog.NewNopLogger()
@@ -83,6 +116,58 @@ func TestProcess(t *testing.T) {
 
 	ds.AssertExpectations(t)
 	rd.AssertExpectations(t)
+
+	assert.Len(t, ds.Calls, 1)
+
+	decryptedDevice, err := decryptData(t, ds.Calls[0], "D19GsDTGjLBX23J281SNpXWUdu+oL6hdAJ0Zh6IrRHA=")
+	assert.Nil(t, err)
+
+	assert.Len(t, decryptedDevice.Sensors, 4)
+}
+
+func TestProcessWithNoOperations(t *testing.T) {
+	logger := kitlog.NewNopLogger()
+	ds := mocks.Datastore{}
+
+	// set up a mock response
+	ds.On(
+		"WriteData",
+		context.Background(),
+		mock.Anything,
+	).Return(
+		&datastore.WriteResponse{},
+		nil,
+	)
+
+	rd := mocks.Redis{}
+
+	payload := []byte(`{"data":[{"recorded_at":"2018-12-11T14:46:44Z","sensors":[{"id":13, "value":51.00},{"id":14, "value":426.42},{"id":12, "value":12.58},{"id":29, "value":79.35},{"id":53, "value":51.00},{"id":58, "value":101.56},{"id":89, "value":4.00},{"id":87, "value":7.00},{"id":88, "value":7.00}]}]}`)
+
+	processor := pipeline.NewProcessor(datastore.Datastore(&ds), &rd, true, logger)
+
+	device := &postgres.Device{
+		DeviceToken: "foo",
+		Streams: []*postgres.Stream{
+			{
+				PolicyID:   "smartcitizen",
+				PublicKey:  `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
+				Operations: postgres.Operations{},
+			},
+		},
+	}
+
+	err := processor.Process(device, payload)
+	assert.Nil(t, err)
+
+	ds.AssertExpectations(t)
+	rd.AssertExpectations(t)
+
+	assert.Len(t, ds.Calls, 1)
+
+	decryptedDevice, err := decryptData(t, ds.Calls[0], "D19GsDTGjLBX23J281SNpXWUdu+oL6hdAJ0Zh6IrRHA=")
+	assert.Nil(t, err)
+
+	assert.Len(t, decryptedDevice.Sensors, 9)
 }
 
 func TestProcessWithDatastoreError(t *testing.T) {

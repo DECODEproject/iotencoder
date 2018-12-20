@@ -202,10 +202,11 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.Stream) ([]byte, error) {
 	// if no operations just return the whole object
 	if len(stream.Operations) == 0 {
-		_, err := json.Marshal(device)
+		b, err := json.Marshal(device)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to marshal complete device")
 		}
+		return b, nil
 	}
 
 	// create empty slice for processed sensors
