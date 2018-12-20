@@ -10,7 +10,6 @@ import (
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
-	registry "github.com/thingful/retryable-registry-prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
 	"gopkg.in/guregu/null.v3"
 
@@ -20,9 +19,9 @@ import (
 )
 
 var (
-	// datastoreErrorCounter is a prometheus counter recording a count of any
+	// DatastoreErrorCounter is a prometheus counter recording a count of any
 	// errors that occur when writing to the datastore
-	datastoreErrorCounter = prometheus.NewCounter(
+	DatastoreErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: "decode",
 			Subsystem: "encoder",
@@ -31,9 +30,9 @@ var (
 		},
 	)
 
-	// zenroomErrorCounter is a prometheus counter recording a count of any errors
+	// ZenroomErrorCounter is a prometheus counter recording a count of any errors
 	// that occur when invoking zenroom.
-	zenroomErrorCounter = prometheus.NewCounter(
+	ZenroomErrorCounter = prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: "decode",
 			Subsystem: "encoder",
@@ -42,9 +41,9 @@ var (
 		},
 	)
 
-	// datastoreWriteHistogram is a prometheus histogram recording successful
+	// DatastoreWriteHistogram is a prometheus histogram recording successful
 	// writes to the datastore. We use the default bucket distributions.
-	datastoreWriteHistogram = prometheus.NewHistogram(
+	DatastoreWriteHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Namespace: "decode",
 			Subsystem: "encoder",
@@ -53,9 +52,9 @@ var (
 		},
 	)
 
-	// processHistogram is a prometheus histogram recording duration of processing
+	// ProcessHistogram is a prometheus histogram recording duration of processing
 	// a device for a stream.
-	processHistogram = prometheus.NewHistogramVec(
+	ProcessHistogram = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "decode",
 			Subsystem: "encoder",
@@ -65,9 +64,9 @@ var (
 		[]string{"operation"},
 	)
 
-	// zenroomHistogram is a prometheus histogram recording execution times of
+	// ZenroomHistogram is a prometheus histogram recording execution times of
 	// calls to zenroom to exec some script.
-	zenroomHistogram = prometheus.NewHistogram(
+	ZenroomHistogram = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Namespace: "decode",
 			Subsystem: "encoder",
@@ -76,14 +75,6 @@ var (
 		},
 	)
 )
-
-func init() {
-	registry.MustRegister(datastoreErrorCounter)
-	registry.MustRegister(datastoreWriteHistogram)
-	registry.MustRegister(zenroomErrorCounter)
-	registry.MustRegister(zenroomHistogram)
-	registry.MustRegister(processHistogram)
-}
 
 // MovingAverager is an interface for a type that can return a moving average
 // for the given device/sensor/interval
@@ -172,11 +163,11 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		duration := time.Since(start)
 
 		if err != nil {
-			zenroomErrorCounter.Inc()
+			ZenroomErrorCounter.Inc()
 			return err
 		}
 
-		zenroomHistogram.Observe(duration.Seconds())
+		ZenroomHistogram.Observe(duration.Seconds())
 
 		start = time.Now()
 
@@ -189,11 +180,11 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		duration = time.Since(start)
 
 		if err != nil {
-			datastoreErrorCounter.Inc()
+			DatastoreErrorCounter.Inc()
 			return err
 		}
 
-		datastoreWriteHistogram.Observe(duration.Seconds())
+		DatastoreWriteHistogram.Observe(duration.Seconds())
 	}
 
 	return nil
@@ -232,7 +223,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 				duration := time.Since(start)
 
-				processHistogram.WithLabelValues(string(postgres.Share)).Observe(duration.Seconds() * 1e3)
+				ProcessHistogram.WithLabelValues(string(postgres.Share)).Observe(duration.Seconds() * 1e3)
 
 				processedSensors = append(processedSensors, processedSensor)
 			case postgres.Bin:
@@ -250,7 +241,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 				duration := time.Since(start)
 
-				processHistogram.WithLabelValues(string(postgres.Bin)).Observe(duration.Seconds() * 1e3)
+				ProcessHistogram.WithLabelValues(string(postgres.Bin)).Observe(duration.Seconds() * 1e3)
 
 				processedSensors = append(processedSensors, processedSensor)
 			case postgres.MovingAverage:
@@ -278,7 +269,7 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 
 				duration := time.Since(start)
 
-				processHistogram.WithLabelValues(string(postgres.MovingAverage)).Observe(duration.Seconds() * 1e3)
+				ProcessHistogram.WithLabelValues(string(postgres.MovingAverage)).Observe(duration.Seconds() * 1e3)
 
 				processedSensors = append(processedSensors, processedSensor)
 			default:
