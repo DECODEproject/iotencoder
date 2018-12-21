@@ -146,7 +146,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	mux.Use(middleware.RequestIDMiddleware)
 
-	metricsMiddleware := middleware.MetricsMiddleware("decode", "encoder")
+	metricsMiddleware := middleware.MetricsMiddleware("decode", "encoder", registry)
 	mux.Use(metricsMiddleware)
 
 	// create our http.Server instance
