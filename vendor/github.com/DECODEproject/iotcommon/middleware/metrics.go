@@ -31,7 +31,7 @@ func (m *metricsMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 // MetricsMiddleware returns a new middleware that can then be Used by goji, or
 // any other standard http.Handler based server.
-func MetricsMiddleware(namespace, subsystem string) func(http.Handler) http.Handler {
+func MetricsMiddleware(namespace, subsystem string, registerer prometheus.Registerer) func(http.Handler) http.Handler {
 	duration := prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: namespace,
@@ -42,7 +42,7 @@ func MetricsMiddleware(namespace, subsystem string) func(http.Handler) http.Hand
 		}, []string{"status_code", "method", "path"},
 	)
 
-	prometheus.MustRegister(duration)
+	registerer.MustRegister(duration)
 
 	fn := func(h http.Handler) http.Handler {
 		return &metricsMiddleware{
