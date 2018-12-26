@@ -14,6 +14,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	registry "github.com/thingful/retryable-registry-prometheus"
 	datastore "github.com/thingful/twirp-datastore-go"
 	encoder "github.com/thingful/twirp-encoder-go"
 	goji "goji.io"
@@ -38,6 +39,16 @@ var (
 		}, []string{"name", "version", "build_date"},
 	)
 )
+
+func init() {
+	registry.MustRegister(buildInfo)
+	registry.MustRegister(mqtt.MessageCounter)
+	registry.MustRegister(pipeline.DatastoreErrorCounter)
+	registry.MustRegister(pipeline.ZenroomErrorCounter)
+	registry.MustRegister(pipeline.DatastoreWriteHistogram)
+	registry.MustRegister(pipeline.ProcessHistogram)
+	registry.MustRegister(pipeline.ZenroomHistogram)
+}
 
 // Config is a top level config object. Populated by viper in the command setup,
 // we then pass down config to the right places.
@@ -91,15 +102,6 @@ func PulseHandler(db *postgres.DB, rd *redis.Redis) http.Handler {
 // constructing all components, and injecting them into the right place. This
 // perhaps belongs elsewhere, but leaving here for now.
 func NewServer(config *Config, logger kitlog.Logger) *Server {
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(buildInfo)
-	registry.MustRegister(mqtt.MessageCounter)
-	registry.MustRegister(pipeline.DatastoreErrorCounter)
-	registry.MustRegister(pipeline.ZenroomErrorCounter)
-	registry.MustRegister(pipeline.DatastoreWriteHistogram)
-	registry.MustRegister(pipeline.ProcessHistogram)
-	registry.MustRegister(pipeline.ZenroomHistogram)
-
 	db := postgres.NewDB(&postgres.Config{
 		ConnStr:            config.ConnStr,
 		EncryptionPassword: config.EncryptionPassword,
@@ -128,7 +130,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		BrokerAddr: config.BrokerAddr,
 	}, logger)
 
-	hooks := twrpprom.NewServerHooks(registry)
+	hooks := twrpprom.NewServerHooks(registry.DefaultRegisterer)
 
 	buildInfo.WithLabelValues(version.BinaryName, version.Version, version.BuildDate)
 
@@ -146,7 +148,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	mux.Use(middleware.RequestIDMiddleware)
 
-	metricsMiddleware := middleware.MetricsMiddleware("decode", "encoder", registry)
+	metricsMiddleware := middleware.MetricsMiddleware("decode", "encoder", registry.DefaultRegisterer)
 	mux.Use(metricsMiddleware)
 
 	// create our http.Server instance
