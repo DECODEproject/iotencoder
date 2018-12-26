@@ -401,6 +401,14 @@
   version = "v1.2.2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:e5583898a989195137730e572a4d9fedfbea4982bc7ca8dd66ac0cb53c67ea70"
+  name = "github.com/thingful/retryable-registry-prometheus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "0538f7de5ba9348c2cdd8b45776469782447f905"
+
+[[projects]]
   digest = "1:bae9513814929663f27c4a51e9c3fff0adf77a0cd57f4789561463c18110e657"
   name = "github.com/thingful/twirp-datastore-go"
   packages = ["."]
@@ -519,6 +527,7 @@
     "github.com/stretchr/testify/assert",
     "github.com/stretchr/testify/mock",
     "github.com/stretchr/testify/suite",
+    "github.com/thingful/retryable-registry-prometheus",
     "github.com/thingful/twirp-datastore-go",
     "github.com/thingful/twirp-encoder-go",
     "github.com/twitchtv/twirp",
