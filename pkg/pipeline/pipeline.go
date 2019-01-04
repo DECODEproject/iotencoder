@@ -7,7 +7,6 @@ import (
 	"time"
 
 	zenroom "github.com/DECODEproject/zenroom-go"
-	raven "github.com/getsentry/raven-go"
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
@@ -125,14 +124,12 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 
 	parsedDevice, err := p.sensors.ParseData(device, payload)
 	if err != nil {
-		raven.CaptureError(err, map[string]string{"operation": "process"})
 		return errors.Wrap(err, "failed to parse SmartCitizen data")
 	}
 
 	// pull encryption script from go-bindata asset
 	script, err := lua.Asset("encrypt.lua")
 	if err != nil {
-		raven.CaptureError(err, map[string]string{"operation": "process"})
 		return errors.Wrap(err, "failed to read zenroom script")
 	}
 
@@ -151,7 +148,6 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 
 		payloadBytes, err := p.processDevice(parsedDevice, stream)
 		if err != nil {
-			raven.CaptureError(err, map[string]string{"operation": "process"})
 			return err
 		}
 
@@ -167,7 +163,6 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		duration := time.Since(start)
 
 		if err != nil {
-			raven.CaptureError(err, map[string]string{"operation": "process"})
 			ZenroomErrorCounter.Inc()
 			return err
 		}
@@ -185,7 +180,6 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		duration = time.Since(start)
 
 		if err != nil {
-			raven.CaptureError(err, map[string]string{"operation": "process"})
 			DatastoreErrorCounter.Inc()
 			return err
 		}

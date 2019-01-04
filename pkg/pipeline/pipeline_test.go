@@ -6,24 +6,21 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/DECODEproject/iotencoder/pkg/lua"
-	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 	"github.com/DECODEproject/zenroom-go"
-
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	datastore "github.com/thingful/twirp-datastore-go"
 
+	"github.com/DECODEproject/iotencoder/pkg/lua"
 	"github.com/DECODEproject/iotencoder/pkg/mocks"
 	"github.com/DECODEproject/iotencoder/pkg/pipeline"
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
+	"github.com/DECODEproject/iotencoder/pkg/smartcitizen"
 )
 
 func decryptData(t *testing.T, call mock.Call, secKey string) (*smartcitizen.Device, error) {
-	t.Helper()
-
 	req := call.Arguments[1].(*datastore.WriteRequest)
 
 	decryptKeys := []byte(fmt.Sprintf(`{"community_seckey":"%s"}`, secKey))
