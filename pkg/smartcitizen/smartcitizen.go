@@ -17,10 +17,10 @@ type Sensor struct {
 	ID          int             `json:"id"`
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
-	Unit        null.String     `json:"unit"`
+	Unit        *null.String    `json:"unit,omitempty"`
 	Action      postgres.Action `json:"type"`
-	Interval    null.Int        `json:"interval,omitempty"`
-	Value       null.Float      `json:"value,omitempty"`
+	Interval    *null.Int       `json:"interval,omitempty"`
+	Value       *null.Float     `json:"value,omitempty"`
 	Bins        []float64       `json:"bins,omitempty"`
 	Values      []int           `json:"values,omitempty"`
 }
@@ -93,13 +93,15 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 			continue
 		}
 
+		value := null.FloatFrom(rawSensor.Value)
+
 		sensor := &Sensor{
 			ID:          rawSensor.ID,
 			Name:        metadata.Name,
 			Description: metadata.Description,
-			Value:       null.FloatFrom(rawSensor.Value),
+			Value:       &value,
 			Action:      postgres.Action(encoder.CreateStreamRequest_Operation_SHARE.String()),
-			Unit:        metadata.Unit,
+			Unit:        &metadata.Unit,
 		}
 
 		d.Sensors = append(d.Sensors, sensor)

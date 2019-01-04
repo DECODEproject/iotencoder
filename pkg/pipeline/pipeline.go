@@ -257,14 +257,17 @@ func (p *Processor) processDevice(device *smartcitizen.Device, stream *postgres.
 					return nil, errors.Wrap(err, "failed to calculate moving average")
 				}
 
+				interval := null.IntFrom(int64(operation.Interval))
+				value := null.FloatFrom(avgVal)
+
 				processedSensor := &smartcitizen.Sensor{
 					ID:          sensor.ID,
 					Name:        sensor.Name,
 					Description: sensor.Description,
 					Unit:        sensor.Unit,
 					Action:      operation.Action,
-					Interval:    null.IntFrom(int64(operation.Interval)),
-					Value:       null.FloatFrom(avgVal),
+					Interval:    &interval,
+					Value:       &value,
 				}
 
 				duration := time.Since(start)
