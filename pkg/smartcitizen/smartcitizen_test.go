@@ -58,6 +58,27 @@ func TestParseData(t *testing.T) {
 }
 
 func TestMarshalling(t *testing.T) {
+	device := buildDevice(t)
+
+	b, err := json.Marshal(device)
+	assert.Nil(t, err)
+
+	expected := `{"token":"abc123","longitude":12,"latitude":12,"exposure":"INDOOR","recordedAt":"2018-12-01T10:00:00Z","sensors":[{"id":12,"name":"HPP828E031","description":"Temperature","unit":"ºC","type":"SHARE","value":12.3},{"id":14,"name":"BH1730FVC","description":"Digital Ambient Light Sensor","unit":"Lux","type":"MOVING_AVG","interval":300,"value":23.2},{"id":53,"name":"dBA1","description":"Digital Sound Sensor","unit":"dBA","type":"BIN","bins":[30,60,90],"values":[0,1,0,0]}]}`
+
+	assert.Equal(t, expected, string(b))
+}
+
+func TestFindSensor(t *testing.T) {
+	device := buildDevice(t)
+
+	sensor := device.FindSensor(123)
+	assert.Nil(t, sensor)
+
+	sensor = device.FindSensor(12)
+	assert.NotNil(t, sensor)
+}
+
+func buildDevice(t *testing.T) *smartcitizen.Device {
 	unit1 := null.StringFrom("ºC")
 	value1 := null.FloatFrom(12.3)
 
@@ -67,7 +88,7 @@ func TestMarshalling(t *testing.T) {
 
 	unit3 := null.StringFrom("dBA")
 
-	device := &smartcitizen.Device{
+	return &smartcitizen.Device{
 		Token:      "abc123",
 		Longitude:  12,
 		Latitude:   12,
@@ -102,11 +123,4 @@ func TestMarshalling(t *testing.T) {
 			},
 		},
 	}
-
-	b, err := json.Marshal(device)
-	assert.Nil(t, err)
-
-	expected := `{"token":"abc123","longitude":12,"latitude":12,"exposure":"INDOOR","recordedAt":"2018-12-01T10:00:00Z","sensors":[{"id":12,"name":"HPP828E031","description":"Temperature","unit":"ºC","type":"SHARE","value":12.3},{"id":14,"name":"BH1730FVC","description":"Digital Ambient Light Sensor","unit":"Lux","type":"MOVING_AVG","interval":300,"value":23.2},{"id":53,"name":"dBA1","description":"Digital Sound Sensor","unit":"dBA","type":"BIN","bins":[30,60,90],"values":[0,1,0,0]}]}`
-
-	assert.Equal(t, expected, string(b))
 }
