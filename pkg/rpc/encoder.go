@@ -109,13 +109,11 @@ func (e *encoderImpl) Stop() error {
 func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStreamRequest) (*encoder.CreateStreamResponse, error) {
 	err := validateCreateRequest(req)
 	if err != nil {
-		raven.CaptureError(err, map[string]string{"operation": "createStream"})
 		return nil, err
 	}
 
 	stream, err := createStream(req, e.brokerAddr)
 	if err != nil {
-		raven.CaptureError(err, map[string]string{"operation": "createStream"})
 		return nil, err
 	}
 
@@ -146,7 +144,6 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStreamRequest) (*encoder.DeleteStreamResponse, error) {
 	err := validateDeleteRequest(req)
 	if err != nil {
-		raven.CaptureError(err, map[string]string{"operation": "deleteStream"})
 		return nil, err
 	}
 
@@ -185,6 +182,7 @@ func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 
 	device, err := e.db.GetDevice(token)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "handleCallback"})
 		e.logger.Log("err", err, "msg", "failed to get device")
 	}
 
@@ -194,6 +192,7 @@ func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 
 	err = e.processor.Process(device, payload)
 	if err != nil {
+		raven.CaptureError(err, map[string]string{"operation": "handleCallback"})
 		e.logger.Log("err", err, "msg", "failed to process payload")
 	}
 }
