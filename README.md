@@ -46,3 +46,31 @@ curl to exercise the basic functions of the API. The script inserts 4
 entries, then paginates through them, before deleting all inserted data. The
 purpose of this script is just to sanity check the functionality from the
 command line.
+
+## Configuration
+
+The binary generated for this application is called `iotstore`. It has the following four subcommands:
+
+* `help` - displays help informmation
+* `migrate` - allows database migrations to be created and applied
+* `server` - the primary command that starts up the server.
+
+For operational use the `server` command is the only one that is generally
+required.
+
+**Configuration for `server` command**
+
+| Flag                  | Environment Variable           | Description                                                 | Default value                   | Required |
+| --------------------- | ------------------------------ | ----------------------------------------------------------- | ------------------------------- | -------- |
+| --addr or -a          | IOTENCODER_ADDR                | The address to which the server binds                       | 0.0.0.0:8080                    | No       |
+| --broker-addr or -b   | IOTENCODER_BROKER_ADDR         | Address at which the MQTT broker is listening               | tcp://mqtt.smartcitizen.me:1883 | No       |
+| --cert-file or -c     | IOTENCODER_CERT_FILE           | The path to a TLS certificate file to enable TLS            |                                 | No       |
+| --database-url        | IOTENCODER_DATABASE_URL        | Connection string for Postgres database                     |                                 | Yes      |
+| --datastore or -d     | IOTENCODER_DATASTORE           | Address at which the datastore component is listening       |                                 | Yes      |
+| --encryption-password | IOTENCODER_ENCRYPTION_PASSWORD | Password used to encrypt secret tokens we write to Postgres |                                 | Yes      |
+| --hashid-length or -l | IOTENCODER_HASHID_LENGTH       | Minimum length of generated ids for streams                 | 8                               | No       |
+| --hashid-salt         | IOTENCODER_HASHID_SALT         | Salt value used for generating ids for streams              |                                 | Yes      |
+| --key-file or -k      | IOTENCODER_KEY_FILE            | The path to a TLS key file to enable TLS                    |                                 | No       |
+| --redis-url           | IOTENCODER_REDIS_URL           | URL at which Redis is listening                             |                                 | Yes      |
+| --verbose             | IOTENCODER_VERBOSE             | Flag that if set enables verbose mode                       | False                           | No       |
+|                       | SENTRY_DSN                     | Optional DSN string for Sentry error reporting              |                                 | No       |
