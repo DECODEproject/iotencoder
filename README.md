@@ -49,7 +49,7 @@ command line.
 
 ## Configuration
 
-The binary generated for this application is called `iotstore`. It has the following four subcommands:
+The binary generated for this application is called `iotenc`. It has the following four subcommands:
 
 * `help` - displays help informmation
 * `migrate` - allows database migrations to be created and applied
