@@ -7,7 +7,7 @@ BIN := iotenc
 PKG := github.com/DECODEproject/iotencoder
 
 # Docker Hub ID to which docker images should be pushed
-REGISTRY ?= thingful
+REGISTRY ?= decodeproject
 
 # Default architecture to build
 ARCH ?= amd64
