@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,6 +20,7 @@ import (
 	encoder "github.com/thingful/twirp-encoder-go"
 	goji "goji.io"
 	"goji.io/pat"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
 	"github.com/DECODEproject/iotencoder/pkg/pipeline"
@@ -63,21 +65,19 @@ type Config struct {
 	BrokerAddr         string
 	BrokerUsername     string
 	RedisURL           string
-	CertFile           string
-	KeyFile            string
+	Domains            []string
 }
 
 // Server is our top level type, contains all other components, is responsible
 // for starting and stopping them in the correct order.
 type Server struct {
-	srv      *http.Server
-	encoder  encoder.Encoder
-	db       *postgres.DB
-	mqtt     mqtt.Client
-	logger   kitlog.Logger
-	rd       *redis.Redis
-	certFile string
-	keyFile  string
+	srv     *http.Server
+	encoder encoder.Encoder
+	db      *postgres.DB
+	mqtt    mqtt.Client
+	logger  kitlog.Logger
+	rd      *redis.Redis
+	domains []string
 }
 
 // PulseHandler is the simplest possible handler function - used to expose an
@@ -168,14 +168,13 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 
 	// return the instantiated server
 	return &Server{
-		srv:      srv,
-		encoder:  enc,
-		db:       db,
-		mqtt:     mqttClient,
-		logger:   kitlog.With(logger, "module", "server"),
-		rd:       rd,
-		certFile: config.CertFile,
-		keyFile:  config.KeyFile,
+		srv:     srv,
+		encoder: enc,
+		db:      db,
+		mqtt:    mqttClient,
+		logger:  kitlog.With(logger, "module", "server"),
+		rd:      rd,
+		domains: config.Domains,
 	}
 }
 
@@ -214,17 +213,28 @@ func (s *Server) Start() error {
 	signal.Notify(stopChan, os.Interrupt)
 
 	go func() {
-		s.logger.Log("listenAddr", s.srv.Addr, "msg", "starting server", "pathPrefix", encoder.EncoderPathPrefix, "tlsEnabled", isTLSEnabled(s.certFile, s.keyFile))
+		s.logger.Log(
+			"listenAddr", s.srv.Addr,
+			"msg", "starting server",
+			"pathPrefix", encoder.EncoderPathPrefix,
+			"tlsEnabled", isTLSEnabled(s.domains),
+		)
 
-		if isTLSEnabled(s.certFile, s.keyFile) {
-			if err := s.srv.ListenAndServeTLS(s.certFile, s.keyFile); err != nil {
-				s.logger.Log("err", err)
-				os.Exit(1)
+		if isTLSEnabled(s.domains) {
+			m := &autocert.Manager{
+				Cache:      s.db,
+				Prompt:     autocert.AcceptTOS,
+				HostPolicy: autocert.HostWhitelist(s.domains...),
+			}
+
+			s.srv.TLSConfig = m.TLSConfig()
+
+			if err := s.srv.ListenAndServeTLS("", ""); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("ListenAndServeTLS(): %s", err)
 			}
 		} else {
-			if err := s.srv.ListenAndServe(); err != nil {
-				s.logger.Log("err", err)
-				os.Exit(1)
+			if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatalf("ListenAndServe(): %s", err)
 			}
 		}
 	}()
@@ -264,6 +274,6 @@ func (s *Server) Stop() error {
 
 // isTLSEnabled returns true if we have passed in paths for both cert and key
 // files
-func isTLSEnabled(certFile, keyFile string) bool {
-	return certFile != "" && keyFile != ""
+func isTLSEnabled(domains []string) bool {
+	return len(domains) > 0
 }

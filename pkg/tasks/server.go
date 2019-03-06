@@ -17,18 +17,17 @@ import (
 
 func init() {
 	rootCmd.AddCommand(serverCmd)
-	serverCmd.Flags().StringP("addr", "a", "0.0.0.0:8081", "Address to which the HTTP server binds")
+	serverCmd.Flags().StringP("addr", "a", ":8081", "Address to which the HTTP server binds")
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
 	serverCmd.Flags().String("database-url", "", "URL at which Postgres is listening (e.g. postgres://username:password@host:5432/dbname?sslmode=enable)")
 	serverCmd.Flags().String("encryption-password", "", "Password used to encrypt secret tokens we write to Postgres")
 	serverCmd.Flags().IntP("hashid-length", "l", 8, "Minimum length of generated ids for streams")
 	serverCmd.Flags().String("hashid-salt", "", "Salt value used when hashing generated ids for streams")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
-	serverCmd.Flags().StringP("broker-addr", "b", "tcp://mqtt.smartcitizen.me:8883", "Address at which the MQTT broker is listening")
+	serverCmd.Flags().StringP("broker-addr", "b", "tcps://mqtt.smartcitizen.me:8883", "Address at which the MQTT broker is listening")
 	serverCmd.Flags().StringP("broker-username", "u", "", "Username for accessing the MQTT broker")
 	serverCmd.Flags().StringP("redis-url", "r", "", "URL at which redis is listening (e.g. redis://password@host:6379/1)")
-	serverCmd.Flags().StringP("cert-file", "c", "", "Path to a TLS certificate file to enable TLS on the server")
-	serverCmd.Flags().StringP("key-file", "k", "", "Path to a TLS private key file to enable TLS on the server")
+	serverCmd.Flags().StringSlice("domains", []string{}, "Comma separated list of domains to enable TLS for these domains")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
@@ -40,8 +39,7 @@ func init() {
 	viper.BindPFlag("broker-addr", serverCmd.Flags().Lookup("broker-addr"))
 	viper.BindPFlag("broker-username", serverCmd.Flags().Lookup("broker-username"))
 	viper.BindPFlag("redis-url", serverCmd.Flags().Lookup("redis-url"))
-	viper.BindPFlag("cert-file", serverCmd.Flags().Lookup("cert-file"))
-	viper.BindPFlag("key-file", serverCmd.Flags().Lookup("key-file"))
+	viper.BindPFlag("domains", serverCmd.Flags().Lookup("domains"))
 
 	raven.SetRelease(version.Version)
 	raven.SetTagsContext(map[string]string{"component": "encoder"})
@@ -116,8 +114,7 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			BrokerAddr:         brokerAddr,
 			BrokerUsername:     brokerUsername,
 			RedisURL:           redisURL,
-			CertFile:           viper.GetString("cert-file"),
-			KeyFile:            viper.GetString("key-file"),
+			Domains:            viper.GetStringSlice("domains"),
 		}
 
 		executer := backoff.ExecuteFunc(func(_ context.Context) error {
