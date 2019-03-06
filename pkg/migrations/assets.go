@@ -8,6 +8,8 @@
 // sql/20181202133704_add_operations.up.sql (50B)
 // sql/20190306164350_remove_broker_col.down.sql (43B)
 // sql/20190306164350_remove_broker_col.up.sql (39B)
+// sql/20190306170548_add_certificate_table.down.sql (34B)
+// sql/20190306170548_add_certificate_table.up.sql (106B)
 
 package migrations
 
@@ -211,7 +213,7 @@ func _20190306164350_remove_broker_colDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190306164350_remove_broker_col.down.sql", size: 43, mode: os.FileMode(420), modTime: time.Unix(1551890848, 0)}
+	info := bindataFileInfo{name: "20190306164350_remove_broker_col.down.sql", size: 43, mode: os.FileMode(420), modTime: time.Unix(1551891690, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x73, 0x12, 0x9a, 0xd9, 0xd2, 0x13, 0x16, 0x44, 0x33, 0x66, 0x1d, 0xa6, 0xc6, 0x3c, 0xf2, 0x1c, 0x8d, 0xda, 0x6a, 0xa5, 0x22, 0x83, 0x0, 0xeb, 0xd0, 0x94, 0x7d, 0xef, 0xb4, 0x40, 0xfb, 0x20}}
 	return a, nil
 }
@@ -231,8 +233,48 @@ func _20190306164350_remove_broker_colUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190306164350_remove_broker_col.up.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1551890753, 0)}
+	info := bindataFileInfo{name: "20190306164350_remove_broker_col.up.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1551891690, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x27, 0xcf, 0x6e, 0x61, 0xcd, 0x94, 0xbb, 0x70, 0xd3, 0x57, 0xe, 0x83, 0xf3, 0xc2, 0xec, 0x4d, 0xc8, 0xd5, 0x19, 0x54, 0xfa, 0xa4, 0x57, 0x95, 0x8c, 0x59, 0xcf, 0x8d, 0xba, 0x43, 0xa8, 0x5a}}
+	return a, nil
+}
+
+var __20190306170548_add_certificate_tableDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\x08\x71\x74\xf2\x71\x55\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x48\x4e\x2d\x2a\xc9\x4c\xcb\x4c\x4e\x2c\x49\x2d\xb6\x06\x04\x00\x00\xff\xff\x9b\x6a\xf7\x60\x22\x00\x00\x00")
+
+func _20190306170548_add_certificate_tableDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190306170548_add_certificate_tableDownSql,
+		"20190306170548_add_certificate_table.down.sql",
+	)
+}
+
+func _20190306170548_add_certificate_tableDownSql() (*asset, error) {
+	bytes, err := _20190306170548_add_certificate_tableDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190306170548_add_certificate_table.down.sql", size: 34, mode: os.FileMode(420), modTime: time.Unix(1551892002, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x3d, 0x85, 0xef, 0x15, 0xa1, 0x51, 0x74, 0x22, 0x6b, 0x2f, 0xde, 0x28, 0x99, 0xb5, 0x60, 0xd6, 0xe8, 0x10, 0x23, 0xa7, 0x48, 0x63, 0xf2, 0xc4, 0x3c, 0xca, 0x83, 0x1f, 0xb4, 0x65, 0xad, 0x98}}
+	return a, nil
+}
+
+var __20190306170548_add_certificate_tableUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x0e\x72\x75\x0c\x71\x55\x08\x71\x74\xf2\x71\x55\xf0\x74\x53\xf0\xf3\x0f\x51\x70\x8d\xf0\x0c\x0e\x09\x56\x48\x4e\x2d\x2a\xc9\x4c\xcb\x4c\x4e\x2c\x49\x2d\x56\xd0\xe0\x52\x50\xc8\x4e\xad\x54\x08\x71\x8d\x08\x01\x2b\xf2\x0b\xf5\xf1\x51\x08\x08\xf2\xf4\x75\x0c\x8a\x54\xf0\x76\x8d\xd4\xe1\x52\x40\xd6\xa1\xe0\x14\x19\xe2\xea\x08\x57\xc9\xa5\x69\x0d\x08\x00\x00\xff\xff\x2d\x4d\xb2\x71\x6a\x00\x00\x00")
+
+func _20190306170548_add_certificate_tableUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190306170548_add_certificate_tableUpSql,
+		"20190306170548_add_certificate_table.up.sql",
+	)
+}
+
+func _20190306170548_add_certificate_tableUpSql() (*asset, error) {
+	bytes, err := _20190306170548_add_certificate_tableUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190306170548_add_certificate_table.up.sql", size: 106, mode: os.FileMode(420), modTime: time.Unix(1551892564, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x66, 0x3c, 0x3, 0x6a, 0x8c, 0x5a, 0x0, 0xe2, 0xca, 0x24, 0x4b, 0xf0, 0x4b, 0x55, 0xb2, 0xc4, 0x3f, 0x19, 0x75, 0x20, 0x4f, 0xd3, 0x4d, 0xc6, 0xa6, 0x9b, 0xbb, 0xc1, 0x94, 0x70, 0xbc, 0x38}}
 	return a, nil
 }
 
@@ -342,6 +384,10 @@ var _bindata = map[string]func() (*asset, error){
 	"20190306164350_remove_broker_col.down.sql": _20190306164350_remove_broker_colDownSql,
 
 	"20190306164350_remove_broker_col.up.sql": _20190306164350_remove_broker_colUpSql,
+
+	"20190306170548_add_certificate_table.down.sql": _20190306170548_add_certificate_tableDownSql,
+
+	"20190306170548_add_certificate_table.up.sql": _20190306170548_add_certificate_tableUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -385,14 +431,16 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"20180525115614_create_device_table.down.sql": &bintree{_20180525115614_create_device_tableDownSql, map[string]*bintree{}},
-	"20180525115614_create_device_table.up.sql":   &bintree{_20180525115614_create_device_tableUpSql, map[string]*bintree{}},
-	"20180526232618_add_streams_table.down.sql":   &bintree{_20180526232618_add_streams_tableDownSql, map[string]*bintree{}},
-	"20180526232618_add_streams_table.up.sql":     &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
-	"20181202133704_add_operations.down.sql":      &bintree{_20181202133704_add_operationsDownSql, map[string]*bintree{}},
-	"20181202133704_add_operations.up.sql":        &bintree{_20181202133704_add_operationsUpSql, map[string]*bintree{}},
-	"20190306164350_remove_broker_col.down.sql":   &bintree{_20190306164350_remove_broker_colDownSql, map[string]*bintree{}},
-	"20190306164350_remove_broker_col.up.sql":     &bintree{_20190306164350_remove_broker_colUpSql, map[string]*bintree{}},
+	"20180525115614_create_device_table.down.sql":   &bintree{_20180525115614_create_device_tableDownSql, map[string]*bintree{}},
+	"20180525115614_create_device_table.up.sql":     &bintree{_20180525115614_create_device_tableUpSql, map[string]*bintree{}},
+	"20180526232618_add_streams_table.down.sql":     &bintree{_20180526232618_add_streams_tableDownSql, map[string]*bintree{}},
+	"20180526232618_add_streams_table.up.sql":       &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
+	"20181202133704_add_operations.down.sql":        &bintree{_20181202133704_add_operationsDownSql, map[string]*bintree{}},
+	"20181202133704_add_operations.up.sql":          &bintree{_20181202133704_add_operationsUpSql, map[string]*bintree{}},
+	"20190306164350_remove_broker_col.down.sql":     &bintree{_20190306164350_remove_broker_colDownSql, map[string]*bintree{}},
+	"20190306164350_remove_broker_col.up.sql":       &bintree{_20190306164350_remove_broker_colUpSql, map[string]*bintree{}},
+	"20190306170548_add_certificate_table.down.sql": &bintree{_20190306170548_add_certificate_tableDownSql, map[string]*bintree{}},
+	"20190306170548_add_certificate_table.up.sql":   &bintree{_20190306170548_add_certificate_tableUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory.
