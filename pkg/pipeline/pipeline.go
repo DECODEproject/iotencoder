@@ -101,8 +101,6 @@ type Processor struct {
 func NewProcessor(ds datastore.Datastore, movingAvg MovingAverager, verbose bool, logger kitlog.Logger) *Processor {
 	logger = kitlog.With(logger, "module", "pipeline")
 
-	logger.Log("msg", "creating processor")
-
 	return &Processor{
 		datastore: ds,
 		logger:    logger,

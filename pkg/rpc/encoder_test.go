@@ -70,11 +70,12 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         e.db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    false,
-		BrokerAddr: "tcp://mqtt.local:1883",
+		DB:             e.db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        false,
+		BrokerAddr:     "tcp://mqtt.local:1883",
+		BrokerUsername: "decode",
 	}, logger)
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 0)
@@ -96,7 +97,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	assert.Nil(e.T(), err)
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 1)
-	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
+	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883:decode"], 1)
 	assert.NotEqual(e.T(), "", resp.StreamUid)
 
 	device, err := e.db.GetDevice("abc123")
@@ -120,11 +121,12 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         e.db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    false,
-		BrokerAddr: "tcp://mqtt.local:1883",
+		DB:             e.db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        false,
+		BrokerAddr:     "tcp://mqtt.local:1883",
+		BrokerUsername: "decode",
 	}, logger)
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 0)
@@ -162,7 +164,7 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 	assert.Nil(e.T(), err)
 
 	assert.Len(e.T(), mqttClient.Subscriptions, 1)
-	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883"], 1)
+	assert.Len(e.T(), mqttClient.Subscriptions["tcp://mqtt.local:1883:decode"], 1)
 	assert.NotEqual(e.T(), "", resp.StreamUid)
 
 	device, err := e.db.GetDevice("abc123")
@@ -227,16 +229,17 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	assert.Nil(e.T(), err)
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         e.db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    true,
-		BrokerAddr: "tcp://broker1:1883",
+		DB:             e.db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        true,
+		BrokerAddr:     "tcp://broker1:1883",
+		BrokerUsername: "decode",
 	}, logger)
 
 	enc.(system.Startable).Start()
 
-	assert.Len(e.T(), mqttClient.Subscriptions["tcp://broker1:1883"], 2)
+	assert.Len(e.T(), mqttClient.Subscriptions["tcp://broker1:1883:decode"], 2)
 
 	enc.(system.Stoppable).Stop()
 }
@@ -247,11 +250,12 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         e.db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    true,
-		BrokerAddr: "tcp://mqtt",
+		DB:             e.db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        true,
+		BrokerAddr:     "tcp://mqtt",
+		BrokerUsername: "decode",
 	}, logger)
 
 	enc.(system.Startable).Start()
@@ -412,11 +416,12 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 	processor := mocks.NewProcessor()
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         e.db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    true,
-		BrokerAddr: "tcp://mqtt:1883",
+		DB:             e.db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        true,
+		BrokerAddr:     "tcp://mqtt:1883",
+		BrokerUsername: "decode",
 	}, logger)
 
 	enc.(system.Startable).Start()
@@ -472,11 +477,12 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 	assert.Nil(e.T(), err)
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         e.db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    true,
-		BrokerAddr: "tcp://broker:1883",
+		DB:             e.db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        true,
+		BrokerAddr:     "tcp://broker:1883",
+		BrokerUsername: "decode",
 	}, logger)
 
 	err = enc.(system.Startable).Start()

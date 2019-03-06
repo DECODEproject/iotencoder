@@ -61,6 +61,7 @@ type Config struct {
 	DatastoreAddr      string
 	Verbose            bool
 	BrokerAddr         string
+	BrokerUsername     string
 	RedisURL           string
 	CertFile           string
 	KeyFile            string
@@ -135,7 +136,13 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	buildInfo.WithLabelValues(version.BinaryName, version.Version, version.BuildDate)
 
 	logger = kitlog.With(logger, "module", "server")
-	logger.Log("msg", "creating server", "datastore", config.DatastoreAddr, "hashid", config.HashidMinLength)
+	logger.Log(
+		"msg", "creating server",
+		"datastore", config.DatastoreAddr,
+		"hashidLength", config.HashidMinLength,
+		"mqttBroker", config.BrokerAddr,
+		"listenAddr", config.ListenAddr,
+	)
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 

@@ -17,7 +17,5 @@ func NewLogger() kitlog.Logger {
 		"version", version.Version,
 	)
 
-	logger.Log("module", "logger", "msg", "creating logger instance")
-
 	return logger
 }

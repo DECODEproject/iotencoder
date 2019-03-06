@@ -24,7 +24,8 @@ func init() {
 	serverCmd.Flags().IntP("hashid-length", "l", 8, "Minimum length of generated ids for streams")
 	serverCmd.Flags().String("hashid-salt", "", "Salt value used when hashing generated ids for streams")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
-	serverCmd.Flags().StringP("broker-addr", "b", "tcp://mqtt.smartcitizen.me:1883", "Address at which the MQTT broker is listening")
+	serverCmd.Flags().StringP("broker-addr", "b", "tcp://mqtt.smartcitizen.me:8883", "Address at which the MQTT broker is listening")
+	serverCmd.Flags().StringP("broker-username", "u", "", "Username for accessing the MQTT broker")
 	serverCmd.Flags().StringP("redis-url", "r", "", "URL at which redis is listening (e.g. redis://password@host:6379/1)")
 	serverCmd.Flags().StringP("cert-file", "c", "", "Path to a TLS certificate file to enable TLS on the server")
 	serverCmd.Flags().StringP("key-file", "k", "", "Path to a TLS private key file to enable TLS on the server")
@@ -37,6 +38,7 @@ func init() {
 	viper.BindPFlag("hashid-salt", serverCmd.Flags().Lookup("hashid-salt"))
 	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("broker-addr", serverCmd.Flags().Lookup("broker-addr"))
+	viper.BindPFlag("broker-username", serverCmd.Flags().Lookup("broker-username"))
 	viper.BindPFlag("redis-url", serverCmd.Flags().Lookup("redis-url"))
 	viper.BindPFlag("cert-file", serverCmd.Flags().Lookup("cert-file"))
 	viper.BindPFlag("key-file", serverCmd.Flags().Lookup("key-file"))
@@ -91,6 +93,11 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			return errors.New("Must provide MQTT broker address to which updates are published")
 		}
 
+		brokerUsername := viper.GetString("broker-username")
+		if brokerAddr == "" {
+			return errors.New("Must provide MQTT broker username to authenticate access to the broker")
+		}
+
 		redisURL := viper.GetString("redis-url")
 		if redisURL == "" {
 			return errors.New("Must provide redis url")
@@ -107,6 +114,7 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			HashidMinLength:    viper.GetInt("hashid-length"),
 			Verbose:            viper.GetBool("verbose"),
 			BrokerAddr:         brokerAddr,
+			BrokerUsername:     brokerUsername,
 			RedisURL:           redisURL,
 			CertFile:           viper.GetString("cert-file"),
 			KeyFile:            viper.GetString("key-file"),

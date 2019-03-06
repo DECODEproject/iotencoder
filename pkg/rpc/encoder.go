@@ -25,22 +25,24 @@ type Processor interface {
 // encoderImpl is our implementation of the generated twirp interface for the
 // stream encoder.
 type encoderImpl struct {
-	logger       kitlog.Logger
-	db           *postgres.DB
-	mqtt         mqtt.Client
-	brokerAddr   string
-	processor    Processor
-	verbose      bool
-	topicPattern *regexp.Regexp
+	logger         kitlog.Logger
+	db             *postgres.DB
+	mqtt           mqtt.Client
+	brokerAddr     string
+	brokerUsername string
+	processor      Processor
+	verbose        bool
+	topicPattern   *regexp.Regexp
 }
 
 // Config is a struct used to pass in configuration when creating the encoder
 type Config struct {
-	DB         *postgres.DB
-	MQTTClient mqtt.Client
-	Processor  Processor
-	Verbose    bool
-	BrokerAddr string
+	DB             *postgres.DB
+	MQTTClient     mqtt.Client
+	Processor      Processor
+	Verbose        bool
+	BrokerAddr     string
+	BrokerUsername string
 }
 
 // NewEncoder returns a newly instantiated Encoder instance. It takes as
@@ -52,21 +54,20 @@ func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 	logger.Log("msg", "creating encoder")
 
 	return &encoderImpl{
-		logger:       logger,
-		db:           config.DB,
-		mqtt:         config.MQTTClient,
-		processor:    config.Processor,
-		verbose:      config.Verbose,
-		brokerAddr:   config.BrokerAddr,
-		topicPattern: regexp.MustCompile("device/sck/(\\w+)/readings"),
+		logger:         logger,
+		db:             config.DB,
+		mqtt:           config.MQTTClient,
+		processor:      config.Processor,
+		verbose:        config.Verbose,
+		brokerAddr:     config.BrokerAddr,
+		brokerUsername: config.BrokerUsername,
+		topicPattern:   regexp.MustCompile("device/sck/(\\w+)/readings"),
 	}
 }
 
 // Start the encoder. Here we create MQTT subscriptions for all records stored
 // in the DB.
 func (e *encoderImpl) Start() error {
-	e.logger.Log("msg", "starting encoder")
-
 	e.logger.Log("msg", "creating existing subscriptions")
 
 	devices, err := e.db.GetDevices()
@@ -75,13 +76,15 @@ func (e *encoderImpl) Start() error {
 	}
 
 	for _, d := range devices {
-		e.logger.Log("broker", d.Broker,
+		e.logger.Log(
+			"broker", d.Broker,
 			"device_token", d.DeviceToken,
 			"msg", "creating subscription",
 		)
 
 		err = e.mqtt.Subscribe(
 			e.brokerAddr,
+			e.brokerUsername,
 			d.DeviceToken,
 			func(topic string, payload []byte) {
 				e.handleCallback(topic, payload)
@@ -123,9 +126,13 @@ func (e *encoderImpl) CreateStream(ctx context.Context, req *encoder.CreateStrea
 		return nil, twirp.InternalErrorWith(err)
 	}
 
-	err = e.mqtt.Subscribe(e.brokerAddr, req.DeviceToken, func(topic string, payload []byte) {
-		e.handleCallback(topic, payload)
-	})
+	err = e.mqtt.Subscribe(
+		e.brokerAddr,
+		e.brokerUsername,
+		req.DeviceToken,
+		func(topic string, payload []byte) {
+			e.handleCallback(topic, payload)
+		})
 
 	if err != nil {
 		raven.CaptureError(err, map[string]string{"operation": "createStream"})
@@ -160,7 +167,7 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 
 	if device != nil {
 		// we should unsubscribe for this device
-		err = e.mqtt.Unsubscribe(e.brokerAddr, device.DeviceToken)
+		err = e.mqtt.Unsubscribe(e.brokerAddr, e.brokerUsername, device.DeviceToken)
 		if err != nil {
 			raven.CaptureError(err, map[string]string{"operation": "deleteStream"})
 			return nil, twirp.InternalErrorWith(err)

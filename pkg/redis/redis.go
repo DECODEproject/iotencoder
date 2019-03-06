@@ -43,8 +43,6 @@ type Redis struct {
 func NewRedis(connStr string, verbose bool, clock Clock, logger kitlog.Logger) *Redis {
 	logger = kitlog.With(logger, "module", "redis")
 
-	logger.Log("msg", "creating redis client")
-
 	return &Redis{
 		connStr: connStr,
 		verbose: verbose,
