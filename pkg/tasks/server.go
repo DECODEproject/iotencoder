@@ -94,7 +94,7 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 		}
 
 		brokerUsername := viper.GetString("broker-username")
-		if brokerAddr == "" {
+		if brokerUsername == "" {
 			return errors.New("Must provide MQTT broker username to authenticate access to the broker")
 		}
 
