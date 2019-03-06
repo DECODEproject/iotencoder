@@ -6,6 +6,8 @@
 // sql/20180526232618_add_streams_table.up.sql (354B)
 // sql/20181202133704_add_operations.down.sql (45B)
 // sql/20181202133704_add_operations.up.sql (50B)
+// sql/20190306164350_remove_broker_col.down.sql (43B)
+// sql/20190306164350_remove_broker_col.up.sql (39B)
 
 package migrations
 
@@ -194,6 +196,46 @@ func _20181202133704_add_operationsUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __20190306164350_remove_broker_colDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\x56\x70\x74\x71\x51\x70\xf6\xf7\x09\xf5\xf5\x53\x48\x2a\xca\xcf\x4e\x2d\x52\x08\x71\x8d\x08\xb1\x06\x04\x00\x00\xff\xff\xb8\xa4\xe3\x27\x2b\x00\x00\x00")
+
+func _20190306164350_remove_broker_colDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190306164350_remove_broker_colDownSql,
+		"20190306164350_remove_broker_col.down.sql",
+	)
+}
+
+func _20190306164350_remove_broker_colDownSql() (*asset, error) {
+	bytes, err := _20190306164350_remove_broker_colDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190306164350_remove_broker_col.down.sql", size: 43, mode: os.FileMode(420), modTime: time.Unix(1551890848, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x73, 0x12, 0x9a, 0xd9, 0xd2, 0x13, 0x16, 0x44, 0x33, 0x66, 0x1d, 0xa6, 0xc6, 0x3c, 0xf2, 0x1c, 0x8d, 0xda, 0x6a, 0xa5, 0x22, 0x83, 0x0, 0xeb, 0xd0, 0x94, 0x7d, 0xef, 0xb4, 0x40, 0xfb, 0x20}}
+	return a, nil
+}
+
+var __20190306164350_remove_broker_colUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\x56\x70\x09\xf2\x0f\x50\x70\xf6\xf7\x09\xf5\xf5\x53\x48\x2a\xca\xcf\x4e\x2d\xb2\x06\x04\x00\x00\xff\xff\x42\x2d\xf7\x17\x27\x00\x00\x00")
+
+func _20190306164350_remove_broker_colUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190306164350_remove_broker_colUpSql,
+		"20190306164350_remove_broker_col.up.sql",
+	)
+}
+
+func _20190306164350_remove_broker_colUpSql() (*asset, error) {
+	bytes, err := _20190306164350_remove_broker_colUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190306164350_remove_broker_col.up.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1551890753, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x27, 0xcf, 0x6e, 0x61, 0xcd, 0x94, 0xbb, 0x70, 0xd3, 0x57, 0xe, 0x83, 0xf3, 0xc2, 0xec, 0x4d, 0xc8, 0xd5, 0x19, 0x54, 0xfa, 0xa4, 0x57, 0x95, 0x8c, 0x59, 0xcf, 0x8d, 0xba, 0x43, 0xa8, 0x5a}}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -296,6 +338,10 @@ var _bindata = map[string]func() (*asset, error){
 	"20181202133704_add_operations.down.sql": _20181202133704_add_operationsDownSql,
 
 	"20181202133704_add_operations.up.sql": _20181202133704_add_operationsUpSql,
+
+	"20190306164350_remove_broker_col.down.sql": _20190306164350_remove_broker_colDownSql,
+
+	"20190306164350_remove_broker_col.up.sql": _20190306164350_remove_broker_colUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -345,6 +391,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"20180526232618_add_streams_table.up.sql":     &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
 	"20181202133704_add_operations.down.sql":      &bintree{_20181202133704_add_operationsDownSql, map[string]*bintree{}},
 	"20181202133704_add_operations.up.sql":        &bintree{_20181202133704_add_operationsUpSql, map[string]*bintree{}},
+	"20190306164350_remove_broker_col.down.sql":   &bintree{_20190306164350_remove_broker_colDownSql, map[string]*bintree{}},
+	"20190306164350_remove_broker_col.up.sql":     &bintree{_20190306164350_remove_broker_colUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory.
