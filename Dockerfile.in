@@ -2,6 +2,10 @@ FROM ARG_FROM
 
 MAINTAINER Thingful <info@thingful.net>
 
+RUN apt-get update && \
+  apt-get install -y \
+    ca-certificates
+
 ADD bin/ARG_ARCH/ARG_BIN /ARG_BIN
 COPY vendor/github.com/DECODEproject/zenroom-go/lib/* /usr/lib/
 
