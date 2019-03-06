@@ -36,7 +36,6 @@ const (
 // Stream type.
 type Device struct {
 	ID          int     `db:"id"`
-	Broker      string  `db:"broker"`
 	DeviceToken string  `db:"device_token"`
 	Longitude   float64 `db:"longitude"`
 	Latitude    float64 `db:"latitude"`
@@ -176,17 +175,15 @@ func (d *DB) Stop() error {
 // occurs.
 func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 	sql := `INSERT INTO devices
-		(broker, device_token, longitude, latitude, exposure)
-	VALUES (:broker, :device_token, :longitude, :latitude, :exposure)
+		(device_token, longitude, latitude, exposure)
+	VALUES (:device_token, :longitude, :latitude, :exposure)
 	ON CONFLICT (device_token) DO UPDATE
-	SET broker = EXCLUDED.broker,
-			longitude = EXCLUDED.longitude,
+	SET longitude = EXCLUDED.longitude,
 			latitude = EXCLUDED.latitude,
 			exposure = EXCLUDED.exposure
 	RETURNING id`
 
 	mapArgs := map[string]interface{}{
-		"broker":       stream.Device.Broker,
 		"device_token": stream.Device.DeviceToken,
 		"longitude":    stream.Device.Longitude,
 		"latitude":     stream.Device.Latitude,
@@ -254,7 +251,7 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 // DeleteStream deletes a stream identified by the given id string. If this
 // stream is the last one associated with a device, then the device record is
 // also deleted. We return a Device object purely so we can pass back out the
-// broker and token allowing us to unsubscribe.
+// token allowing us to unsubscribe.
 func (d *DB) DeleteStream(stream *Stream) (_ *Device, err error) {
 	sql := `DELETE FROM streams
 	WHERE id = :id
@@ -309,7 +306,7 @@ func (d *DB) DeleteStream(stream *Stream) (_ *Device, err error) {
 
 	if streamCount == 0 {
 		// delete the device too
-		sql = `DELETE FROM devices WHERE id = :id RETURNING broker, device_token`
+		sql = `DELETE FROM devices WHERE id = :id RETURNING device_token`
 
 		mapArgs = map[string]interface{}{
 			"id": deviceID,
@@ -332,7 +329,7 @@ func (d *DB) DeleteStream(stream *Stream) (_ *Device, err error) {
 // about pagination here as we have a maximum number of devices of approximately
 // 25 to 50. Note we do not load all streams for these devices.
 func (d *DB) GetDevices() ([]*Device, error) {
-	sql := `SELECT id, broker, device_token FROM devices`
+	sql := `SELECT id, device_token FROM devices`
 
 	tx, err := BeginTX(d.DB)
 	if err != nil {
@@ -374,7 +371,7 @@ func (d *DB) GetDevices() ([]*Device, error) {
 // for that device. This is used to set up subscriptions for existing records on
 // application start.
 func (d *DB) GetDevice(deviceToken string) (_ *Device, err error) {
-	sql := `SELECT id, broker, device_token, longitude, latitude, exposure
+	sql := `SELECT id, device_token, longitude, latitude, exposure
 		FROM devices
 		WHERE device_token = :device_token`
 

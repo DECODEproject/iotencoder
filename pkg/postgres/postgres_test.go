@@ -62,7 +62,6 @@ func (s *PostgresSuite) TestRoundTrip() {
 		PolicyID:  "policy-id",
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
 			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -78,7 +77,6 @@ func (s *PostgresSuite) TestRoundTrip() {
 		PolicyID:  "policy-id",
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://mqtt.com",
 			DeviceToken: "124",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -94,17 +92,14 @@ func (s *PostgresSuite) TestRoundTrip() {
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), devices, 2)
 
-	assert.Equal(s.T(), "tcp://example.com", devices[0].Broker)
 	assert.Equal(s.T(), "123", devices[0].DeviceToken)
 
-	assert.Equal(s.T(), "tcp://mqtt.com", devices[1].Broker)
 	assert.Equal(s.T(), "124", devices[1].DeviceToken)
 
 	device, err := s.db.GetDevice("123")
 	assert.Nil(s.T(), err)
 	assert.NotNil(s.T(), device)
 
-	assert.Equal(s.T(), "tcp://example.com", device.Broker)
 	assert.Equal(s.T(), "123", device.DeviceToken)
 	assert.Equal(s.T(), 45.2, device.Longitude)
 	assert.Equal(s.T(), 23.2, device.Latitude)
@@ -115,7 +110,6 @@ func (s *PostgresSuite) TestRoundTrip() {
 
 	device, err = s.db.DeleteStream(stream1)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), "tcp://example.com", device.Broker)
 	assert.Equal(s.T(), "123", device.DeviceToken)
 
 	devices, err = s.db.GetDevices()
@@ -134,7 +128,6 @@ func (s *PostgresSuite) TestRoundTripWithOperations() {
 			},
 		},
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
 			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -159,7 +152,6 @@ func (s *PostgresSuite) TestInvalidDeleteStream() {
 		PolicyID:  "policy-id",
 		PublicKey: "public",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
 			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -204,7 +196,6 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 		PublicKey: "public1",
 		PolicyID:  "policy-id",
 		Device: &postgres.Device{
-			Broker:      "tcp://example.com",
 			DeviceToken: "foo",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -219,7 +210,6 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 		PublicKey: "public2",
 		PolicyID:  "policy-id",
 		Device: &postgres.Device{
-			Broker:      "tcp://mqtt.com",
 			DeviceToken: "foo",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -247,7 +237,6 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 		PublicKey: "public",
 		PolicyID:  "policy-id",
 		Device: &postgres.Device{
-			Broker:      "tcp://unique.com",
 			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
@@ -261,7 +250,6 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 		PublicKey: "public",
 		PolicyID:  "policy-id",
 		Device: &postgres.Device{
-			Broker:      "tcp://unique.com",
 			DeviceToken: "123",
 			Longitude:   45.2,
 			Latitude:    23.2,
