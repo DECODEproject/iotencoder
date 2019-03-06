@@ -1,12 +1,14 @@
 package postgres_test
 
 import (
+	"context"
 	"os"
 	"testing"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"golang.org/x/crypto/acme/autocert"
 
 	"github.com/DECODEproject/iotencoder/pkg/postgres"
 )
@@ -258,6 +260,33 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	})
 
 	assert.NotNil(s.T(), err)
+}
+
+func (s *PostgresSuite) TestCertificates() {
+	ctx := context.Background()
+
+	// nonexistent key should return error
+	_, err := s.db.Get(ctx, "baz")
+	assert.NotNil(s.T(), err)
+	assert.Equal(s.T(), autocert.ErrCacheMiss, err)
+
+	// should be able to write a cert
+	err = s.db.Put(ctx, "foo", []byte("bar"))
+	assert.Nil(s.T(), err)
+
+	// now should be able to read it
+	cert, err := s.db.Get(ctx, "foo")
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), []byte("bar"), cert)
+
+	// should be able to delete it
+	err = s.db.Delete(ctx, "foo")
+	assert.Nil(s.T(), err)
+
+	// now should not be able to read it
+	_, err = s.db.Get(ctx, "foo")
+	assert.NotNil(s.T(), err)
+	assert.Equal(s.T(), autocert.ErrCacheMiss, err)
 }
 
 func TestRunPostgresSuite(t *testing.T) {

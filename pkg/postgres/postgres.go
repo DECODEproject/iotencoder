@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"context"
+	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 	"github.com/speps/go-hashids"
+	"golang.org/x/crypto/acme/autocert"
 
 	// blank import for db driver
 	_ "github.com/lib/pq"
@@ -447,4 +450,78 @@ func (d *DB) Ping() error {
 		return err
 	}
 	return nil
+}
+
+// certificate is an internal type used for persisting LetsEncrypt certificates
+type certificate struct {
+	Key         string `db:"key"`
+	Certificate []byte `db:"certificate"`
+}
+
+// Get is an implementation of the Get method of the autocert.Cache interface.
+func (d *DB) Get(ctx context.Context, key string) ([]byte, error) {
+	query := `SELECT certificate FROM certificates WHERE key = $1`
+
+	var cert []byte
+	err := d.DB.Get(&cert, query, key)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, autocert.ErrCacheMiss
+		}
+		return nil, errors.Wrap(err, "failed to read certificate from DB")
+	}
+
+	return cert, nil
+}
+
+// Put is an implementation of the Put method of the autocert.Cache interface
+// for saving certificates
+func (d *DB) Put(ctx context.Context, key string, cert []byte) error {
+	query := `INSERT INTO certificates (key, certificate)
+		VALUES (:key, :certificate)
+	ON CONFLICT (key)
+	DO UPDATE SET certificate = EXCLUDED.certificate`
+
+	mapArgs := map[string]interface{}{
+		"key":         key,
+		"certificate": cert,
+	}
+
+	tx, err := d.DB.Beginx()
+	if err != nil {
+		return errors.Wrap(err, "failed to begin transaction when writing certificate")
+	}
+
+	query, args, err := tx.BindNamed(query, mapArgs)
+	if err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "failed to bind named parameters")
+	}
+
+	_, err = tx.Exec(query, args...)
+	if err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "failed to insert certificate")
+	}
+
+	return tx.Commit()
+}
+
+// Delete is an implementation of the Delete method of the autocert.Cache
+// interface method for deleting certificates.
+func (d *DB) Delete(ctx context.Context, key string) error {
+	query := `DELETE FROM certificates WHERE key = $1`
+
+	tx, err := d.DB.Beginx()
+	if err != nil {
+		return errors.Wrap(err, "failed to begin transaction when deleting certificate")
+	}
+
+	_, err = tx.Exec(query, key)
+	if err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "failed to delete certificate")
+	}
+
+	return tx.Commit()
 }

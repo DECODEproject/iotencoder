@@ -451,6 +451,17 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:398e132d86665f82a3642f675cdadea673d0d1521209ebac3c378141209f99c4"
+  name = "golang.org/x/crypto"
+  packages = [
+    "acme",
+    "acme/autocert",
+  ]
+  pruneopts = "UT"
+  revision = "8dd112bcdc25174059e45e07517d9fc663123347"
+
+[[projects]]
+  branch = "master"
   digest = "1:50095e42352dba1c6ab2cec7e03b24fb4b513123f41d4ab4dbd2627c25fe18b8"
   name = "golang.org/x/net"
   packages = [
@@ -533,6 +544,7 @@
     "github.com/twitchtv/twirp",
     "goji.io",
     "goji.io/pat",
+    "golang.org/x/crypto/acme/autocert",
     "gopkg.in/guregu/null.v3",
   ]
   solver-name = "gps-cdcl"
