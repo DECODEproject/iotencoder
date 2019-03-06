@@ -1,6 +1,15 @@
+FROM alpine:latest AS certs
+
+RUN apk add --update --no-cache \
+  ca-certificates && \
+  update-ca-certificates
+
 FROM ARG_FROM
 
-MAINTAINER Thingful <info@thingful.net>
+LABEL maintainer="info@thingful.net"
+LABEL description="stream encoder for DECODE IoT Pilot"
+
+COPY --from=certs /etc/ssl/certs /etc/ssl/certs
 
 ADD bin/ARG_ARCH/ARG_BIN /ARG_BIN
 COPY vendor/github.com/DECODEproject/zenroom-go/lib/* /usr/lib/

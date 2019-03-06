@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/DECODEproject/iotencoder/pkg/mqtt"
@@ -28,36 +29,40 @@ func NewMQTTClient(err error) *MQTTClient {
 // Subscribe is the public interface method. In the mock we add the given broker
 // and topic to an internal data structure where it can be retrieved for test
 // verification.
-func (m *MQTTClient) Subscribe(broker, deviceToken string, cb mqtt.Callback) error {
+func (m *MQTTClient) Subscribe(broker, username, deviceToken string, cb mqtt.Callback) error {
 	if m.err != nil {
 		return m.err
 	}
 
+	key := fmt.Sprintf("%s:%s", broker, username)
+
 	m.Lock()
 	defer m.Unlock()
 
-	if _, ok := m.Subscriptions[broker]; !ok {
-		m.Subscriptions[broker] = make(map[string]bool)
+	if _, ok := m.Subscriptions[key]; !ok {
+		m.Subscriptions[key] = make(map[string]bool)
 	}
 
-	m.Subscriptions[broker][deviceToken] = true
+	m.Subscriptions[key][deviceToken] = true
 
 	return nil
 }
 
-func (m *MQTTClient) Unsubscribe(broker, deviceToken string) error {
+func (m *MQTTClient) Unsubscribe(broker, username, deviceToken string) error {
 	if m.err != nil {
 		return m.err
 	}
 
+	key := fmt.Sprintf("%s:%s", broker, username)
+
 	m.Lock()
 	defer m.Unlock()
 
-	if _, ok := m.Subscriptions[broker]; ok {
-		if _, ok := m.Subscriptions[broker][deviceToken]; ok {
-			delete(m.Subscriptions[broker], deviceToken)
-			if len(m.Subscriptions[broker]) == 0 {
-				delete(m.Subscriptions, broker)
+	if _, ok := m.Subscriptions[key]; ok {
+		if _, ok := m.Subscriptions[key][deviceToken]; ok {
+			delete(m.Subscriptions[key], deviceToken)
+			if len(m.Subscriptions[key]) == 0 {
+				delete(m.Subscriptions, key)
 			}
 		}
 	}

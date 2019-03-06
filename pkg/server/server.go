@@ -61,6 +61,7 @@ type Config struct {
 	DatastoreAddr      string
 	Verbose            bool
 	BrokerAddr         string
+	BrokerUsername     string
 	RedisURL           string
 	CertFile           string
 	KeyFile            string
@@ -123,11 +124,12 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	mqttClient := mqtt.NewClient(logger, config.Verbose)
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    config.Verbose,
-		BrokerAddr: config.BrokerAddr,
+		DB:             db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        config.Verbose,
+		BrokerAddr:     config.BrokerAddr,
+		BrokerUsername: config.BrokerUsername,
 	}, logger)
 
 	hooks := twrpprom.NewServerHooks(registry.DefaultRegisterer)
@@ -135,7 +137,14 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	buildInfo.WithLabelValues(version.BinaryName, version.Version, version.BuildDate)
 
 	logger = kitlog.With(logger, "module", "server")
-	logger.Log("msg", "creating server", "datastore", config.DatastoreAddr, "hashid", config.HashidMinLength)
+	logger.Log(
+		"msg", "creating server",
+		"datastore", config.DatastoreAddr,
+		"hashidLength", config.HashidMinLength,
+		"mqttBroker", config.BrokerAddr,
+		"listenAddr", config.ListenAddr,
+		"mqttUsername", config.BrokerAddr,
+	)
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
 

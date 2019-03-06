@@ -38,15 +38,15 @@ type Callback func(topic string, payload []byte)
 // broker, and as events are received it feeds them to a processing pipeline
 // which ultimately will end with data being written to the datastore.
 type Client interface {
-	// Subscribe takes a broker and a device token, and after this function is
-	// called the client will have set up a subscription for the given details with
-	// received events being written to the datastore. Returns an error if we were
-	// unable to subscribe for any reason.
-	Subscribe(broker, deviceToken string, callback Callback) error
+	// Subscribe takes a broker, username and a device token, and after this
+	// function is called the client will have set up a subscription for the given
+	// details with received events being written to the datastore. Returns an
+	// error if we were unable to subscribe for any reason.
+	Subscribe(broker, username, deviceToken string, callback Callback) error
 
 	// Unsubscribe takes a broker and a device token, and attempts to remove the
 	// subscription from the specified broker.
-	Unsubscribe(broker, deviceToken string) error
+	Unsubscribe(broker, username, deviceToken string) error
 }
 
 // client abstracts our connection to one or more MQTT brokers, it allows new
@@ -93,7 +93,7 @@ func (c *client) Stop() error {
 // Subscribe attempts to create a subscription for the given topic, on the given
 // broker. This method will create a new connection to particular broker if one
 // does not already exist, but will reuse an existing connection.
-func (c *client) Subscribe(broker, deviceToken string, cb Callback) error {
+func (c *client) Subscribe(broker, username, deviceToken string, cb Callback) error {
 	if c.verbose {
 		c.logger.Log("deviceToken", deviceToken, "broker", broker, "msg", "subscribing")
 	}
@@ -104,7 +104,7 @@ func (c *client) Subscribe(broker, deviceToken string, cb Callback) error {
 		cb(message.Topic(), message.Payload())
 	}
 
-	client, err := c.getClient(broker)
+	client, err := c.getClient(broker, username)
 	if err != nil {
 		return errors.Wrap(err, "failed to get client")
 	}
@@ -121,12 +121,12 @@ func (c *client) Subscribe(broker, deviceToken string, cb Callback) error {
 // Unsubscribe attempts to unsubscribe to the given topic published on the
 // specified broker. We should only unsubscribe when no streams remain for a
 // device. Returns any error that occurs while trying to unsubscribe.
-func (c *client) Unsubscribe(broker, deviceToken string) error {
+func (c *client) Unsubscribe(broker, username, deviceToken string) error {
 	if c.verbose {
 		c.logger.Log("broker", broker, "deviceToken", deviceToken, "msg", "unsubscribing")
 	}
 
-	client, err := c.getClient(broker)
+	client, err := c.getClient(broker, username)
 	if err != nil {
 		return errors.Wrap(err, "failed to get client")
 	}
@@ -142,8 +142,8 @@ func (c *client) Unsubscribe(broker, deviceToken string) error {
 
 // connect is a helper function that creates a new mqtt.Client instance that is
 // connected to the passed in broker.
-func connect(broker string, logger kitlog.Logger, verbose bool) (mqtt.Client, error) {
-	opts, err := createClientOptions(broker, logger, verbose)
+func connect(broker, username string, logger kitlog.Logger, verbose bool) (mqtt.Client, error) {
+	opts, err := createClientOptions(broker, username, logger, verbose)
 	if err != nil {
 		return nil, err
 	}
@@ -166,13 +166,14 @@ func connect(broker string, logger kitlog.Logger, verbose bool) (mqtt.Client, er
 
 // createClientOptions initializes a set of ClientOptions for connecting to an
 // MQTT broker.
-func createClientOptions(broker string, logger kitlog.Logger, verbose bool) (*mqtt.ClientOptions, error) {
+func createClientOptions(broker, username string, logger kitlog.Logger, verbose bool) (*mqtt.ClientOptions, error) {
 	if verbose {
-		logger.Log("broker", broker, "msg", "configuring client")
+		logger.Log("broker", broker, "msg", "configuring client", "username", username)
 	}
 
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
+	opts.SetUsername(username)
 	opts.SetClientID(mqttClientID)
 	opts.SetAutoReconnect(true)
 
@@ -183,18 +184,20 @@ func createClientOptions(broker string, logger kitlog.Logger, verbose bool) (*mq
 // to return a client from the in memory process, but if one does not exist we
 // use `connect` in order to make a new connection. Once a connnection is made
 // it will be stored in memory for use for other subscriptions.
-func (c *client) getClient(broker string) (mqtt.Client, error) {
+func (c *client) getClient(broker, username string) (mqtt.Client, error) {
 	var client mqtt.Client
 	var err error
+
+	key := fmt.Sprintf("%s:%s", broker, username)
 
 	// attempt to get client, note the use of RLock here which takes a read only
 	// lock on the map containing clients.
 	c.RLock()
-	client, ok := c.clients[broker]
+	client, ok := c.clients[key]
 	c.RUnlock()
 
 	if !ok {
-		client, err = connect(broker, c.logger, c.verbose)
+		client, err = connect(broker, username, c.logger, c.verbose)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to connect to broker")
 		}
@@ -204,7 +207,7 @@ func (c *client) getClient(broker string) (mqtt.Client, error) {
 		}
 
 		c.Lock()
-		c.clients[broker] = client
+		c.clients[key] = client
 		c.Unlock()
 	}
 
