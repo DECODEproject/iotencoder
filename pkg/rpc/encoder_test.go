@@ -102,7 +102,6 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 
 	device, err := e.db.GetDevice("abc123")
 	assert.Nil(e.T(), err)
-	assert.Equal(e.T(), "tcp://mqtt.local:1883", device.Broker)
 	assert.Len(e.T(), device.Streams, 1)
 
 	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{
@@ -169,7 +168,6 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 
 	device, err := e.db.GetDevice("abc123")
 	assert.Nil(e.T(), err)
-	assert.Equal(e.T(), "tcp://mqtt.local:1883", device.Broker)
 	assert.Len(e.T(), device.Streams, 1)
 
 	stream := device.Streams[0]
@@ -206,7 +204,6 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 		PublicKey: "abc123",
 		PolicyID:  "policy-id",
 		Device: &postgres.Device{
-			Broker:      "tcp://broker1:1883",
 			DeviceToken: "foo",
 			Longitude:   23,
 			Latitude:    23.2,
@@ -219,7 +216,6 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 		PublicKey: "abc123",
 		PolicyID:  "policy-id-2",
 		Device: &postgres.Device{
-			Broker:      "tcp://broker1:1883",
 			DeviceToken: "bar",
 			Longitude:   23,
 			Latitude:    23.2,
@@ -467,7 +463,6 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 		PublicKey: "abc123",
 		PolicyID:  "policy-id",
 		Device: &postgres.Device{
-			Broker:      "tcp://broker:1883",
 			DeviceToken: "foo",
 			Longitude:   23,
 			Latitude:    45,

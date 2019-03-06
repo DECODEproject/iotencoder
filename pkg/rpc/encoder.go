@@ -77,7 +77,7 @@ func (e *encoderImpl) Start() error {
 
 	for _, d := range devices {
 		e.logger.Log(
-			"broker", d.Broker,
+			"broker", e.brokerAddr,
 			"device_token", d.DeviceToken,
 			"msg", "creating subscription",
 		)
@@ -263,7 +263,6 @@ func createStream(req *encoder.CreateStreamRequest, brokerAddr string) (*postgre
 		PublicKey:  req.RecipientPublicKey,
 		Operations: operations,
 		Device: &postgres.Device{
-			Broker:      brokerAddr,
 			DeviceToken: req.DeviceToken,
 			Longitude:   req.Location.Longitude,
 			Latitude:    req.Location.Latitude,
