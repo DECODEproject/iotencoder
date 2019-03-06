@@ -124,11 +124,12 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	mqttClient := mqtt.NewClient(logger, config.Verbose)
 
 	enc := rpc.NewEncoder(&rpc.Config{
-		DB:         db,
-		MQTTClient: mqttClient,
-		Processor:  processor,
-		Verbose:    config.Verbose,
-		BrokerAddr: config.BrokerAddr,
+		DB:             db,
+		MQTTClient:     mqttClient,
+		Processor:      processor,
+		Verbose:        config.Verbose,
+		BrokerAddr:     config.BrokerAddr,
+		BrokerUsername: config.BrokerUsername,
 	}, logger)
 
 	hooks := twrpprom.NewServerHooks(registry.DefaultRegisterer)
@@ -142,6 +143,7 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 		"hashidLength", config.HashidMinLength,
 		"mqttBroker", config.BrokerAddr,
 		"listenAddr", config.ListenAddr,
+		"mqttUsername", config.BrokerAddr,
 	)
 
 	twirpHandler := encoder.NewEncoderServer(enc, hooks)
