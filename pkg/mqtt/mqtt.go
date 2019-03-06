@@ -168,7 +168,7 @@ func connect(broker, username string, logger kitlog.Logger, verbose bool) (mqtt.
 // MQTT broker.
 func createClientOptions(broker, username string, logger kitlog.Logger, verbose bool) (*mqtt.ClientOptions, error) {
 	if verbose {
-		logger.Log("broker", broker, "msg", "configuring client")
+		logger.Log("broker", broker, "msg", "configuring client", "username", username)
 	}
 
 	opts := mqtt.NewClientOptions()
