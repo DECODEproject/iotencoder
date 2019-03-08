@@ -140,7 +140,7 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		keyString := fmt.Sprintf(
 			`{"device_token":"%s","community_id":"%s","community_pubkey":"%s"}`,
 			device.DeviceToken,
-			stream.PolicyID,
+			stream.CommunityID,
 			stream.PublicKey,
 		)
 
@@ -170,7 +170,7 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 		start = time.Now()
 
 		_, err = p.datastore.WriteData(context.Background(), &datastore.WriteRequest{
-			PolicyId:    stream.PolicyID,
+			CommunityId: stream.CommunityID,
 			DeviceToken: device.DeviceToken,
 			Data:        []byte(encodedPayload),
 		})

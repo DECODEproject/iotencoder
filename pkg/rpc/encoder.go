@@ -212,8 +212,8 @@ func validateCreateRequest(req *encoder.CreateStreamRequest) error {
 		return twirp.RequiredArgumentError("device_token")
 	}
 
-	if req.PolicyId == "" {
-		return twirp.RequiredArgumentError("policy_id")
+	if req.CommunityId == "" {
+		return twirp.RequiredArgumentError("community_id")
 	}
 
 	if req.RecipientPublicKey == "" {
@@ -259,9 +259,9 @@ func createStream(req *encoder.CreateStreamRequest, brokerAddr string) (*postgre
 	}
 
 	return &postgres.Stream{
-		PolicyID:   req.PolicyId,
-		PublicKey:  req.RecipientPublicKey,
-		Operations: operations,
+		CommunityID: req.CommunityId,
+		PublicKey:   req.RecipientPublicKey,
+		Operations:  operations,
 		Device: &postgres.Device{
 			DeviceToken: req.DeviceToken,
 			Longitude:   req.Location.Longitude,

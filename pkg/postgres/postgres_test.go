@@ -61,8 +61,8 @@ func (s *PostgresSuite) TearDownTest() {
 
 func (s *PostgresSuite) TestRoundTrip() {
 	stream1, err := s.db.CreateStream(&postgres.Stream{
-		PolicyID:  "policy-id",
-		PublicKey: "public",
+		CommunityID: "policy-id",
+		PublicKey:   "public",
 		Device: &postgres.Device{
 			DeviceToken: "123",
 			Longitude:   45.2,
@@ -76,8 +76,8 @@ func (s *PostgresSuite) TestRoundTrip() {
 	assert.NotEqual(s.T(), "", stream1.Token)
 
 	stream2, err := s.db.CreateStream(&postgres.Stream{
-		PolicyID:  "policy-id",
-		PublicKey: "public",
+		CommunityID: "policy-id",
+		PublicKey:   "public",
 		Device: &postgres.Device{
 			DeviceToken: "124",
 			Longitude:   45.2,
@@ -108,7 +108,7 @@ func (s *PostgresSuite) TestRoundTrip() {
 	assert.Equal(s.T(), "indoor", device.Exposure)
 	assert.Len(s.T(), device.Streams, 1)
 	assert.Equal(s.T(), "public", device.Streams[0].PublicKey)
-	assert.Equal(s.T(), "policy-id", device.Streams[0].PolicyID)
+	assert.Equal(s.T(), "policy-id", device.Streams[0].CommunityID)
 
 	device, err = s.db.DeleteStream(stream1)
 	assert.Nil(s.T(), err)
@@ -121,8 +121,8 @@ func (s *PostgresSuite) TestRoundTrip() {
 
 func (s *PostgresSuite) TestRoundTripWithOperations() {
 	stream, err := s.db.CreateStream(&postgres.Stream{
-		PolicyID:  "policy-id",
-		PublicKey: "public",
+		CommunityID: "policy-id",
+		PublicKey:   "public",
 		Operations: []*postgres.Operation{
 			&postgres.Operation{
 				SensorID: 12,
@@ -151,8 +151,8 @@ func (s *PostgresSuite) TestRoundTripWithOperations() {
 
 func (s *PostgresSuite) TestInvalidDeleteStream() {
 	stream, err := s.db.CreateStream(&postgres.Stream{
-		PolicyID:  "policy-id",
-		PublicKey: "public",
+		CommunityID: "policy-id",
+		PublicKey:   "public",
 		Device: &postgres.Device{
 			DeviceToken: "123",
 			Longitude:   45.2,
@@ -195,8 +195,8 @@ func (s *PostgresSuite) TestInvalidDeleteStream() {
 
 func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	stream1, err := s.db.CreateStream(&postgres.Stream{
-		PublicKey: "public1",
-		PolicyID:  "policy-id",
+		PublicKey:   "public1",
+		CommunityID: "policy-id",
 		Device: &postgres.Device{
 			DeviceToken: "foo",
 			Longitude:   45.2,
@@ -209,8 +209,8 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	assert.NotEqual(s.T(), "", stream1.StreamID)
 
 	stream2, err := s.db.CreateStream(&postgres.Stream{
-		PublicKey: "public2",
-		PolicyID:  "policy-id",
+		PublicKey:   "public2",
+		CommunityID: "policy-id",
 		Device: &postgres.Device{
 			DeviceToken: "foo",
 			Longitude:   45.2,
@@ -236,8 +236,8 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 
 func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	_, err := s.db.CreateStream(&postgres.Stream{
-		PublicKey: "public",
-		PolicyID:  "policy-id",
+		PublicKey:   "public",
+		CommunityID: "policy-id",
 		Device: &postgres.Device{
 			DeviceToken: "123",
 			Longitude:   45.2,
@@ -249,8 +249,8 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	assert.Nil(s.T(), err)
 
 	_, err = s.db.CreateStream(&postgres.Stream{
-		PublicKey: "public",
-		PolicyID:  "policy-id",
+		PublicKey:   "public",
+		CommunityID: "policy-id",
 		Device: &postgres.Device{
 			DeviceToken: "123",
 			Longitude:   45.2,
