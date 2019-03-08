@@ -51,9 +51,9 @@ type Device struct {
 // stream. It contains a public key field used when reading data, and for
 // creating a new stream has an associated Device instance.
 type Stream struct {
-	PolicyID   string     `db:"policy_id"`
-	PublicKey  string     `db:"public_key"`
-	Operations Operations `db:"operations"`
+	CommunityID string     `db:"community_id"`
+	PublicKey   string     `db:"public_key"`
+	Operations  Operations `db:"operations"`
 
 	StreamID string
 	Token    string
@@ -214,8 +214,8 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 
 	// streams insert sql
 	sql = `INSERT INTO streams
-	(device_id, policy_id, public_key, token, operations)
-	VALUES (:device_id, :policy_id, :public_key, pgp_sym_encrypt(:token, :encryption_password), :operations)
+	(device_id, community_id, public_key, token, operations)
+	VALUES (:device_id, :community_id, :public_key, pgp_sym_encrypt(:token, :encryption_password), :operations)
 	RETURNING id`
 
 	token, err := GenerateToken(TokenLength)
@@ -225,7 +225,7 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 
 	mapArgs = map[string]interface{}{
 		"device_id":           deviceID,
-		"policy_id":           stream.PolicyID,
+		"community_id":        stream.CommunityID,
 		"public_key":          stream.PublicKey,
 		"token":               token,
 		"encryption_password": d.encryptionPassword,
@@ -400,7 +400,7 @@ func (d *DB) GetDevice(deviceToken string) (_ *Device, err error) {
 	}
 
 	// now load streams
-	sql = `SELECT policy_id, public_key, operations FROM streams WHERE device_id = :device_id`
+	sql = `SELECT community_id, public_key, operations FROM streams WHERE device_id = :device_id`
 
 	mapArgs = map[string]interface{}{
 		"device_id": device.ID,

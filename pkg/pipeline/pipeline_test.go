@@ -82,8 +82,8 @@ func TestProcess(t *testing.T) {
 		DeviceToken: "foo",
 		Streams: []*postgres.Stream{
 			{
-				PolicyID:  "smartcitizen",
-				PublicKey: `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
+				CommunityID: "smartcitizen",
+				PublicKey:   `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
 				Operations: postgres.Operations{
 					&postgres.Operation{
 						SensorID: 13,
@@ -146,9 +146,9 @@ func TestProcessWithNoOperations(t *testing.T) {
 		DeviceToken: "foo",
 		Streams: []*postgres.Stream{
 			{
-				PolicyID:   "smartcitizen",
-				PublicKey:  `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
-				Operations: postgres.Operations{},
+				CommunityID: "smartcitizen",
+				PublicKey:   `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
+				Operations:  postgres.Operations{},
 			},
 		},
 	}
@@ -199,8 +199,8 @@ func TestProcessWithDatastoreError(t *testing.T) {
 		DeviceToken: "foo",
 		Streams: []*postgres.Stream{
 			{
-				PolicyID:  "smartcitizen",
-				PublicKey: `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
+				CommunityID: "smartcitizen",
+				PublicKey:   `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
 			},
 		},
 	}
@@ -244,8 +244,8 @@ func TestProcessWithRedisError(t *testing.T) {
 		DeviceToken: "foo",
 		Streams: []*postgres.Stream{
 			{
-				PolicyID:  "smartcitizen",
-				PublicKey: `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
+				CommunityID: "smartcitizen",
+				PublicKey:   `BBLewg4VqLR38b38daE7Fj\/uhr543uGrEpyoPFgmFZK6EZ9g2XdK\/i65RrSJ6sJ96aXD3DJHY3Me2GJQO9\/ifjE=`,
 				Operations: postgres.Operations{
 					&postgres.Operation{
 						SensorID: 13,

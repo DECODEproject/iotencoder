@@ -87,7 +87,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
 		DeviceToken:        "abc123",
 		RecipientPublicKey: "pub_key",
-		PolicyId:           "policy-id",
+		CommunityId:        "policy-id",
 		Location: &encoder.CreateStreamRequest_Location{
 			Longitude: -0.024,
 			Latitude:  54.24,
@@ -137,7 +137,7 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
 		DeviceToken:        "abc123",
 		RecipientPublicKey: "pub_key",
-		PolicyId:           "policy-id",
+		CommunityId:        "policy-id",
 		Location: &encoder.CreateStreamRequest_Location{
 			Longitude: -0.024,
 			Latitude:  54.24,
@@ -201,8 +201,8 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 
 	// insert two streams with devices
 	_, err := e.db.CreateStream(&postgres.Stream{
-		PublicKey: "abc123",
-		PolicyID:  "policy-id",
+		PublicKey:   "abc123",
+		CommunityID: "policy-id",
 		Device: &postgres.Device{
 			DeviceToken: "foo",
 			Longitude:   23,
@@ -213,8 +213,8 @@ func (e *EncoderTestSuite) TestSubscriptionsCreatedOnStart() {
 	assert.Nil(e.T(), err)
 
 	_, err = e.db.CreateStream(&postgres.Stream{
-		PublicKey: "abc123",
-		PolicyID:  "policy-id-2",
+		PublicKey:   "abc123",
+		CommunityID: "policy-id-2",
 		Device: &postgres.Device{
 			DeviceToken: "bar",
 			Longitude:   23,
@@ -285,13 +285,13 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 				},
 				Exposure: encoder.CreateStreamRequest_INDOOR,
 			},
-			expectedErr: "twirp error invalid_argument: policy_id is required",
+			expectedErr: "twirp error invalid_argument: community_id is required",
 		},
 		{
 			label: "missing public key",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken: "foo",
-				PolicyId:    "policy-id",
+				CommunityId: "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
 					Latitude:  23,
@@ -304,7 +304,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing location",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
-				PolicyId:           "policy-id",
+				CommunityId:        "policy-id",
 				RecipientPublicKey: "pubkey",
 				Exposure:           encoder.CreateStreamRequest_INDOOR,
 			},
@@ -314,7 +314,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing longitude",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
-				PolicyId:           "policy-id",
+				CommunityId:        "policy-id",
 				RecipientPublicKey: "pubkey",
 				Location: &encoder.CreateStreamRequest_Location{
 					Latitude: 23,
@@ -327,7 +327,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing latitude",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
-				PolicyId:           "policy-id",
+				CommunityId:        "policy-id",
 				RecipientPublicKey: "pubkey",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 45,
@@ -341,7 +341,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "abc123",
 				RecipientPublicKey: "pub_key",
-				PolicyId:           "policy-id",
+				CommunityId:        "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: -0.024,
 					Latitude:  54.24,
@@ -360,7 +360,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "abc123",
 				RecipientPublicKey: "pub_key",
-				PolicyId:           "policy-id",
+				CommunityId:        "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: -0.024,
 					Latitude:  54.24,
@@ -380,7 +380,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "abc123",
 				RecipientPublicKey: "pub_key",
-				PolicyId:           "policy-id",
+				CommunityId:        "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: -0.024,
 					Latitude:  54.24,
@@ -460,8 +460,8 @@ func (e *EncoderTestSuite) TestSubscribeErrorContinues() {
 	processor := mocks.NewProcessor()
 
 	_, err := e.db.CreateStream(&postgres.Stream{
-		PublicKey: "abc123",
-		PolicyID:  "policy-id",
+		PublicKey:   "abc123",
+		CommunityID: "policy-id",
 		Device: &postgres.Device{
 			DeviceToken: "foo",
 			Longitude:   23,
