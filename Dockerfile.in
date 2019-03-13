@@ -7,7 +7,7 @@ RUN apk add --update --no-cache \
 FROM ARG_FROM
 
 LABEL maintainer="info@thingful.net"
-LABEL description="stream encoder for DECODE IoT Pilot"
+LABEL description="Stream encoder for DECODE IoT Pilot"
 
 COPY --from=certs /etc/ssl/certs /etc/ssl/certs
 
