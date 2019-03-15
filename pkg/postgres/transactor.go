@@ -28,6 +28,9 @@ type Transactor interface {
 	// Map executes an sqlx.Queryx call and pushes the results row by row to the
 	// given RowMapper function.
 	Map(sql string, args interface{}, rm RowMapper) error
+
+	// Exec executes the given sql statement and args
+	Exec(sql string, args interface{}) error
 }
 
 // transactor is the private type that implements the Transactor interface
@@ -83,6 +86,24 @@ func (t *transactor) Get(dest interface{}, sql string, args interface{}) error {
 	}
 
 	err = t.tx.Get(dest, nsql, nargs...)
+	if err != nil {
+		return t.rollback(err)
+	}
+
+	return nil
+}
+
+// Exec wraps tx.Exec and takes as input an sql string as well as some args. If
+// the sql contains named parameters and our args is a map[string]interface{}
+// type then the query will be rebound to convert the named args into slice of
+// args and a query string with postgres style variable placeholders.
+func (t *transactor) Exec(sql string, args interface{}) error {
+	nsql, nargs, err := t.normalizeSql(sql, args)
+	if err != nil {
+		return t.rollback(err)
+	}
+
+	_, err = t.tx.Exec(nsql, nargs...)
 	if err != nil {
 		return t.rollback(err)
 	}

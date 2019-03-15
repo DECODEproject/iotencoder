@@ -21,8 +21,6 @@ func init() {
 	serverCmd.Flags().StringP("datastore", "d", "", "Address at which the datastore is listening")
 	serverCmd.Flags().String("database-url", "", "URL at which Postgres is listening (e.g. postgres://username:password@host:5432/dbname?sslmode=enable)")
 	serverCmd.Flags().String("encryption-password", "", "Password used to encrypt secret tokens we write to Postgres")
-	serverCmd.Flags().IntP("hashid-length", "l", 8, "Minimum length of generated ids for streams")
-	serverCmd.Flags().String("hashid-salt", "", "Salt value used when hashing generated ids for streams")
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
 	serverCmd.Flags().StringP("broker-addr", "b", "tcps://mqtt.smartcitizen.me:8883", "Address at which the MQTT broker is listening")
 	serverCmd.Flags().StringP("broker-username", "u", "", "Username for accessing the MQTT broker")
@@ -33,8 +31,6 @@ func init() {
 	viper.BindPFlag("datastore", serverCmd.Flags().Lookup("datastore"))
 	viper.BindPFlag("database-url", serverCmd.Flags().Lookup("database-url"))
 	viper.BindPFlag("encryption-password", serverCmd.Flags().Lookup("encryption-password"))
-	viper.BindPFlag("hashid-length", serverCmd.Flags().Lookup("hashid-length"))
-	viper.BindPFlag("hashid-salt", serverCmd.Flags().Lookup("hashid-salt"))
 	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("broker-addr", serverCmd.Flags().Lookup("broker-addr"))
 	viper.BindPFlag("broker-username", serverCmd.Flags().Lookup("broker-username"))
@@ -81,11 +77,6 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			return errors.New("Must provide postgres encryption password")
 		}
 
-		hashidSalt := viper.GetString("hashid-salt")
-		if hashidSalt == "" {
-			return errors.New("Missing required environment variable: $IOTENCODER_HASHID_SALT")
-		}
-
 		brokerAddr := viper.GetString("broker-addr")
 		if brokerAddr == "" {
 			return errors.New("Must provide MQTT broker address to which updates are published")
@@ -108,8 +99,6 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			DatastoreAddr:      datastoreAddr,
 			ConnStr:            connStr,
 			EncryptionPassword: encryptionPassword,
-			HashidSalt:         hashidSalt,
-			HashidMinLength:    viper.GetInt("hashid-length"),
 			Verbose:            viper.GetBool("verbose"),
 			BrokerAddr:         brokerAddr,
 			BrokerUsername:     brokerUsername,

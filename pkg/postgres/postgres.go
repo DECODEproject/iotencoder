@@ -6,10 +6,11 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
+	"github.com/google/uuid"
+
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
-	"github.com/speps/go-hashids"
 	"golang.org/x/crypto/acme/autocert"
 
 	// blank import for db driver
@@ -113,9 +114,7 @@ func Open(connStr string) (*sqlx.DB, error) {
 type DB struct {
 	connStr            string
 	encryptionPassword []byte
-	hashidData         *hashids.HashIDData
 	DB                 *sqlx.DB
-	hashid             *hashids.HashID
 	logger             kitlog.Logger
 }
 
@@ -123,8 +122,6 @@ type DB struct {
 type Config struct {
 	ConnStr            string
 	EncryptionPassword string
-	HashidSalt         string
-	HashidMinLength    int
 }
 
 // NewDB creates a new DB instance with the given connection string. We also
@@ -132,14 +129,9 @@ type Config struct {
 func NewDB(config *Config, logger kitlog.Logger) *DB {
 	logger = kitlog.With(logger, "module", "postgres")
 
-	hd := hashids.NewData()
-	hd.Salt = config.HashidSalt
-	hd.MinLength = config.HashidMinLength
-
 	return &DB{
 		connStr:            config.ConnStr,
 		encryptionPassword: []byte(config.EncryptionPassword),
-		hashidData:         hd,
 		logger:             logger,
 	}
 }
@@ -154,13 +146,7 @@ func (d *DB) Start() error {
 		return errors.Wrap(err, "opening db connection failed")
 	}
 
-	h, err := hashids.NewWithData(d.hashidData)
-	if err != nil {
-		return errors.Wrap(err, "creating hashid generator failed")
-	}
-
 	d.DB = db
-	d.hashid = h
 
 	return nil
 }
@@ -212,11 +198,15 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 		return nil, errors.Wrap(err, "failed to upsert device")
 	}
 
+	streamID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to generate stream UUID")
+	}
+
 	// streams insert sql
 	sql = `INSERT INTO streams
-	(device_id, community_id, public_key, token, operations)
-	VALUES (:device_id, :community_id, :public_key, pgp_sym_encrypt(:token, :encryption_password), :operations)
-	RETURNING id`
+	(device_id, community_id, public_key, token, operations, uuid)
+	VALUES (:device_id, :community_id, :public_key, pgp_sym_encrypt(:token, :encryption_password), :operations, :uuid)`
 
 	token, err := GenerateToken(TokenLength)
 	if err != nil {
@@ -230,22 +220,15 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 		"token":               token,
 		"encryption_password": d.encryptionPassword,
 		"operations":          stream.Operations,
+		"uuid":                streamID.String(),
 	}
 
-	var streamID int
-
-	// again use a Get to get back the stream's id
-	err = tx.Get(&streamID, sql, mapArgs)
+	err = tx.Exec(sql, mapArgs)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to insert stream")
 	}
 
-	id, err := d.hashid.Encode([]int{streamID})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to hash new stream ID")
-	}
-
-	stream.StreamID = id
+	stream.StreamID = streamID.String()
 	stream.Token = token
 
 	return stream, err
@@ -257,17 +240,12 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 // token allowing us to unsubscribe.
 func (d *DB) DeleteStream(stream *Stream) (_ *Device, err error) {
 	sql := `DELETE FROM streams
-	WHERE id = :id
+	WHERE uuid = :uuid
 	AND pgp_sym_decrypt(token, :encryption_password) = :token
 	RETURNING device_id`
 
-	streamIDs, err := d.hashid.DecodeWithError(stream.StreamID)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to decode hashed id")
-	}
-
 	mapArgs := map[string]interface{}{
-		"id":                  streamIDs[0],
+		"uuid":                stream.StreamID,
 		"encryption_password": d.encryptionPassword,
 		"token":               stream.Token,
 	}

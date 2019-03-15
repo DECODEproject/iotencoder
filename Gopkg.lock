@@ -321,14 +321,6 @@
   revision = "a683aaf2d516deecd70cad0c72e3ca773ecfcef0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b749dfc1b2734006da71966102ca708c5575081590f4bbfa7bf6ba1979f04ee9"
-  name = "github.com/speps/go-hashids"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "6ba254bc2e328fdc3fca46bfbccea4ab8052755f"
-
-[[projects]]
   digest = "1:3e39bafd6c2f4bf3c76c3bfd16a2e09e016510ad5db90dc02b88e2f565d6d595"
   name = "github.com/spf13/afero"
   packages = [
@@ -524,6 +516,7 @@
     "github.com/golang-migrate/migrate",
     "github.com/golang-migrate/migrate/database/postgres",
     "github.com/golang-migrate/migrate/source/go-bindata",
+    "github.com/google/uuid",
     "github.com/jmoiron/sqlx",
     "github.com/joneskoo/twirp-serverhook-prometheus",
     "github.com/lestrrat-go/backoff",
@@ -532,7 +525,6 @@
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
     "github.com/serenize/snaker",
-    "github.com/speps/go-hashids",
     "github.com/spf13/cobra",
     "github.com/spf13/viper",
     "github.com/stretchr/testify/assert",
