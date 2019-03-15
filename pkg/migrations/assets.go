@@ -379,7 +379,7 @@ func _20190315225536_change_stream_unique_indexDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190315225536_change_stream_unique_index.down.sql", size: 161, mode: os.FileMode(420), modTime: time.Unix(1552690650, 0)}
+	info := bindataFileInfo{name: "20190315225536_change_stream_unique_index.down.sql", size: 161, mode: os.FileMode(420), modTime: time.Unix(1552691070, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x61, 0xed, 0xd4, 0x8a, 0xa3, 0x5d, 0xcc, 0x12, 0x7f, 0x4, 0xe0, 0x25, 0x98, 0xb, 0x9a, 0x9f, 0x1d, 0xe2, 0xb, 0x43, 0x18, 0x9f, 0x92, 0xc1, 0xb8, 0x2c, 0x34, 0x1d, 0xa7, 0x51, 0xef, 0xb}}
 	return a, nil
 }
@@ -399,7 +399,7 @@ func _20190315225536_change_stream_unique_indexUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190315225536_change_stream_unique_index.up.sql", size: 163, mode: os.FileMode(420), modTime: time.Unix(1552690615, 0)}
+	info := bindataFileInfo{name: "20190315225536_change_stream_unique_index.up.sql", size: 163, mode: os.FileMode(420), modTime: time.Unix(1552691070, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xb2, 0x17, 0x4d, 0xb5, 0x68, 0x88, 0x65, 0x74, 0x3f, 0x57, 0xaf, 0xc4, 0x5a, 0x8, 0x2b, 0x43, 0x14, 0xb3, 0xfc, 0x4e, 0x22, 0xc, 0xb9, 0x77, 0x2, 0x2d, 0x54, 0x47, 0xfd, 0x96, 0x3e, 0xe1}}
 	return a, nil
 }
