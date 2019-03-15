@@ -28,8 +28,6 @@ func TestPulseHandler(t *testing.T) {
 		&postgres.Config{
 			ConnStr:            connStr,
 			EncryptionPassword: "password",
-			HashidSalt:         "salt",
-			HashidMinLength:    8,
 		},
 		logger,
 	)

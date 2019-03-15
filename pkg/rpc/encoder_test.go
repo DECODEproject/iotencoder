@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	encoder "github.com/thingful/twirp-encoder-go"
@@ -51,8 +52,6 @@ func (e *EncoderTestSuite) SetupTest() {
 		&postgres.Config{
 			ConnStr:            connStr,
 			EncryptionPassword: "password",
-			HashidSalt:         "salt",
-			HashidMinLength:    8,
 		},
 		logger,
 	)
@@ -423,6 +422,8 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 	enc.(system.Startable).Start()
 	defer enc.(system.Stoppable).Stop()
 
+	streamID := uuid.New().String()
+
 	testcases := []struct {
 		label       string
 		request     *encoder.DeleteStreamRequest
@@ -435,12 +436,12 @@ func (e *EncoderTestSuite) TestDeleteStreamInvalid() {
 		},
 		{
 			label:       "missing token",
-			request:     &encoder.DeleteStreamRequest{StreamUid: "foobar"},
+			request:     &encoder.DeleteStreamRequest{StreamUid: streamID},
 			expectedErr: "twirp error invalid_argument: token is required",
 		},
 		{
 			label:       "missing stream",
-			request:     &encoder.DeleteStreamRequest{StreamUid: "Gzmdv8vp", Token: "barfoo"},
+			request:     &encoder.DeleteStreamRequest{StreamUid: streamID, Token: "barfoo"},
 			expectedErr: "twirp error internal: failed to delete stream: sql: no rows in result set",
 		},
 	}

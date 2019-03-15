@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/acme/autocert"
@@ -46,8 +47,6 @@ func (s *PostgresSuite) SetupTest() {
 		&postgres.Config{
 			ConnStr:            connStr,
 			EncryptionPassword: "password",
-			HashidSalt:         "salt",
-			HashidMinLength:    8,
 		},
 		logger,
 	)
@@ -150,6 +149,8 @@ func (s *PostgresSuite) TestRoundTripWithOperations() {
 }
 
 func (s *PostgresSuite) TestInvalidDeleteStream() {
+	unknownStreamID := uuid.New().String()
+
 	stream, err := s.db.CreateStream(&postgres.Stream{
 		CommunityID: "policy-id",
 		PublicKey:   "public",
@@ -169,18 +170,13 @@ func (s *PostgresSuite) TestInvalidDeleteStream() {
 	}{
 		{
 			"incorrect stream id",
-			&postgres.Stream{StreamID: "Gzmdv8vp", Token: stream.Token},
+			&postgres.Stream{StreamID: unknownStreamID, Token: stream.Token},
 			"failed to delete stream: sql: no rows in result set",
 		},
 		{
 			"incorrect token",
 			&postgres.Stream{StreamID: stream.StreamID, Token: "foobar"},
 			"failed to delete stream: sql: no rows in result set",
-		},
-		{
-			"invalid hashid",
-			&postgres.Stream{StreamID: "foo", Token: stream.Token},
-			"failed to decode hashed id: mismatch between encode and decode: foo start a63Oaakq re-encoded. result: [900]",
 		},
 	}
 

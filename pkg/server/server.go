@@ -58,8 +58,6 @@ type Config struct {
 	ListenAddr         string
 	ConnStr            string
 	EncryptionPassword string
-	HashidSalt         string
-	HashidMinLength    int
 	DatastoreAddr      string
 	Verbose            bool
 	BrokerAddr         string
@@ -106,8 +104,6 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	db := postgres.NewDB(&postgres.Config{
 		ConnStr:            config.ConnStr,
 		EncryptionPassword: config.EncryptionPassword,
-		HashidSalt:         config.HashidSalt,
-		HashidMinLength:    config.HashidMinLength,
 	}, logger)
 
 	ds := datastore.NewDatastoreProtobufClient(
@@ -140,7 +136,6 @@ func NewServer(config *Config, logger kitlog.Logger) *Server {
 	logger.Log(
 		"msg", "creating server",
 		"datastore", config.DatastoreAddr,
-		"hashidLength", config.HashidMinLength,
 		"mqttBroker", config.BrokerAddr,
 		"listenAddr", config.ListenAddr,
 		"mqttUsername", config.BrokerAddr,
