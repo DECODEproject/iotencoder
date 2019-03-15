@@ -177,6 +177,14 @@ func createClientOptions(broker, username string, logger kitlog.Logger, verbose 
 	opts.SetClientID(mqttClientID)
 	opts.SetAutoReconnect(true)
 
+	var onConnectHandler mqtt.OnConnectHandler = func(client mqtt.Client) {
+		fmt.Println("*******************")
+		fmt.Println("Connected!")
+		fmt.Println("*******************")
+	}
+
+	opts.SetOnConnectHandler(onConnectHandler)
+
 	return opts, nil
 }
 
