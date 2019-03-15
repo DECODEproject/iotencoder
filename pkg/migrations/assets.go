@@ -177,7 +177,7 @@ func _20181202133704_add_operationsDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20181202133704_add_operations.down.sql", size: 45, mode: os.FileMode(420), modTime: time.Unix(1544562664, 0)}
+	info := bindataFileInfo{name: "20181202133704_add_operations.down.sql", size: 45, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xef, 0x17, 0xa5, 0xa6, 0x56, 0xf, 0xce, 0xd8, 0xfd, 0xdc, 0xfd, 0x79, 0xf4, 0x17, 0x51, 0x29, 0xb1, 0xcf, 0xb9, 0x55, 0xb1, 0x2e, 0x58, 0x16, 0x69, 0xe3, 0xa8, 0x21, 0xf5, 0xa0, 0xe6, 0x41}}
 	return a, nil
 }
@@ -197,7 +197,7 @@ func _20181202133704_add_operationsUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20181202133704_add_operations.up.sql", size: 50, mode: os.FileMode(420), modTime: time.Unix(1544562664, 0)}
+	info := bindataFileInfo{name: "20181202133704_add_operations.up.sql", size: 50, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xe3, 0x81, 0x8c, 0xf7, 0x44, 0xa5, 0x90, 0xca, 0x30, 0x21, 0xb8, 0x6a, 0x65, 0xb6, 0x9, 0x89, 0x3f, 0x34, 0x99, 0x2b, 0xc5, 0x3a, 0xd3, 0x82, 0x2c, 0xae, 0xce, 0xb3, 0xf5, 0x28, 0x88, 0x16}}
 	return a, nil
 }
@@ -217,7 +217,7 @@ func _20190306164350_remove_broker_colDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190306164350_remove_broker_col.down.sql", size: 43, mode: os.FileMode(420), modTime: time.Unix(1551891690, 0)}
+	info := bindataFileInfo{name: "20190306164350_remove_broker_col.down.sql", size: 43, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x73, 0x12, 0x9a, 0xd9, 0xd2, 0x13, 0x16, 0x44, 0x33, 0x66, 0x1d, 0xa6, 0xc6, 0x3c, 0xf2, 0x1c, 0x8d, 0xda, 0x6a, 0xa5, 0x22, 0x83, 0x0, 0xeb, 0xd0, 0x94, 0x7d, 0xef, 0xb4, 0x40, 0xfb, 0x20}}
 	return a, nil
 }
@@ -237,7 +237,7 @@ func _20190306164350_remove_broker_colUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190306164350_remove_broker_col.up.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1551891690, 0)}
+	info := bindataFileInfo{name: "20190306164350_remove_broker_col.up.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x27, 0xcf, 0x6e, 0x61, 0xcd, 0x94, 0xbb, 0x70, 0xd3, 0x57, 0xe, 0x83, 0xf3, 0xc2, 0xec, 0x4d, 0xc8, 0xd5, 0x19, 0x54, 0xfa, 0xa4, 0x57, 0x95, 0x8c, 0x59, 0xcf, 0x8d, 0xba, 0x43, 0xa8, 0x5a}}
 	return a, nil
 }
@@ -257,7 +257,7 @@ func _20190306170548_add_certificate_tableDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190306170548_add_certificate_table.down.sql", size: 34, mode: os.FileMode(420), modTime: time.Unix(1551893686, 0)}
+	info := bindataFileInfo{name: "20190306170548_add_certificate_table.down.sql", size: 34, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x3d, 0x85, 0xef, 0x15, 0xa1, 0x51, 0x74, 0x22, 0x6b, 0x2f, 0xde, 0x28, 0x99, 0xb5, 0x60, 0xd6, 0xe8, 0x10, 0x23, 0xa7, 0x48, 0x63, 0xf2, 0xc4, 0x3c, 0xca, 0x83, 0x1f, 0xb4, 0x65, 0xad, 0x98}}
 	return a, nil
 }
@@ -277,7 +277,7 @@ func _20190306170548_add_certificate_tableUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190306170548_add_certificate_table.up.sql", size: 106, mode: os.FileMode(420), modTime: time.Unix(1551893686, 0)}
+	info := bindataFileInfo{name: "20190306170548_add_certificate_table.up.sql", size: 106, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x66, 0x3c, 0x3, 0x6a, 0x8c, 0x5a, 0x0, 0xe2, 0xca, 0x24, 0x4b, 0xf0, 0x4b, 0x55, 0xb2, 0xc4, 0x3f, 0x19, 0x75, 0x20, 0x4f, 0xd3, 0x4d, 0xc6, 0xa6, 0x9b, 0xbb, 0xc1, 0x94, 0x70, 0xbc, 0x38}}
 	return a, nil
 }
@@ -297,7 +297,7 @@ func _20190308144957_rename_policy_idDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190308144957_rename_policy_id.down.sql", size: 62, mode: os.FileMode(420), modTime: time.Unix(1552057806, 0)}
+	info := bindataFileInfo{name: "20190308144957_rename_policy_id.down.sql", size: 62, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x41, 0x9f, 0xd1, 0x62, 0xa4, 0x15, 0x9e, 0x20, 0x98, 0xca, 0x4f, 0x1c, 0xd9, 0xe4, 0xe7, 0xe3, 0x30, 0xc1, 0xc6, 0xc8, 0x9f, 0xd7, 0x6d, 0xce, 0x36, 0xfe, 0xa7, 0xa5, 0xa7, 0x59, 0xf7, 0x6f}}
 	return a, nil
 }
@@ -317,7 +317,7 @@ func _20190308144957_rename_policy_idUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190308144957_rename_policy_id.up.sql", size: 62, mode: os.FileMode(420), modTime: time.Unix(1552057806, 0)}
+	info := bindataFileInfo{name: "20190308144957_rename_policy_id.up.sql", size: 62, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xcc, 0x5b, 0x7d, 0xd, 0x38, 0x77, 0xf, 0xcd, 0x16, 0x40, 0xd8, 0x41, 0xc2, 0x4b, 0x7b, 0x81, 0x98, 0xd3, 0xb6, 0x5c, 0x1d, 0x87, 0xdb, 0x42, 0x76, 0x2b, 0xe6, 0x7c, 0xc8, 0x39, 0x2, 0x85}}
 	return a, nil
 }
@@ -337,7 +337,7 @@ func _20190315170620_add_uuid_column_to_streamDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190315170620_add_uuid_column_to_stream.down.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1552669902, 0)}
+	info := bindataFileInfo{name: "20190315170620_add_uuid_column_to_stream.down.sql", size: 39, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xee, 0x5c, 0x86, 0x4a, 0x1b, 0x17, 0xf9, 0xa1, 0x4, 0xc7, 0x18, 0x12, 0xf7, 0x4f, 0xc3, 0x45, 0x6f, 0xc3, 0x64, 0xd3, 0x16, 0x1c, 0x9a, 0x61, 0x66, 0xd3, 0x64, 0x55, 0xbb, 0xc, 0xdc, 0xf1}}
 	return a, nil
 }
@@ -357,7 +357,7 @@ func _20190315170620_add_uuid_column_to_streamUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190315170620_add_uuid_column_to_stream.up.sql", size: 125, mode: os.FileMode(420), modTime: time.Unix(1552669884, 0)}
+	info := bindataFileInfo{name: "20190315170620_add_uuid_column_to_stream.up.sql", size: 125, mode: os.FileMode(420), modTime: time.Unix(1552671827, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x63, 0xe8, 0xa6, 0xbe, 0x10, 0xc0, 0x22, 0x47, 0x38, 0x51, 0x1a, 0x88, 0x1e, 0x34, 0x16, 0xa7, 0xf, 0x0, 0x7f, 0xb0, 0xd1, 0x7f, 0xc5, 0x90, 0xec, 0x9f, 0x38, 0xd4, 0x9b, 0xfa, 0xf8, 0x37}}
 	return a, nil
 }
