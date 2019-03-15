@@ -14,6 +14,8 @@
 // sql/20190308144957_rename_policy_id.up.sql (62B)
 // sql/20190315170620_add_uuid_column_to_stream.down.sql (39B)
 // sql/20190315170620_add_uuid_column_to_stream.up.sql (125B)
+// sql/20190315225536_change_stream_unique_index.down.sql (161B)
+// sql/20190315225536_change_stream_unique_index.up.sql (163B)
 
 package migrations
 
@@ -362,6 +364,46 @@ func _20190315170620_add_uuid_column_to_streamUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __20190315225536_change_stream_unique_indexDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\xf0\xf4\x73\x71\x8d\x50\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x28\x2e\x29\x4a\x4d\xcc\x2d\x8e\x4f\x49\x2d\xcb\x4c\x4e\x8d\xcf\x4c\x89\x4f\xce\xcf\xcd\x2d\xcd\xcb\x2c\xa9\x04\x71\x32\x53\x2a\xac\xb9\xb8\x9c\x83\x5c\x1d\x43\x5c\x15\x42\xfd\x3c\x03\x43\x5d\x11\x46\xf8\xf9\x87\xe0\x36\xa6\xa0\x34\x29\x27\x33\x39\x3e\x3b\x15\x64\x4e\x05\x97\x82\x82\xbf\x1f\x4c\x95\x06\x5c\x95\x8e\x02\x42\x99\xa6\x35\x20\x00\x00\xff\xff\xbf\xf2\x66\xc2\xa1\x00\x00\x00")
+
+func _20190315225536_change_stream_unique_indexDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190315225536_change_stream_unique_indexDownSql,
+		"20190315225536_change_stream_unique_index.down.sql",
+	)
+}
+
+func _20190315225536_change_stream_unique_indexDownSql() (*asset, error) {
+	bytes, err := _20190315225536_change_stream_unique_indexDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190315225536_change_stream_unique_index.down.sql", size: 161, mode: os.FileMode(420), modTime: time.Unix(1552690650, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x61, 0xed, 0xd4, 0x8a, 0xa3, 0x5d, 0xcc, 0x12, 0x7f, 0x4, 0xe0, 0x25, 0x98, 0xb, 0x9a, 0x9f, 0x1d, 0xe2, 0xb, 0x43, 0x18, 0x9f, 0x92, 0xc1, 0xb8, 0x2c, 0x34, 0x1d, 0xa7, 0x51, 0xef, 0xb}}
+	return a, nil
+}
+
+var __20190315225536_change_stream_unique_indexUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\x09\xf2\x0f\x50\xf0\xf4\x73\x71\x8d\x50\xf0\x74\x53\x70\x8d\xf0\x0c\x0e\x09\x56\x28\x2e\x29\x4a\x4d\xcc\x2d\x8e\x4f\x49\x2d\xcb\x4c\x4e\x8d\xcf\x4c\x89\x2f\x28\x4d\xca\xc9\x4c\x8e\xcf\x4e\xad\x8c\xcf\x4c\xa9\xb0\xe6\xe2\x72\x0e\x72\x75\x0c\x71\x55\x08\xf5\xf3\x0c\x0c\x75\x45\x18\xe0\xe7\x1f\x82\xdb\x90\xe4\xfc\xdc\xdc\xd2\xbc\xcc\x12\x90\x19\x20\x63\xb8\x14\x14\xfc\xfd\x60\xea\x34\xe0\xea\x74\x14\x90\x15\x6a\x5a\x03\x02\x00\x00\xff\xff\x7c\xaf\x0f\xbc\xa3\x00\x00\x00")
+
+func _20190315225536_change_stream_unique_indexUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190315225536_change_stream_unique_indexUpSql,
+		"20190315225536_change_stream_unique_index.up.sql",
+	)
+}
+
+func _20190315225536_change_stream_unique_indexUpSql() (*asset, error) {
+	bytes, err := _20190315225536_change_stream_unique_indexUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190315225536_change_stream_unique_index.up.sql", size: 163, mode: os.FileMode(420), modTime: time.Unix(1552690615, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xb2, 0x17, 0x4d, 0xb5, 0x68, 0x88, 0x65, 0x74, 0x3f, 0x57, 0xaf, 0xc4, 0x5a, 0x8, 0x2b, 0x43, 0x14, 0xb3, 0xfc, 0x4e, 0x22, 0xc, 0xb9, 0x77, 0x2, 0x2d, 0x54, 0x47, 0xfd, 0x96, 0x3e, 0xe1}}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -480,6 +522,10 @@ var _bindata = map[string]func() (*asset, error){
 	"20190315170620_add_uuid_column_to_stream.down.sql": _20190315170620_add_uuid_column_to_streamDownSql,
 
 	"20190315170620_add_uuid_column_to_stream.up.sql": _20190315170620_add_uuid_column_to_streamUpSql,
+
+	"20190315225536_change_stream_unique_index.down.sql": _20190315225536_change_stream_unique_indexDownSql,
+
+	"20190315225536_change_stream_unique_index.up.sql": _20190315225536_change_stream_unique_indexUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -523,20 +569,22 @@ type bintree struct {
 }
 
 var _bintree = &bintree{nil, map[string]*bintree{
-	"20180525115614_create_device_table.down.sql":       &bintree{_20180525115614_create_device_tableDownSql, map[string]*bintree{}},
-	"20180525115614_create_device_table.up.sql":         &bintree{_20180525115614_create_device_tableUpSql, map[string]*bintree{}},
-	"20180526232618_add_streams_table.down.sql":         &bintree{_20180526232618_add_streams_tableDownSql, map[string]*bintree{}},
-	"20180526232618_add_streams_table.up.sql":           &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
-	"20181202133704_add_operations.down.sql":            &bintree{_20181202133704_add_operationsDownSql, map[string]*bintree{}},
-	"20181202133704_add_operations.up.sql":              &bintree{_20181202133704_add_operationsUpSql, map[string]*bintree{}},
-	"20190306164350_remove_broker_col.down.sql":         &bintree{_20190306164350_remove_broker_colDownSql, map[string]*bintree{}},
-	"20190306164350_remove_broker_col.up.sql":           &bintree{_20190306164350_remove_broker_colUpSql, map[string]*bintree{}},
-	"20190306170548_add_certificate_table.down.sql":     &bintree{_20190306170548_add_certificate_tableDownSql, map[string]*bintree{}},
-	"20190306170548_add_certificate_table.up.sql":       &bintree{_20190306170548_add_certificate_tableUpSql, map[string]*bintree{}},
-	"20190308144957_rename_policy_id.down.sql":          &bintree{_20190308144957_rename_policy_idDownSql, map[string]*bintree{}},
-	"20190308144957_rename_policy_id.up.sql":            &bintree{_20190308144957_rename_policy_idUpSql, map[string]*bintree{}},
-	"20190315170620_add_uuid_column_to_stream.down.sql": &bintree{_20190315170620_add_uuid_column_to_streamDownSql, map[string]*bintree{}},
-	"20190315170620_add_uuid_column_to_stream.up.sql":   &bintree{_20190315170620_add_uuid_column_to_streamUpSql, map[string]*bintree{}},
+	"20180525115614_create_device_table.down.sql":        &bintree{_20180525115614_create_device_tableDownSql, map[string]*bintree{}},
+	"20180525115614_create_device_table.up.sql":          &bintree{_20180525115614_create_device_tableUpSql, map[string]*bintree{}},
+	"20180526232618_add_streams_table.down.sql":          &bintree{_20180526232618_add_streams_tableDownSql, map[string]*bintree{}},
+	"20180526232618_add_streams_table.up.sql":            &bintree{_20180526232618_add_streams_tableUpSql, map[string]*bintree{}},
+	"20181202133704_add_operations.down.sql":             &bintree{_20181202133704_add_operationsDownSql, map[string]*bintree{}},
+	"20181202133704_add_operations.up.sql":               &bintree{_20181202133704_add_operationsUpSql, map[string]*bintree{}},
+	"20190306164350_remove_broker_col.down.sql":          &bintree{_20190306164350_remove_broker_colDownSql, map[string]*bintree{}},
+	"20190306164350_remove_broker_col.up.sql":            &bintree{_20190306164350_remove_broker_colUpSql, map[string]*bintree{}},
+	"20190306170548_add_certificate_table.down.sql":      &bintree{_20190306170548_add_certificate_tableDownSql, map[string]*bintree{}},
+	"20190306170548_add_certificate_table.up.sql":        &bintree{_20190306170548_add_certificate_tableUpSql, map[string]*bintree{}},
+	"20190308144957_rename_policy_id.down.sql":           &bintree{_20190308144957_rename_policy_idDownSql, map[string]*bintree{}},
+	"20190308144957_rename_policy_id.up.sql":             &bintree{_20190308144957_rename_policy_idUpSql, map[string]*bintree{}},
+	"20190315170620_add_uuid_column_to_stream.down.sql":  &bintree{_20190315170620_add_uuid_column_to_streamDownSql, map[string]*bintree{}},
+	"20190315170620_add_uuid_column_to_stream.up.sql":    &bintree{_20190315170620_add_uuid_column_to_streamUpSql, map[string]*bintree{}},
+	"20190315225536_change_stream_unique_index.down.sql": &bintree{_20190315225536_change_stream_unique_indexDownSql, map[string]*bintree{}},
+	"20190315225536_change_stream_unique_index.up.sql":   &bintree{_20190315225536_change_stream_unique_indexUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory.
