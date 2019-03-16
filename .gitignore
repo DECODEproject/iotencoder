@@ -7,3 +7,4 @@
 /.docker-compose-*
 /.coverage
 STATUS
+/tmp
