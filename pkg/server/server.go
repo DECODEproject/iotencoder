@@ -50,6 +50,7 @@ func init() {
 	registry.MustRegister(pipeline.DatastoreWriteHistogram)
 	registry.MustRegister(pipeline.ProcessHistogram)
 	registry.MustRegister(pipeline.ZenroomHistogram)
+	registry.MustRegister(postgres.StreamGauge)
 }
 
 // Config is a top level config object. Populated by viper in the command setup,

@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"encoding/json"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/jmoiron/sqlx"
@@ -15,6 +17,18 @@ import (
 
 	// blank import for db driver
 	_ "github.com/lib/pq"
+)
+
+var (
+	// StreamGauge is a gauge of the number of current registered streams
+	StreamGauge = prometheus.NewGauge(
+		prometheus.GaugeOpts{
+			Namespace: "decode",
+			Subsystem: "encoder",
+			Name:      "stream_gauge",
+			Help:      "Count of current streams in database",
+		},
+	)
 )
 
 // Action is a type alias for string - we use for constants
@@ -147,6 +161,8 @@ func (d *DB) Start() error {
 	}
 
 	d.DB = db
+
+	go d.recordMetrics()
 
 	return nil
 }
@@ -502,4 +518,24 @@ func (d *DB) Delete(ctx context.Context, key string) error {
 	}
 
 	return tx.Commit()
+}
+
+// recordMetrics starts a ticker to collect some gauge related metrics from the
+// DB on a 30 second interval
+func (d *DB) recordMetrics() {
+	ticker := time.NewTicker(time.Second * time.Duration(30))
+
+	for range ticker.C {
+		var streamCount float64
+		err := d.DB.Get(&streamCount, `SELECT COUNT(*) FROM streams`)
+		if err != nil {
+			d.logger.Log(
+				"msg", "error counting streams",
+				"err", err,
+			)
+			continue
+		}
+
+		StreamGauge.Set(streamCount)
+	}
 }
