@@ -61,7 +61,7 @@ func NewEncoder(config *Config, logger kitlog.Logger) encoder.Encoder {
 		verbose:        config.Verbose,
 		brokerAddr:     config.BrokerAddr,
 		brokerUsername: config.BrokerUsername,
-		topicPattern:   regexp.MustCompile("device/sck/(\\w+)/readings"),
+		topicPattern:   regexp.MustCompile(`device/sck/(\w+)/readings`),
 	}
 }
 

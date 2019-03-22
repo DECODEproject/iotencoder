@@ -205,7 +205,7 @@ func (s *Server) Start() error {
 	}
 
 	// add signal handling stuff to shutdown gracefully
-	stopChan := make(chan os.Signal)
+	stopChan := make(chan os.Signal, 1)
 	signal.Notify(stopChan, os.Interrupt)
 
 	go func() {
