@@ -109,7 +109,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	})
 	assert.Nil(e.T(), err)
 
-	device, err = e.db.GetDevice("abc123")
+	_, err = e.db.GetDevice("abc123")
 	assert.NotNil(e.T(), err)
 }
 
@@ -189,7 +189,7 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 	})
 	assert.Nil(e.T(), err)
 
-	device, err = e.db.GetDevice("abc123")
+	_, err = e.db.GetDevice("abc123")
 	assert.NotNil(e.T(), err)
 }
 

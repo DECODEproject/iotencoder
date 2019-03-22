@@ -192,7 +192,7 @@ func (s *PostgresSuite) TestInvalidDeleteStream() {
 func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 	stream1, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey:   "public1",
-		CommunityID: "policy-id",
+		CommunityID: "policy-id1",
 		Device: &postgres.Device{
 			DeviceToken: "foo",
 			Longitude:   45.2,
@@ -206,7 +206,7 @@ func (s *PostgresSuite) TestDeleteStreamLeavesDeviceIfOtherStreams() {
 
 	stream2, err := s.db.CreateStream(&postgres.Stream{
 		PublicKey:   "public2",
-		CommunityID: "policy-id",
+		CommunityID: "policy-id2",
 		Device: &postgres.Device{
 			DeviceToken: "foo",
 			Longitude:   45.2,

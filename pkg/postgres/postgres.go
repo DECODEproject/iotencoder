@@ -446,12 +446,6 @@ func (d *DB) Ping() error {
 	return nil
 }
 
-// certificate is an internal type used for persisting LetsEncrypt certificates
-type certificate struct {
-	Key         string `db:"key"`
-	Certificate []byte `db:"certificate"`
-}
-
 // Get is an implementation of the Get method of the autocert.Cache interface.
 func (d *DB) Get(ctx context.Context, key string) ([]byte, error) {
 	query := `SELECT certificate FROM certificates WHERE key = $1`
