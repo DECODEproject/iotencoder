@@ -97,8 +97,6 @@ func (r *Redis) MovingAverage(value float64, deviceToken string, sensorID int, i
 		r.logger.Log("key", key, "msg", "calculating moving average")
 	}
 
-	fmt.Println(key)
-
 	now := r.clock.Now()
 	intervalDuration := time.Second * time.Duration(-int(interval))
 	previousTime := now.Add(intervalDuration)

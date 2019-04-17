@@ -149,6 +149,10 @@ func (p *Processor) Process(device *postgres.Device, payload []byte) error {
 			return err
 		}
 
+		if p.verbose {
+			p.logger.Log("full_payload", string(payloadBytes))
+		}
+
 		start := time.Now()
 
 		encodedPayload, err := zenroom.Exec(
