@@ -429,6 +429,17 @@
   version = "v5.5.2"
 
 [[projects]]
+  digest = "1:01d5dc3bfb14cf8fb2c924dcf026231218604b8ed15daaa028875d49e7f09071"
+  name = "github.com/vmihailenco/msgpack"
+  packages = [
+    ".",
+    "codes",
+  ]
+  pruneopts = "UT"
+  revision = "c2fc210f30a2aca9db880cc017a92c169c999253"
+  version = "v4.0.4"
+
+[[projects]]
   digest = "1:6e898847e5e1a1e0068a915fc9d4476a6e3399ee3cdd1122f3dad90e49c9c3b8"
   name = "goji.io"
   packages = [
@@ -454,9 +465,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7b9fdf110cdbe98f41436d1d3b6e0c648920dab6f36a399a8e688c70ae3c7c92"
+  digest = "1:492ac03ced56256365bdb486c00cabdc9f36a4c16e2577d87933202274db6cbc"
   name = "golang.org/x/net"
   packages = [
+    "context",
     "internal/socks",
     "proxy",
     "websocket",
@@ -486,6 +498,24 @@
   pruneopts = "UT"
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
+
+[[projects]]
+  digest = "1:f5b35141aaa32649e375fa72052f81c99808e2a58c77602948d82b06570a4f41"
+  name = "google.golang.org/appengine"
+  packages = [
+    ".",
+    "datastore",
+    "internal",
+    "internal/app_identity",
+    "internal/base",
+    "internal/datastore",
+    "internal/log",
+    "internal/modules",
+    "internal/remote_api",
+  ]
+  pruneopts = "UT"
+  revision = "54a98f90d1c46b7731eb8fb305d2a321c30ef610"
+  version = "v1.5.0"
 
 [[projects]]
   digest = "1:a4b04b5314d49a67ad022fa7693453ee2b823ab99314f52fa3930ed31085dfef"
@@ -534,6 +564,7 @@
     "github.com/thingful/twirp-datastore-go",
     "github.com/thingful/twirp-encoder-go",
     "github.com/twitchtv/twirp",
+    "github.com/vmihailenco/msgpack",
     "goji.io",
     "goji.io/pat",
     "golang.org/x/crypto/acme/autocert",
