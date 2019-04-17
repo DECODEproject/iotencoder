@@ -1,17 +1,15 @@
 package redis_test
 
 import (
-	"fmt"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	rd "github.com/go-redis/redis"
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"github.com/vmihailenco/msgpack"
 
 	"github.com/DECODEproject/iotencoder/pkg/mocks"
 	"github.com/DECODEproject/iotencoder/pkg/redis"
@@ -20,59 +18,6 @@ import (
 func TestBuildKey(t *testing.T) {
 	key := redis.BuildKey("abc123", 12, uint32(300))
 	assert.Equal(t, "abc123:12:300", key)
-}
-
-func TestCalculateAverage(t *testing.T) {
-	testcases := []struct {
-		label    string
-		input    []string
-		expected float64
-		err      error
-	}{
-		{
-			label:    "empty list",
-			input:    []string{},
-			expected: 0.0,
-			err:      nil,
-		},
-		{
-			label:    "single value list",
-			input:    []string{"12.2:1234567"},
-			expected: 12.2,
-			err:      nil,
-		},
-		{
-			label:    "list of values",
-			input:    []string{"12.2:1234567", "15.3:1234568", "8.8:12345669"},
-			expected: 12.1,
-			err:      nil,
-		},
-		{
-			label:    "invalid element",
-			input:    []string{"12.2:1234567", "13.9"},
-			expected: 0.0,
-			err:      errors.New("invalid value pulled from sorted set"),
-		},
-		{
-			label:    "invalid number",
-			input:    []string{"foo:1234567"},
-			expected: 0.0,
-			err:      errors.New("failed to parse float value read from sorted set: strconv.ParseFloat: parsing \"foo\": invalid syntax"),
-		},
-	}
-
-	for _, testcase := range testcases {
-		t.Run(testcase.label, func(t *testing.T) {
-			got, err := redis.CalculateAverage(testcase.input)
-			if testcase.err != nil {
-				assert.NotNil(t, err)
-				assert.Equal(t, testcase.err.Error(), err.Error())
-			} else {
-				assert.Nil(t, err)
-				assert.Equal(t, testcase.expected, got)
-			}
-		})
-	}
 }
 
 type RedisSuite struct {
@@ -115,19 +60,19 @@ func (s *RedisSuite) SetupTest() {
 		"abc123:12:900",
 		rd.Z{
 			Score:  float64(firstTime.Unix()),
-			Member: fmt.Sprintf("%v:%v", 4.5, firstTime.Unix()),
+			Member: buildMember(s.T(), 4.5, firstTime),
 		},
 		rd.Z{
 			Score:  float64(secondTime.Unix()),
-			Member: fmt.Sprintf("%v:%v", 5.5, secondTime.Unix()),
+			Member: buildMember(s.T(), 5.5, secondTime),
 		},
 		rd.Z{
 			Score:  float64(thirdTime.Unix()),
-			Member: fmt.Sprintf("%v:%v", 6.5, thirdTime.Unix()),
+			Member: buildMember(s.T(), 6.5, thirdTime),
 		},
 		rd.Z{
 			Score:  float64(fourthTime.Unix()),
-			Member: fmt.Sprintf("%v:%v", 3.5, fourthTime.Unix()),
+			Member: buildMember(s.T(), 5.5, fourthTime),
 		},
 	).Result()
 	if err != nil {
@@ -156,7 +101,7 @@ func (s *RedisSuite) TestMovingAverage() {
 		uint32(900),
 	)
 	assert.Nil(s.T(), err)
-	assert.Equal(s.T(), 4.25, value)
+	assert.Equal(s.T(), 4.75, value)
 
 	// we should still have 4 members of the set, i.e. the oldest has been deleted
 	count, err := s.client.ZCard("abc123:12:900").Result()
@@ -168,6 +113,25 @@ func (s *RedisSuite) TestMovingAverage() {
 	result, err := s.client.ZPopMin("abc123:12:900", 1).Result()
 	assert.Nil(s.T(), err)
 	assert.Len(s.T(), result, 1)
-	elem := strings.Split(result[0].Member.(string), ":")
-	assert.Equal(s.T(), "5.5", elem[0])
+
+	var m redis.Member
+	err = msgpack.Unmarshal([]byte(result[0].Member.(string)), &m)
+	assert.Nil(s.T(), err)
+	assert.Equal(s.T(), 5.5, m.Value)
+}
+
+func buildMember(t *testing.T, val float64, timestamp time.Time) []byte {
+	t.Helper()
+
+	m := redis.Member{
+		Timestamp: timestamp.Unix(),
+		Value:     val,
+	}
+
+	b, err := msgpack.Marshal(m)
+	if err != nil {
+		t.Fatalf("failed to marshal msgpack: %v", err)
+	}
+
+	return b
 }
