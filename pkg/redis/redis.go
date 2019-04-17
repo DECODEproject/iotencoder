@@ -3,12 +3,12 @@ package redis
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"time"
 
 	kitlog "github.com/go-kit/kit/log"
 	rd "github.com/go-redis/redis"
 	"github.com/pkg/errors"
+	"github.com/vmihailenco/msgpack"
 )
 
 // Clock is a local interface for some type that can return the current time
@@ -77,6 +77,16 @@ func (r *Redis) Stop() error {
 	return r.client.Close()
 }
 
+// Member is a type used for serializing unique values to redis. We must include
+// a timestamp with each value as a sorted set will never store multiple entries
+// with the same value (it is a set after all). However in order to calculate
+// the mean we need to be able to count all values whether duplicate or now, so
+// we build this object that includes the timestamp.
+type Member struct {
+	Timestamp int64   `msgpack:"timestamp"`
+	Value     float64 `msgpack:"value"`
+}
+
 // MovingAverage is our main public method of the instance that calculates a
 // moving average for the given value. Uses a Redis sorted set under the hood to
 // maintain the running state of the average.
@@ -87,37 +97,61 @@ func (r *Redis) MovingAverage(value float64, deviceToken string, sensorID int, i
 		r.logger.Log("key", key, "msg", "calculating moving average")
 	}
 
+	fmt.Println(key)
+
 	now := r.clock.Now()
 	intervalDuration := time.Second * time.Duration(-int(interval))
 	previousTime := now.Add(intervalDuration)
 
-	_, err := r.client.ZAdd(key, rd.Z{
-		Score:  float64(now.Unix()),
-		Member: fmt.Sprintf("%v:%v", value, now.Unix()),
-	}).Result()
-
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to add value to sorted set")
+	m := Member{
+		Timestamp: now.Unix(),
+		Value:     value,
 	}
 
-	vals, err := r.client.ZRangeByScore(key, rd.ZRangeBy{
-		Min: strconv.FormatInt(previousTime.Unix(), 10),
-		Max: strconv.FormatInt(now.Unix(), 10),
-	}).Result()
+	b, err := msgpack.Marshal(m)
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to read values from sorted set")
+		return 0, errors.Wrap(err, "failed to marshal member to messagepack")
 	}
 
-	_, err = r.client.ZRemRangeByScore(
-		key,
-		"-inf",
-		strconv.FormatInt(previousTime.Unix(), 10),
-	).Result()
+	script := `
+	-- read parameters
+	local key = KEYS[1]
+	local current_time = tonumber(ARGV[1])
+	local previous_time = tonumber(ARGV[2])
+	local value = ARGV[3]
+
+	-- add the new value to the sorted set with score of current_time
+	redis.call('zadd', key, current_time, value)
+
+	-- get list of previous scores
+	local values = redis.call('ZRANGEBYSCORE', key, previous_time, current_time)
+
+	-- delete any value older than the previous time
+	redis.call('ZREMRANGEBYSCORE', key, '-inf', previous_time)
+
+	local acc = 0
+	local counter = 0
+
+	for i=1, #values do
+		local v = cmsgpack.unpack(values[i])
+		acc = acc + tonumber(v['value'])
+		counter = counter + 1
+	end
+
+	return tostring(acc/counter)
+	`
+
+	avg, err := r.client.Eval(script, []string{key}, now.Unix(), previousTime.Unix(), b).Result()
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to delete old values from sorted set")
+		return 0, errors.Wrap(err, "failed to execute moving average script")
 	}
 
-	return CalculateAverage(vals)
+	numericAvg, err := strconv.ParseFloat(avg.(string), 64)
+	if err != nil {
+		return 0, errors.Wrap(err, "failed to parse average value read from sorted set")
+	}
+
+	return numericAvg, nil
 }
 
 // Ping attempts to send a ping message to Redis, returning an error if we are
@@ -134,30 +168,4 @@ func (r *Redis) Ping() error {
 // calculate moving averages.
 func BuildKey(deviceToken string, sensorID int, interval uint32) string {
 	return fmt.Sprintf("%s:%v:%v", deviceToken, sensorID, interval)
-}
-
-// CalculateAverage is the stateless function that calculates a simple average
-// for the given list of values. Redis returns values as strings, so we need to
-// convert before calculating.
-func CalculateAverage(vals []string) (float64, error) {
-	if len(vals) == 0 {
-		return 0, nil
-	}
-
-	var acc float64
-
-	for _, val := range vals {
-		parts := strings.Split(val, ":")
-		if len(parts) != 2 {
-			return 0, errors.New("invalid value pulled from sorted set")
-		}
-
-		numericVal, err := strconv.ParseFloat(parts[0], 64)
-		if err != nil {
-			return 0, errors.Wrap(err, "failed to parse float value read from sorted set")
-		}
-		acc = acc + numericVal
-	}
-
-	return acc / float64(len(vals)), nil
 }
