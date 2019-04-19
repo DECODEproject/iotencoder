@@ -76,12 +76,6 @@ var (
 	)
 )
 
-// MovingAverager is an interface for a type that can return a moving average
-// for the given device/sensor/interval
-type MovingAverager interface {
-	MovingAverage(value float64, deviceToken string, sensorId int, interval uint32) (float64, error)
-}
-
 // Processor is a type that encapsulates processing incoming events received
 // from smartcitizen, and is responsible for enriching the data, applying any
 // transformations to the data and then encrypting it using zenroom before
