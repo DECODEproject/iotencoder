@@ -69,6 +69,5 @@ required.
 | --datastore or -d     | IOTENCODER_DATASTORE           | Address at which the datastore component is listening       |                                 | Yes      |
 | --encryption-password | IOTENCODER_ENCRYPTION_PASSWORD | Password used to encrypt secret tokens we write to Postgres |                                 | Yes      |
 | --key-file or -k      | IOTENCODER_KEY_FILE            | The path to a TLS key file to enable TLS                    |                                 | No       |
-| --redis-url           | IOTENCODER_REDIS_URL           | URL at which Redis is listening                             |                                 | Yes      |
 | --verbose             | IOTENCODER_VERBOSE             | Flag that if set enables verbose mode                       | False                           | No       |
 |                       | SENTRY_DSN                     | Optional DSN string for Sentry error reporting              |                                 | No       |
