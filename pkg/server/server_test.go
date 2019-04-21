@@ -6,8 +6,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/DECODEproject/iotencoder/pkg/redis"
-
 	kitlog "github.com/go-kit/kit/log"
 	"github.com/stretchr/testify/assert"
 
@@ -20,7 +18,6 @@ func TestPulseHandler(t *testing.T) {
 	assert.Nil(t, err)
 
 	connStr := os.Getenv("IOTENCODER_DATABASE_URL")
-	redisStr := os.Getenv("IOTENCODER_REDIS_URL")
 
 	logger := kitlog.NewNopLogger()
 
@@ -37,18 +34,8 @@ func TestPulseHandler(t *testing.T) {
 
 	defer db.Stop()
 
-	rd := redis.NewRedis(
-		redisStr,
-		false,
-		redis.NewClock(),
-		logger,
-	)
-
-	err = rd.Start()
-	assert.Nil(t, err)
-
 	rr := httptest.NewRecorder()
-	handler := server.PulseHandler(db, rd)
+	handler := server.PulseHandler(db)
 
 	handler.ServeHTTP(rr, req)
 

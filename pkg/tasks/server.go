@@ -24,7 +24,6 @@ func init() {
 	serverCmd.Flags().Bool("verbose", false, "Enable verbose output")
 	serverCmd.Flags().StringP("broker-addr", "b", "tcps://mqtt.smartcitizen.me:8883", "Address at which the MQTT broker is listening")
 	serverCmd.Flags().StringP("broker-username", "u", "", "Username for accessing the MQTT broker")
-	serverCmd.Flags().StringP("redis-url", "r", "", "URL at which redis is listening (e.g. redis://password@host:6379/1)")
 	serverCmd.Flags().StringSlice("domains", []string{}, "Comma separated list of domains to enable TLS for these domains")
 
 	viper.BindPFlag("addr", serverCmd.Flags().Lookup("addr"))
@@ -34,7 +33,6 @@ func init() {
 	viper.BindPFlag("verbose", serverCmd.Flags().Lookup("verbose"))
 	viper.BindPFlag("broker-addr", serverCmd.Flags().Lookup("broker-addr"))
 	viper.BindPFlag("broker-username", serverCmd.Flags().Lookup("broker-username"))
-	viper.BindPFlag("redis-url", serverCmd.Flags().Lookup("redis-url"))
 	viper.BindPFlag("domains", serverCmd.Flags().Lookup("domains"))
 
 	raven.SetRelease(version.Version)
@@ -87,11 +85,6 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			return errors.New("Must provide MQTT broker username to authenticate access to the broker")
 		}
 
-		redisURL := viper.GetString("redis-url")
-		if redisURL == "" {
-			return errors.New("Must provide redis url")
-		}
-
 		logger := logger.NewLogger()
 
 		config := &server.Config{
@@ -102,7 +95,6 @@ able to be supplied via an environment variable: $IOTENCODER_EXAMPLE_FLAG`,
 			Verbose:            viper.GetBool("verbose"),
 			BrokerAddr:         brokerAddr,
 			BrokerUsername:     brokerUsername,
-			RedisURL:           redisURL,
 			Domains:            viper.GetStringSlice("domains"),
 		}
 
