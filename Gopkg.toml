@@ -86,8 +86,8 @@
   version = "1.0.2"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/DECODEproject/zenroom-go"
+  version = "0.1.1"
 
 [[constraint]]
   branch = "master"
