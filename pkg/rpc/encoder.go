@@ -184,13 +184,15 @@ func (e *encoderImpl) DeleteStream(ctx context.Context, req *encoder.DeleteStrea
 func (e *encoderImpl) handleCallback(topic string, payload []byte) {
 	token, err := e.extractToken(topic)
 	if err != nil {
-		e.logger.Log("err", err, "msg", "failed to extract device token")
+		e.logger.Log("err", err, "msg", "failed to extract device token", "topic", topic)
+		return
 	}
 
 	device, err := e.db.GetDevice(token)
 	if err != nil {
 		raven.CaptureError(err, map[string]string{"operation": "handleCallback"})
-		e.logger.Log("err", err, "msg", "failed to get device")
+		e.logger.Log("err", err, "msg", "failed to get device", "token", token)
+		return
 	}
 
 	if e.verbose {
