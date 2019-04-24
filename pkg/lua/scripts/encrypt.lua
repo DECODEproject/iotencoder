@@ -16,6 +16,7 @@ device_key = ECDH.keygen(curve)
 
 -- read the payload we will encrypt
 payload = {}
+payload['device_token'] = keys['device_token']
 payload['data'] = DATA
 
 -- The device's public key, community_id and the curve type are tranmitted in
@@ -24,14 +25,16 @@ header = {}
 header['device_pubkey'] = device_key:public():base64()
 header['community_id'] = keys['community_id']
 
--- encrypt the data, and build our output object
-output = ECDH.encrypt(
-  device_key,
-  base64(keys.community_pubkey),
-  MSG.pack(payload), MSG.pack(header)
-)
+iv = RNG.new():octet(16)
+header['iv'] = iv:base64()
 
-output = map(output, base64)
+-- encrypt the data, and build our output object
+local session = device_key:session(base64(keys.community_pubkey))
+local head = str(MSG.pack(header))
+local out = { header = head }
+out.text, out.checksum = ECDH.aead_encrypt(session, str(MSG.pack(payload)), iv, head)
+
+output = map(out, base64)
 output.zenroom = VERSION
 output.encoding = 'base64'
 output.curve = curve
