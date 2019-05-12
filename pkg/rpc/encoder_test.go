@@ -85,6 +85,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
 		DeviceToken:        "abc123",
+		DeviceLabel:        "my sensor",
 		RecipientPublicKey: "pub_key",
 		CommunityId:        "policy-id",
 		Location: &encoder.CreateStreamRequest_Location{
@@ -102,6 +103,7 @@ func (e *EncoderTestSuite) TestStreamLifecycle() {
 	device, err := e.db.GetDevice("abc123")
 	assert.Nil(e.T(), err)
 	assert.Len(e.T(), device.Streams, 1)
+	assert.Equal(e.T(), "my sensor", device.Label)
 
 	_, err = enc.DeleteStream(context.Background(), &encoder.DeleteStreamRequest{
 		StreamUid: resp.StreamUid,
@@ -135,6 +137,7 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 
 	resp, err := enc.CreateStream(context.Background(), &encoder.CreateStreamRequest{
 		DeviceToken:        "abc123",
+		DeviceLabel:        "my sensor",
 		RecipientPublicKey: "pub_key",
 		CommunityId:        "policy-id",
 		Location: &encoder.CreateStreamRequest_Location{
@@ -167,6 +170,7 @@ func (e *EncoderTestSuite) TestStreamWithOperationsLifecycle() {
 
 	device, err := e.db.GetDevice("abc123")
 	assert.Nil(e.T(), err)
+	assert.Equal(e.T(), "my sensor", device.Label)
 	assert.Len(e.T(), device.Streams, 1)
 
 	stream := device.Streams[0]
@@ -264,6 +268,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 		{
 			label: "missing device token",
 			request: &encoder.CreateStreamRequest{
+				DeviceLabel:        "my sensor",
 				RecipientPublicKey: "pubkey",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
@@ -274,9 +279,23 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			expectedErr: "twirp error invalid_argument: device_token is required",
 		},
 		{
+			label: "missing device label",
+			request: &encoder.CreateStreamRequest{
+				DeviceToken:        "foobar",
+				RecipientPublicKey: "pubkey",
+				Location: &encoder.CreateStreamRequest_Location{
+					Longitude: 32,
+					Latitude:  23,
+				},
+				Exposure: encoder.CreateStreamRequest_INDOOR,
+			},
+			expectedErr: "twirp error invalid_argument: device_label is required",
+		},
+		{
 			label: "missing policy id",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
+				DeviceLabel:        "my sensor",
 				RecipientPublicKey: "pubkey",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
@@ -290,6 +309,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing public key",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken: "foo",
+				DeviceLabel: "my sensor",
 				CommunityId: "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
 					Longitude: 32,
@@ -303,6 +323,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing location",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
+				DeviceLabel:        "my sensor",
 				CommunityId:        "policy-id",
 				RecipientPublicKey: "pubkey",
 				Exposure:           encoder.CreateStreamRequest_INDOOR,
@@ -313,6 +334,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing longitude",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
+				DeviceLabel:        "my sensor",
 				CommunityId:        "policy-id",
 				RecipientPublicKey: "pubkey",
 				Location: &encoder.CreateStreamRequest_Location{
@@ -326,6 +348,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "missing latitude",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "foo",
+				DeviceLabel:        "my sensor",
 				CommunityId:        "policy-id",
 				RecipientPublicKey: "pubkey",
 				Location: &encoder.CreateStreamRequest_Location{
@@ -339,6 +362,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "operation with no sensor id",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "abc123",
+				DeviceLabel:        "my sensor",
 				RecipientPublicKey: "pub_key",
 				CommunityId:        "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
@@ -358,6 +382,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "bin with no bins",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "abc123",
+				DeviceLabel:        "my sensor",
 				RecipientPublicKey: "pub_key",
 				CommunityId:        "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{
@@ -378,6 +403,7 @@ func (e *EncoderTestSuite) TestCreateStreamInvalid() {
 			label: "moving average no interval",
 			request: &encoder.CreateStreamRequest{
 				DeviceToken:        "abc123",
+				DeviceLabel:        "my sensor",
 				RecipientPublicKey: "pub_key",
 				CommunityId:        "policy-id",
 				Location: &encoder.CreateStreamRequest_Location{

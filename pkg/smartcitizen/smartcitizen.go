@@ -29,6 +29,7 @@ type Sensor struct {
 // datastore.
 type Device struct {
 	Token      string    `json:"token"`
+	Label      string    `json:"label"`
 	Longitude  float64   `json:"longitude"`
 	Latitude   float64   `json:"latitude"`
 	Exposure   string    `json:"exposure"`
@@ -80,6 +81,7 @@ func (s *Smartcitizen) ParseData(device *postgres.Device, payload []byte) (*Devi
 
 	d := &Device{
 		Token:      device.DeviceToken,
+		Label:      device.Label,
 		Longitude:  device.Longitude,
 		Latitude:   device.Latitude,
 		Exposure:   device.Exposure,
