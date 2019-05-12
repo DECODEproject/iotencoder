@@ -14,7 +14,13 @@ import (
 )
 
 func TestParseData(t *testing.T) {
-	device := &postgres.Device{DeviceToken: "abc123", Longitude: 12, Latitude: 12, Exposure: "INDOOR"}
+	device := &postgres.Device{
+		DeviceToken: "abc123",
+		Label:       "my sensor",
+		Longitude:   12,
+		Latitude:    12,
+		Exposure:    "INDOOR",
+	}
 
 	payload := []byte(`{"data":[{"recorded_at":"2018-12-01T10:00:00Z","sensors":[{"id":12,"value":12.3},{"id":14,"value":23.2}]}]}`)
 
@@ -28,6 +34,7 @@ func TestParseData(t *testing.T) {
 
 	expected := &smartcitizen.Device{
 		Token:      "abc123",
+		Label:      "my sensor",
 		Longitude:  12,
 		Latitude:   12,
 		Exposure:   "INDOOR",
@@ -63,7 +70,7 @@ func TestMarshalling(t *testing.T) {
 	b, err := json.Marshal(device)
 	assert.Nil(t, err)
 
-	expected := `{"token":"abc123","longitude":12,"latitude":12,"exposure":"INDOOR","recordedAt":"2018-12-01T10:00:00Z","sensors":[{"id":12,"name":"HPP828E031","description":"Temperature","unit":"ºC","type":"SHARE","value":12.3},{"id":14,"name":"BH1730FVC","description":"Digital Ambient Light Sensor","unit":"Lux","type":"MOVING_AVG","interval":300,"value":23.2},{"id":53,"name":"dBA1","description":"Digital Sound Sensor","unit":"dBA","type":"BIN","bins":[30,60,90],"values":[0,1,0,0]}]}`
+	expected := `{"token":"abc123","label":"my sensor","longitude":12,"latitude":12,"exposure":"INDOOR","recordedAt":"2018-12-01T10:00:00Z","sensors":[{"id":12,"name":"HPP828E031","description":"Temperature","unit":"ºC","type":"SHARE","value":12.3},{"id":14,"name":"BH1730FVC","description":"Digital Ambient Light Sensor","unit":"Lux","type":"MOVING_AVG","interval":300,"value":23.2},{"id":53,"name":"dBA1","description":"Digital Sound Sensor","unit":"dBA","type":"BIN","bins":[30,60,90],"values":[0,1,0,0]}]}`
 
 	assert.Equal(t, expected, string(b))
 }
@@ -90,6 +97,7 @@ func buildDevice(t *testing.T) *smartcitizen.Device {
 
 	return &smartcitizen.Device{
 		Token:      "abc123",
+		Label:      "my sensor",
 		Longitude:  12,
 		Latitude:   12,
 		Exposure:   "INDOOR",

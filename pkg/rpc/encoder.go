@@ -214,6 +214,10 @@ func validateCreateRequest(req *encoder.CreateStreamRequest) error {
 		return twirp.RequiredArgumentError("device_token")
 	}
 
+	if req.DeviceLabel == "" {
+		return twirp.RequiredArgumentError("device_label")
+	}
+
 	if req.CommunityId == "" {
 		return twirp.RequiredArgumentError("community_id")
 	}
@@ -266,6 +270,7 @@ func createStream(req *encoder.CreateStreamRequest, brokerAddr string) (*postgre
 		Operations:  operations,
 		Device: &postgres.Device{
 			DeviceToken: req.DeviceToken,
+			Label:       req.DeviceLabel,
 			Longitude:   req.Location.Longitude,
 			Latitude:    req.Location.Latitude,
 			Exposure:    strings.ToLower(req.Exposure.String()),

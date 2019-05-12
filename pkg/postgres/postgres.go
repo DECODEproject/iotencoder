@@ -55,6 +55,7 @@ const (
 type Device struct {
 	ID          int     `db:"id"`
 	DeviceToken string  `db:"device_token"`
+	Label       string  `db:"device_label"`
 	Longitude   float64 `db:"longitude"`
 	Latitude    float64 `db:"latitude"`
 	Exposure    string  `db:"exposure"`
@@ -180,12 +181,13 @@ func (d *DB) Stop() error {
 // occurs.
 func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 	sql := `INSERT INTO devices
-		(device_token, longitude, latitude, exposure)
-	VALUES (:device_token, :longitude, :latitude, :exposure)
+		(device_token, longitude, latitude, exposure, device_label)
+	VALUES (:device_token, :longitude, :latitude, :exposure, :device_label)
 	ON CONFLICT (device_token) DO UPDATE
 	SET longitude = EXCLUDED.longitude,
 			latitude = EXCLUDED.latitude,
-			exposure = EXCLUDED.exposure
+			exposure = EXCLUDED.exposure,
+			device_label = EXCLUDED.device_label
 	RETURNING id`
 
 	mapArgs := map[string]interface{}{
@@ -193,6 +195,7 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 		"longitude":    stream.Device.Longitude,
 		"latitude":     stream.Device.Latitude,
 		"exposure":     stream.Device.Exposure,
+		"device_label": stream.Device.Label,
 	}
 
 	tx, err := BeginTX(d.DB)
@@ -368,7 +371,7 @@ func (d *DB) GetDevices() ([]*Device, error) {
 // for that device. This is used to set up subscriptions for existing records on
 // application start.
 func (d *DB) GetDevice(deviceToken string) (_ *Device, err error) {
-	sql := `SELECT id, device_token, longitude, latitude, exposure
+	sql := `SELECT id, device_token, longitude, latitude, exposure, device_label
 		FROM devices
 		WHERE device_token = :device_token`
 
