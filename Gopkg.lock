@@ -388,12 +388,12 @@
   version = "v0.1.1"
 
 [[projects]]
-  digest = "1:41488675be9bafa2675e2f077e5c74a5a95c4f7224527694e3675311a6874c28"
+  digest = "1:6777c64a6a652cec55033bd8c2229b6f4c819199cd17efe957a02662072d1141"
   name = "github.com/thingful/twirp-encoder-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f86a6a7a024d9b26d4ff0de388aa55dbcae98975"
-  version = "v0.1.0"
+  revision = "4c5a19747e574f6e85f76027ac6a261064b634d3"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:e08f2d2b7f85d730396863cd81217a6301eb43c05f9abcde904df5e488232204"
