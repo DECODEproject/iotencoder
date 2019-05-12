@@ -16,6 +16,8 @@
 // sql/20190315170620_add_uuid_column_to_stream.up.sql (125B)
 // sql/20190315225536_change_stream_unique_index.down.sql (161B)
 // sql/20190315225536_change_stream_unique_index.up.sql (163B)
+// sql/20190512204433_add_device_label.down.sql (47B)
+// sql/20190512204433_add_device_label.up.sql (71B)
 
 package migrations
 
@@ -404,6 +406,46 @@ func _20190315225536_change_stream_unique_indexUpSql() (*asset, error) {
 	return a, nil
 }
 
+var __20190512204433_add_device_labelDownSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\xe6\x52\x50\x70\x09\xf2\x0f\x50\x70\xf6\xf7\x09\xf5\xf5\x83\x8a\xc6\xe7\x24\x26\xa5\xe6\x58\x03\x02\x00\x00\xff\xff\x8c\xd1\x34\xbd\x2f\x00\x00\x00")
+
+func _20190512204433_add_device_labelDownSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190512204433_add_device_labelDownSql,
+		"20190512204433_add_device_label.down.sql",
+	)
+}
+
+func _20190512204433_add_device_labelDownSql() (*asset, error) {
+	bytes, err := _20190512204433_add_device_labelDownSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190512204433_add_device_label.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1557694131, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x81, 0x81, 0x1e, 0x1e, 0x3, 0xd6, 0x5a, 0xed, 0x46, 0xa4, 0xd, 0xdf, 0x7, 0x1e, 0xd9, 0xf9, 0x34, 0xfb, 0x13, 0x79, 0x53, 0x55, 0x41, 0x6f, 0xdc, 0x7b, 0xd3, 0x8e, 0xe0, 0xc2, 0xc7, 0x53}}
+	return a, nil
+}
+
+var __20190512204433_add_device_labelUpSql = []byte("\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\xff\x72\xf4\x09\x71\x0d\x52\x08\x71\x74\xf2\x71\x55\x48\x49\x2d\xcb\x4c\x4e\x2d\xe6\x52\x50\x70\x74\x71\x51\x70\xf6\xf7\x09\xf5\xf5\x83\x0a\xc6\xe7\x24\x26\xa5\xe6\x28\x84\xb8\x46\x84\x28\xf8\xf9\x87\x28\xf8\x85\xfa\xf8\x28\xb8\xb8\xba\x39\x86\xfa\x84\x28\xa8\xab\x5b\x03\x02\x00\x00\xff\xff\x04\xb5\x14\x14\x47\x00\x00\x00")
+
+func _20190512204433_add_device_labelUpSqlBytes() ([]byte, error) {
+	return bindataRead(
+		__20190512204433_add_device_labelUpSql,
+		"20190512204433_add_device_label.up.sql",
+	)
+}
+
+func _20190512204433_add_device_labelUpSql() (*asset, error) {
+	bytes, err := _20190512204433_add_device_labelUpSqlBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	info := bindataFileInfo{name: "20190512204433_add_device_label.up.sql", size: 71, mode: os.FileMode(420), modTime: time.Unix(1557694110, 0)}
+	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xef, 0x4, 0x75, 0x44, 0x35, 0xa, 0x4b, 0x83, 0x71, 0x8e, 0xc7, 0x72, 0x20, 0x59, 0x4, 0x67, 0x22, 0x44, 0x11, 0xce, 0xf, 0x52, 0xb2, 0x40, 0xf6, 0x93, 0xc6, 0xe, 0x90, 0xdd, 0x9e, 0x5d}}
+	return a, nil
+}
+
 // Asset loads and returns the asset for the given name.
 // It returns an error if the asset could not be found or
 // could not be loaded.
@@ -526,6 +568,10 @@ var _bindata = map[string]func() (*asset, error){
 	"20190315225536_change_stream_unique_index.down.sql": _20190315225536_change_stream_unique_indexDownSql,
 
 	"20190315225536_change_stream_unique_index.up.sql": _20190315225536_change_stream_unique_indexUpSql,
+
+	"20190512204433_add_device_label.down.sql": _20190512204433_add_device_labelDownSql,
+
+	"20190512204433_add_device_label.up.sql": _20190512204433_add_device_labelUpSql,
 }
 
 // AssetDir returns the file names below a certain
@@ -585,6 +631,8 @@ var _bintree = &bintree{nil, map[string]*bintree{
 	"20190315170620_add_uuid_column_to_stream.up.sql":    &bintree{_20190315170620_add_uuid_column_to_streamUpSql, map[string]*bintree{}},
 	"20190315225536_change_stream_unique_index.down.sql": &bintree{_20190315225536_change_stream_unique_indexDownSql, map[string]*bintree{}},
 	"20190315225536_change_stream_unique_index.up.sql":   &bintree{_20190315225536_change_stream_unique_indexUpSql, map[string]*bintree{}},
+	"20190512204433_add_device_label.down.sql":           &bintree{_20190512204433_add_device_labelDownSql, map[string]*bintree{}},
+	"20190512204433_add_device_label.up.sql":             &bintree{_20190512204433_add_device_labelUpSql, map[string]*bintree{}},
 }}
 
 // RestoreAsset restores an asset under the given directory.

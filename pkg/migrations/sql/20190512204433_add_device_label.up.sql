@@ -1,0 +1,2 @@
+ALTER TABLE devices
+  ADD COLUMN device_label TEXT NOT NULL DEFAULT '';
