@@ -7,16 +7,13 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/prometheus/client_golang/prometheus"
-
 	kitlog "github.com/go-kit/kit/log"
+	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/pkg/errors"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/crypto/acme/autocert"
-
-	// blank import for db driver
-	_ "github.com/lib/pq"
 )
 
 var (
@@ -47,6 +44,10 @@ const (
 	// TokenLength is a constant which controls the length in bytes of the security
 	// tokens we generate for streams.
 	TokenLength = 24
+
+	// pqUniqueViolation is an error returned by postgres when we attempt to insert
+	// a row that violates a unique index
+	pqUniqueViolation = "23505"
 )
 
 // Device is a type used when reading data back from the DB. A single Device may
@@ -214,7 +215,7 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 	// we use a Get for the upsert so we get back the device id
 	err = tx.Get(&deviceID, sql, mapArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to upsert device")
+		return nil, errors.Wrap(err, "failed to save device")
 	}
 
 	streamID, err := uuid.NewRandom()
@@ -244,7 +245,12 @@ func (d *DB) CreateStream(stream *Stream) (_ *Stream, err error) {
 
 	err = tx.Exec(sql, mapArgs)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to insert stream")
+		if pqErr, ok := err.(*pq.Error); ok {
+			if pqErr.Code == pqUniqueViolation {
+				return nil, errors.New("failed to create stream: device already registered within community")
+			}
+		}
+		return nil, errors.Wrap(err, "failed to create stream")
 	}
 
 	stream.StreamID = streamID.String()
