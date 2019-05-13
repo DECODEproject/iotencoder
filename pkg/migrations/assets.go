@@ -421,7 +421,7 @@ func _20190512204433_add_device_labelDownSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190512204433_add_device_label.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1557694131, 0)}
+	info := bindataFileInfo{name: "20190512204433_add_device_label.down.sql", size: 47, mode: os.FileMode(420), modTime: time.Unix(1557703783, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x81, 0x81, 0x1e, 0x1e, 0x3, 0xd6, 0x5a, 0xed, 0x46, 0xa4, 0xd, 0xdf, 0x7, 0x1e, 0xd9, 0xf9, 0x34, 0xfb, 0x13, 0x79, 0x53, 0x55, 0x41, 0x6f, 0xdc, 0x7b, 0xd3, 0x8e, 0xe0, 0xc2, 0xc7, 0x53}}
 	return a, nil
 }
@@ -441,7 +441,7 @@ func _20190512204433_add_device_labelUpSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "20190512204433_add_device_label.up.sql", size: 71, mode: os.FileMode(420), modTime: time.Unix(1557694110, 0)}
+	info := bindataFileInfo{name: "20190512204433_add_device_label.up.sql", size: 71, mode: os.FileMode(420), modTime: time.Unix(1557703783, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0xef, 0x4, 0x75, 0x44, 0x35, 0xa, 0x4b, 0x83, 0x71, 0x8e, 0xc7, 0x72, 0x20, 0x59, 0x4, 0x67, 0x22, 0x44, 0x11, 0xce, 0xf, 0x52, 0xb2, 0x40, 0xf6, 0x93, 0xc6, 0xe, 0x90, 0xdd, 0x9e, 0x5d}}
 	return a, nil
 }

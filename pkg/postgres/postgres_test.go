@@ -256,6 +256,7 @@ func (s *PostgresSuite) TestStreamDeviceRecipientUniqueness() {
 	})
 
 	assert.NotNil(s.T(), err)
+	assert.Equal(s.T(), "failed to create stream: device already registered within community", err.Error())
 }
 
 func (s *PostgresSuite) TestCertificates() {
