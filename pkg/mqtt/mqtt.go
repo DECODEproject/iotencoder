@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"fmt"
+	"os"
 	"sync"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -185,6 +186,16 @@ func createClientOptions(broker, username string, logger kitlog.Logger, verbose 
 	}
 
 	opts.SetOnConnectHandler(onConnectHandler)
+
+	var onConnectionLostHandler mqtt.ConnectionLostHandler = func(client mqtt.Client, err error) {
+		logger.Log(
+			"msg", "connection lost",
+			"err", err,
+		)
+		os.Exit(1)
+	}
+
+	opts.SetConnectionLostHandler(onConnectionLostHandler)
 
 	return opts, nil
 }
